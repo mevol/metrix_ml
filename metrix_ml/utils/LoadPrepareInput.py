@@ -14,7 +14,7 @@ class LoadPrepareInput(object):
     #I should think about providing input/outputdirectories and paths
     #as input to the function
     datestring = datetime.strftime(datetime.now(), '%Y%m%d')
-    METRIX_PATH = "/Users/melanievollmar/Documents/METRICS/database_output_analysis/metrix_db_20170531/Python_ML/"
+    METRIX_PATH = 'my_path'
     INPUT_PATH = os.path.join(METRIX_PATH, "data")
     OUTPUT_PATH = METRIX_PATH        
     if not os.path.exists(os.path.join(METRIX_PATH, datestring)):
@@ -34,6 +34,6 @@ class LoadPrepareInput(object):
 
     
 #####################################################################################    
-    #dummy = load_data('May_2017_combined_valid_results_EP-Shelx_fail_removed.csv')
+    #dummy = load_data('my_file.csv')
     #print(dummy)
     #write_data(dummy)
