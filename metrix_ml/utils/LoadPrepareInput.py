@@ -26,15 +26,14 @@ class LoadPrepareInput(object):
         csv_path = os.path.join(input_path, filename)
         return pd.read_csv(csv_path)
 
-    def write_data(df, output_path = OUTPUT_PATH):
+    def write_data(df, output_dir = OUTPUT_DIR):
         '''write dataframe to CSV file'''
         datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-        csv_path = os.path.join(output_path, 'df'+datestring+'.csv')
+        csv_path = os.path.join(output_dir, 'df'+datestring+'.csv')
         return df.to_csv(csv_path)
 
     
 #####################################################################################    
-    #make_directories()
     #dummy = load_data('May_2017_combined_valid_results_EP-Shelx_fail_removed.csv')
     #print(dummy)
     #write_data(dummy)
