@@ -7,8 +7,8 @@ from datetime import datetime
 class ColumnTransformation():
     '''A class to run various column transformation steps to prepare the
     input until I am able to implement this step in the database code'''
-    #def __init__(self):
-    #    pass
+    def __init__(self):
+        pass
 
     def transform(self, df):
         #MW_ASU
