@@ -3,14 +3,18 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
+from sklearn.base import BaseEstimator, TransformerMixin
 
-class ColumnTransformation():
+class ColumnTransformation(BaseEstimator, TransformerMixin):
     '''A class to run various column transformation steps to prepare the
     input until I am able to implement this step in the database code'''
     def __init__(self):
         pass
+    
+    def fit(self, df, y=None):
+        return self
 
-    def transform(self, df):
+    def transform(self, df, y=None):
         #MW_ASU
         df['MW_ASU'] = df['MW_chain'] * df['No_mol_ASU']
 
