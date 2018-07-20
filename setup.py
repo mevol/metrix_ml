@@ -5,12 +5,12 @@ setup(
     version = "0.0.1",
     author = "Melanie Vollmar",
     author_email = "melanie.vollmar@diamond.ac.uk",
-    description = "A package that classifies maps",
+    description = "A package which uses crystallographic statistics and metrics \n"
+    							"to make predictions about the likelihood of solving a structure",
     license = "BSD",
     keywords = "awesome python package",
     packages=[
-      'metrix_ml', 
-      'tests'
+      'metrix_ml'
     ],
     scripts=[
     ],
