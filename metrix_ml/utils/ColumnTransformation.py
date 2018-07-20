@@ -8,6 +8,9 @@ from sklearn.base import BaseEstimator, TransformerMixin
 class ColumnTransformation(BaseEstimator, TransformerMixin):
     '''A class to run various column transformation steps to prepare the
     input until I am able to implement this step in the database code'''
+    
+    '''This works as long as I don't run it within a scikit learn pipeline'''
+    
     def __init__(self):
         pass
     
