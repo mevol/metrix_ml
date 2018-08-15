@@ -13,6 +13,7 @@ setup(
       'metrix_ml'
     ],
     scripts=[
+      'bin/randomforest_gridsearch'
     ],
     install_requires=[
       'pytest',
