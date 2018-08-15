@@ -184,14 +184,12 @@ class RandomForestGridSearch(object):
 		print(grid_search.best_score_)
 		feature_importances = grid_search.best_estimator_.feature_importances_
 		print(sorted(zip(feature_importances, self.X_transform_train), reverse=True))
+		self.best_params = grid_search.best_params_
+	
+	
 	
 	def tree_best_params(self):
-		self.tree_clf_new = DecisionTreeClassifier(max_depth=5,
-																				max_leaf_nodes=15,
-																				min_samples_leaf= 2,
-																				min_samples_split=5,
-																				max_features=16,
-																				random_state= 42)
+		self.tree_clf_new = DecisionTreeClassifier(**self.best_params, random_state=42)
 
 		#visualise best decision tree
 
@@ -475,60 +473,29 @@ class RandomForestGridSearch(object):
 		# IMPORTANT: first argument is true values, second argument is predicted probabilities
 		print('AUC for test set', metrics.roc_auc_score(self.y_test, self.y_pred_prob))
 		print('AUC for CV train set', metrics.roc_auc_score(self.y_train, self.y_scores[:,1]))
+		
+		
+		def scoring(X, y):
+			# calculate cross_val_scores with different scoring functions for test set
+			roc_auc = cross_val_score(self.tree_clf_new, X, y,
+											scoring='roc_auc').mean()
+			accuracy = cross_val_score(self.tree_clf_new, X, y,
+											scoring='accuracy').mean()
+			recall = cross_val_score(self.tree_clf_new, X, y,
+											scoring='recall').mean()
+			precision = cross_val_score(self.tree_clf_new, X, y,
+											scoring='precision').mean()
+			f1 = cross_val_score(self.tree_clf_new, X, y,
+											scoring='f1').mean()
 
-		# calculate cross_val_scores with different scoring functions for test set
-		train_roc_auc = cross_val_score(self.tree_clf_new, self.X_transform_test, self.y_test,
-										scoring='roc_auc').mean()
-		train_accuracy = cross_val_score(self.tree_clf_new, self.X_transform_test, self.y_test,
-										scoring='accuracy').mean()
-		train_recall = cross_val_score(self.tree_clf_new, self.X_transform_test, self.y_test,
-										scoring='recall').mean()
-		train_precision = cross_val_score(self.tree_clf_new, self.X_transform_test, self.y_test,
-										scoring='precision').mean()
-		train_f1 = cross_val_score(self.tree_clf_new, self.X_transform_test, self.y_test,
-										scoring='f1').mean()
+			print('ROC_AUC', roc_auc)#uses metrics.roc_auc_score
+			print('Accuracy', accuracy)#uses metrics.accuracy_score
+			print('Recall', recall)#uses metrics.recall_score
+			print('Precision', precision)#uses metrics.precision_score
+			print('F1 score', f1)#uses metrics.f1_score
 
-		print('ROC_AUC', train_roc_auc)#uses metrics.roc_auc_score
-		print('Accuracy', train_accuracy)#uses metrics.accuracy_score
-		print('Recall', train_recall)#uses metrics.recall_score
-		print('Precision', train_precision)#uses metrics.precision_score
-		print('F1 score', train_f1)#uses metrics.f1_score
-
-		# calculate cross-validated AUC for CV train set
-		train_roc_auc = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
-										scoring='roc_auc').mean()
-		train_accuracy = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
-										scoring='accuracy').mean()
-		train_recall = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
-										scoring='recall').mean()
-		train_precision = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
-										scoring='precision').mean()
-		train_f1 = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
-										scoring='f1').mean()
-
-		print('ROC_AUC CV', train_roc_auc)#uses metrics.roc_auc_score
-		print('Accuracy CV', train_accuracy)#uses metrics.accuracy_score
-		print('Recall CV', train_recall)#uses metrics.recall_score
-		print('Precision CV', train_precision)#uses metrics.precision_score
-		print('F1 score CV', train_f1)#uses metrics.f1_score
-
-		# calculate cross-validated AUC for CV TEST set
-		train_roc_auc = cross_val_score(self.tree_clf_new, self.X_transform_test, self.y_test, cv=10,
-										scoring='roc_auc').mean()
-		train_accuracy = cross_val_score(self.tree_clf_new, self.X_transform_test, self.y_test, cv=10,
-										scoring='accuracy').mean()
-		train_recall = cross_val_score(self.tree_clf_new, self.X_transform_test, self.y_test, cv=10,
-										scoring='recall').mean()
-		train_precision = cross_val_score(self.tree_clf_new, self.X_transform_test, self.y_test, cv=10,
-										scoring='precision').mean()
-		train_f1 = cross_val_score(self.tree_clf_new, self.X_transform_test, self.y_test, cv=10,
-										scoring='f1').mean()
-
-		print('ROC_AUC CV TEST', train_roc_auc)#uses metrics.roc_auc_score
-		print('Accuracy CV TEST', train_accuracy)#uses metrics.accuracy_score
-		print('Recall CV TEST', train_recall)#uses metrics.recall_score
-		print('Precision CV TEST', train_precision)#uses metrics.precision_score
-		print('F1 score CV TEST', train_f1)#uses metrics.f1_score
+		scoring(self.X_transform_test, self.y_test)
+		scoring(self.X_transform_train, self.y_train)
 
 def run():
 	args = parse_command_line()
