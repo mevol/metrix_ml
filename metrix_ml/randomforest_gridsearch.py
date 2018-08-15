@@ -125,130 +125,6 @@ def run():
 
 	###############################################################################
 	#
-	#  importing packages
-	#
-	###############################################################################
-
-	import pandas as pd
-	import os
-	import matplotlib.pyplot as plt
-	import numpy as np
-	from sklearn.model_selection import train_test_split
-
-	###############################################################################
-	#
-	#  importing database table and loading as pandas dataframe
-	#
-	###############################################################################
-
-	#import data which is held in a CSV file previously exported from METRIX_database and edited by hand
-	METRIX_PATH = "/Users/melanievollmar/Documents/METRICS/database_output_analysis/metrix_db_20170531/Python_ML/data"
-	def load_metrix_data(metrix_path = METRIX_PATH):
-			csv_path = os.path.join(metrix_path, "May_2017_combined_valid_results_EP-Shelx_fail_removed.csv")
-			return pd.read_csv(csv_path)
-
-	#look at the imported data to get an idea what we are working with
-	metrix = load_metrix_data()
-
-	###############################################################################
-	#
-	#  creating 3 data frames specific to the three development milestones I had
-	#  1--> directly from data processing
-	#  2--> after adding protein information
-	#  3--> carrying out some further column transformations
-	#
-	###############################################################################
-
-	#look at the data that is coming from processing
-	attr_database = ['IoverSigma', 'anomalousslope', 'anomalousCC', 'anomalousmulti', 'multiplicity',
-									 'diffI', 'cchalf', 'totalobservations', 'wilsonbfactor', 'lowreslimit',
-									 'anomalouscompl', 'highreslimit', 'completeness', 'totalunique', 'RmergediffI',
-									 'RmergeI', 'RmeasI', 'RmeasdiffI', 'RpimdiffI', 'RpimI', 'diffF']
-	metrix_database = metrix[attr_database]
-
-	#database plus manually added data
-	attr_man_add = ['IoverSigma', 'anomalousslope', 'anomalousCC', 'anomalousmulti', 'multiplicity',
-									'diffI', 'cchalf', 'totalobservations', 'wilsonbfactor', 'lowreslimit',
-									'anomalouscompl', 'highreslimit', 'completeness', 'totalunique', 'RmergediffI',
-									'RmergeI', 'RmeasI', 'RmeasdiffI', 'RpimdiffI', 'RpimI', 'diffF',
-									'wavelength', 'Vcell', 'Matth_coeff', 'No_atom_chain', 'solvent_content',
-									'No_mol_ASU', 'MW_chain', 'sites_ASU']
-	metrix_man_add = metrix[attr_man_add]
-
-	#after column transformation expected feature list
-	#X_transform_train_ordered = X_transform_train[['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-	#                          'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-	#                          'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-	#                          'highreslimit', 'wilsonbfactor', 'anomalousslope',
-	#                          'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-	#                          'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
-	#                          'Vcell', 'solvent_content', 'Vcell/Vm<Ma>', 'Matth_coeff',
-	#                          'MW_ASU/sites_ASU/solvent_content', 'MW_chain', 'No_atom_chain',
-	#                          'No_mol_ASU', 'MW_ASU', 'sites_ASU', 'MW_ASU/sites_ASU',
-	#                          'MW_chain/No_atom_chain', 'wilson', 'bragg', 'volume_wilsonB_highres']]                              
-
-	metrix_transform = metrix_man_add.copy()
-
-	#column transformation
-	#MW_ASU
-	metrix_transform['MW_ASU'] = metrix_transform['MW_chain'] * metrix_transform['No_mol_ASU']
-
-	#MW_ASU/sites_ASU
-	metrix_transform['MW_ASU/sites_ASU'] = metrix_transform['MW_ASU'] / metrix_transform['sites_ASU']
-
-	#MW_chain/No_atom_chain
-	metrix_transform['MW_chain/No_atom_chain'] = metrix_transform['MW_chain'] / metrix_transform['No_atom_chain']
-
-	#MW_ASU/sites_ASU/solvent_content
-	metrix_transform['MW_ASU/sites_ASU/solvent_content'] = metrix_transform['MW_ASU/sites_ASU'] / metrix_transform['solvent_content']
-
-	#wavelength**3
-	metrix_transform['wavelength**3'] = metrix_transform['wavelength'] ** 3
-
-	#wavelenght**3/Vcell
-	metrix_transform['wavelength**3/Vcell'] = metrix_transform['wavelength**3'] / metrix_transform['Vcell']
-
-	#Vcell/Vm<Ma>
-	metrix_transform['Vcell/Vm<Ma>'] = metrix_transform['Vcell'] / (metrix_transform['Matth_coeff'] * metrix_transform['MW_chain/No_atom_chain'])
-
-	#wilson
-	metrix_transform['wilson'] = -2 * metrix_transform['wilsonbfactor']
-
-	#bragg
-	metrix_transform['bragg'] = (1 / metrix_transform['highreslimit'])**2
-
-	#use np.exp to work with series object
-	metrix_transform['volume_wilsonB_highres'] = metrix_transform['Vcell/Vm<Ma>'] * np.exp(metrix_transform['wilson'] * metrix_transform['bragg'])
-
-	###############################################################################
-	#
-	#  creating training and test set for each of the 3 dataframes
-	#
-	###############################################################################
-
-	X_database = metrix_database
-	X_man_add = metrix_man_add
-	X_transform = metrix_transform
-	y = metrix['EP_success']
-
-	X_database_train, X_database_test, y_train, y_test = train_test_split(X_database, y, test_size=0.2, random_state=42)
-	X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(X_man_add, y, test_size=0.2, random_state=42)
-	X_transform_train, X_transform_test, y_train, y_test = train_test_split(X_transform, y, test_size=0.2, random_state=42)
-
-	#print(X_database.columns, X_database.shape)
-	#print(X_man_add.columns, X_man_add.shape)
-	#print(X_transform.columns, X_transform.shape)
-
-	#print(X_database_train.columns, X_database_train.shape)
-	#print(X_man_add_train.columns, X_man_add_train.shape)
-	#print(X_transform_train.columns, X_transform_train.shape)
-
-	assert X_database.columns.all() == X_database_train.columns.all()
-	assert X_man_add.columns.all() == X_man_add_train.columns.all()
-	assert X_transform.columns.all() == X_transform_train.columns.all()
-
-	###############################################################################
-	#
 	#  a basic desicion tree classifier with cross_validation
 	#
 	###############################################################################
@@ -287,50 +163,13 @@ def run():
 	print(grid_search.best_score_)
 	feature_importances = grid_search.best_estimator_.feature_importances_
 	print(sorted(zip(feature_importances, X_transform_train), reverse=True))
-
+	
+	
 	###############################################################################
 	#
-	#  a basic desicion tree classifier with cross_validation
+	#  create tree with best parameters
 	#
 	###############################################################################
-	#training a decision tree with the prepared train set and train set lables
-
-	from sklearn.tree import DecisionTreeClassifier
-	from sklearn.metrics import mean_squared_error
-	from sklearn.externals import joblib
-	from sklearn.model_selection import GridSearchCV
-	from sklearn.model_selection import cross_val_score
-	from sklearn.model_selection import cross_val_predict
-	from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
-	from sklearn.metrics import precision_recall_curve, roc_curve
-	from sklearn.tree import export_graphviz
-
-	#create the decision tree
-	tree_clf = DecisionTreeClassifier(random_state=42)
-
-	#set up grid search
-	param_grid = {"criterion": ["gini", "entropy"],
-								'max_features': [1, 2, 4, 8, 16],
-								 "min_samples_split": [5, 10, 15], #min samples per node to induce split
-								 "max_depth": [3, 4, 5, 6], #max number of splits to do
-								 "min_samples_leaf": [2, 4, 6], #min number of samples in a leaf
-								 "max_leaf_nodes": [5, 10, 15]}#max number of leaves
-						 
-
-	#building and running the grid search
-	grid_search = GridSearchCV(tree_clf, param_grid, cv=10,
-														scoring='accuracy')
-
-	grid_search.fit(X_transform_train, y_train)
-
-	#get best parameter combination and its score as accuracy
-	print(grid_search.best_params_)
-	print(grid_search.best_score_)
-	feature_importances = grid_search.best_estimator_.feature_importances_
-	print(sorted(zip(feature_importances, X_transform_train), reverse=True))
-
-
-
 	#create a new tree with the best settings found above
 	tree_clf_new = DecisionTreeClassifier(max_depth=5,
 																				max_leaf_nodes=15,
