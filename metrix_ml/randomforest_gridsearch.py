@@ -1,4 +1,33 @@
+import argparse
+
+def parse_command_line():
+	
+	parser = argparse.ArgumentParser(description='Random forest grid search')
+	
+	parser.add_argument(
+		'--input', 
+		type=str, 
+		dest="input",
+		default="",
+		help='The input CSV file')
+		
+	parser.add_argument(
+		'--outdir',
+		type=str,
+		dest='outdir',
+		default='',
+		help='Specify output directory')
+
+	args = parser.parse_args()
+	if args.input == '':
+		parser.print_help()
+		exit(0)
+	return args
+
 def run():
+	args = parse_command_line()
+	
+	
 	###############################################################################
 	#
 	#  importing packages
@@ -18,9 +47,8 @@ def run():
 	###############################################################################
 
 	#import data which is held in a CSV file previously exported from METRIX_database and edited by hand
-	METRIX_PATH = "/Users/melanievollmar/Documents/METRICS/database_output_analysis/metrix_db_20170531/Python_ML/data"
-	def load_metrix_data(metrix_path = METRIX_PATH):
-			csv_path = os.path.join(metrix_path, "May_2017_combined_valid_results_EP-Shelx_fail_removed.csv")
+	def load_metrix_data():
+			csv_path = args.input
 			return pd.read_csv(csv_path)
 
 	#look at the imported data to get an idea what we are working with
@@ -181,8 +209,8 @@ def run():
 	#visualise best decision tree
 	import subprocess
 	tree_clf_new.fit(X_transform_train, y_train)
-	dotfile = os.path.join(METRIX_PATH, 'tree_clf_new.dot')
-	pngfile = os.path.join(METRIX_PATH, 'tree_clf_new.png')
+	dotfile = os.path.join(args.outdir, 'tree_clf_new.dot')
+	pngfile = os.path.join(args.outdir, 'tree_clf_new.png')
 
 	with open(dotfile, 'w') as f:
 			export_graphviz(tree_clf_new, out_file=f, feature_names=X_transform_train.columns,
