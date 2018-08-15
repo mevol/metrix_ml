@@ -16,7 +16,10 @@ setup(
       'bin/randomforest_gridsearch'
     ],
     install_requires=[
+      'matplotlib',
+      'pandas',
       'pytest',
+      'sklearn'
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
