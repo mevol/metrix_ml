@@ -13,7 +13,7 @@ setup(
       'metrix_ml'
     ],
     scripts=[
-      'bin/randomforest_gridsearch'
+      'bin/decisiontree_gridsearch'
     ],
     install_requires=[
       'matplotlib',

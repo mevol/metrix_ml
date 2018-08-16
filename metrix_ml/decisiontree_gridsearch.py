@@ -49,7 +49,7 @@ def load_metrix_data(csv_path):
 		return pd.read_csv(csv_path)
 
 
-class RandomForestGridSearch(object):
+class DecisionTreeGridSearch(object):
 	def __init__(self, metrix, outdir):
 		self.metrix=metrix
 		self.outdir=outdir
@@ -508,7 +508,7 @@ def run():
 
 	###############################################################################
 
-	random_forest_grid_search = RandomForestGridSearch(metrix, args.outdir)
+	decision_tree_grid_search = DecisionTreeGridSearch(metrix, args.outdir)
 
 
 
