@@ -146,6 +146,10 @@ class DecisionTreeGridSearch(object):
 		self.X_man_add = metrix_man_add
 		self.X_transform = metrix_transform
 
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Created the following dataframes: metrix_database, metrix_man_add, metrix_transform \n')
+
+
 	def split_data(self):
 			###############################################################################
 		#
@@ -169,12 +173,23 @@ class DecisionTreeGridSearch(object):
 		self.y_train = y_train
 		self.y_test = y_test
 
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Spliting into training and test set 80-20 \n')
+		  text_file.write('metrix_database: X_database_train, X_database_test \n')
+		  text_file.write('metrix_man_add: X_man_add_train, X_man_add_test \n')
+		  text_file.write('metrix_transform: X_transform_train, X_transform_test \n')
+		  text_file.write('y(EP_success): y_train, y_test \n')
+
+
 	def grid_search(self):
 			#training a decision tree with the prepared train set and train set lables
 
 
 		#create the decision tree
 		tree_clf = DecisionTreeClassifier(random_state=42)
+
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Created decision tree: tree_clf \n')
 
 		#set up grid search
 		param_grid = {"criterion": ["gini", "entropy"],
@@ -183,6 +198,10 @@ class DecisionTreeGridSearch(object):
 									 "max_depth": [3, 4, 5, 6], #max number of splits to do
 									 "min_samples_leaf": [2, 4, 6], #min number of samples in a leaf
 									 "max_leaf_nodes": [5, 10, 15]}#max number of leaves
+
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Running grid search for the following parameters: %s \n' %param_grid)
+		  text_file.write('use cv=10, scoring=accuracy \n')
 						 
 
 		#building and running the grid search
@@ -193,15 +212,29 @@ class DecisionTreeGridSearch(object):
 
 		#get best parameter combination and its score as accuracy
 		print(grid_search.best_params_)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Best parameters: ' +str(grid_search.best_params_)+'\n')
+		
 		print(grid_search.best_score_)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Best score: ' +str(grid_search.best_score_)+'\n')
+		
 		feature_importances = grid_search.best_estimator_.feature_importances_
+		feature_importances_ls = sorted(zip(feature_importances, self.X_transform_train), reverse=True)
 		print(sorted(zip(feature_importances, self.X_transform_train), reverse=True))
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Feature importances: %s \n' %feature_importances_ls)
+
+		
 		self.best_params = grid_search.best_params_
 	
 	
 	
 	def tree_best_params(self):
 		self.tree_clf_new = DecisionTreeClassifier(**self.best_params, random_state=42)
+
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Created new decision tree "tree_clf_new" using best parameters \n')
 
 		#visualise best decision tree
 
@@ -216,125 +249,233 @@ class DecisionTreeGridSearch(object):
 		command = ["dot", "-Tpng", dotfile, "-o", pngfile]
 		subprocess.check_call(command)
 
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Writing DOTfile and convert to PNG for "tree_clf_new" \n')
+		  text_file.write('DOT filename: tree_clf_new.dot \n')
+		  text_file.write('PNG filename: tree_clf_new.png \n')
+
+
 
 		#not the best measure to use as it heavily depends on the sample 
 		#distribution --> accuracy
 		print(cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train,
 										cv=10, scoring='accuracy'))
+		accuracy_each_cv = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train,
+										cv=10, scoring='accuracy')
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Accuracy for each of 10 CV folds: %s \n' %accuracy_each_cv)
+										
 		print(cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train,
 										cv=10, scoring='accuracy').mean())
-
+		accuracy_mean_cv = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train,
+										cv=10, scoring='accuracy').mean()
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Mean accuracy over all 10 CV folds: %s \n' %accuracy_mean_cv)
 
 
 		# calculate cross_val_scoring with different scoring functions for CV train set
 		train_roc_auc = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
 										scoring='roc_auc').mean()
+		print('ROC_AUC CV', train_roc_auc)#uses metrics.roc_auc_score
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('ROC_AUC mean for 10-fold CV: %s \n' %train_roc_auc)
+										
 		train_accuracy = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
 										scoring='accuracy').mean()
+		print('Accuracy CV', train_accuracy)#uses metrics.accuracy_score
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Accuracy mean for 10-fold CV: %s \n' %train_accuracy)
+										
 		train_recall = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
 										scoring='recall').mean()
+		print('Recall CV', train_recall)#uses metrics.recall_score
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Recall mean for 10-fold CV: %s \n' %train_recall)
+
 		train_precision = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
 										scoring='precision').mean()
+		print('Precision CV', train_precision)#uses metrics.precision_score
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Precision mean for 10-fold CV: %s \n' %train_precision)
+
 		train_f1 = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
 										scoring='f1').mean()
-
-		print('ROC_AUC CV', train_roc_auc)#uses metrics.roc_auc_score
-		print('Accuracy CV', train_accuracy)#uses metrics.accuracy_score
-		print('Recall CV', train_recall)#uses metrics.recall_score
-		print('Precision CV', train_precision)#uses metrics.precision_score
 		print('F1 score CV', train_f1)#uses metrics.f1_score
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('F1 score mean for 10-fold CV: %s \n' %train_f1)
+
 
 	def predict(self):
 		#try out how well the classifier works to predict from the test set
 		self.y_pred_class = self.tree_clf_new.predict(self.X_transform_test)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Saving predictions for X_transform_test in y_pred_class \n')
 
 		#alternative way to not have to use the test set
 		self.y_train_pred = cross_val_predict(self.tree_clf_new, self.X_transform_train, self.y_train,
 											cv=10)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Saving predictions for X_transform_train with 10-fold CV in y_train_pred \n')
+
 		# calculate accuracy
+		y_accuracy = metrics.accuracy_score(self.y_test, self.y_pred_class)
 		print(metrics.accuracy_score(self.y_test, self.y_pred_class))
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Accuracy score or agreement between y_test and y_pred_class: %s \n' %y_accuracy)
 
 		# examine the class distribution of the testing set (using a Pandas Series method)
+		class_dist = self.y_test.value_counts()
 		print(self.y_test.value_counts())
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Class distribution for y_test: %s \n' %class_dist)
 
 		# calculate the percentage of ones
 		# because y_test only contains ones and zeros, we can simply calculate the mean = percentage of ones
+		ones = self.y_test.mean()
 		print(self.y_test.mean())
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Percent 1s in y_test: %s \n' %ones)
 
 		# calculate the percentage of zeros
+		zeros = 1 - self.y_test.mean()
 		print(1 - self.y_test.mean())
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Percent 0s in y_test: %s \n' %zeros)
 
 		# calculate null accuracy in a single line of code
 		# only for binary classification problems coded as 0/1
-		max(self.y_test.mean(), 1 - self.y_test.mean())
+		null_acc = max(self.y_test.mean(), 1 - self.y_test.mean())
+		print(null_acc)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Null accuracy in y_test: %s \n' %null_acc)
 
 	def analysis(self):
 		# IMPORTANT: first argument is true values, second argument is predicted values
 		# this produces a 2x2 numpy array (matrix)
-		print('confusion matrix using test set', metrics.confusion_matrix(self.y_test, self.y_pred_class))#on the test set
-		print('confusion matrix using CV train set', metrics.confusion_matrix(self.y_train, self.y_train_pred))#on the CV train set
+		conf_mat_test = metrics.confusion_matrix(self.y_test, self.y_pred_class)
+		conf_mat_10CV = metrics.confusion_matrix(self.y_train, self.y_train_pred)
+		print('confusion matrix using test set %s' %conf_mat_test)#on the test set
+		print('confusion matrix using CV train set %s' %conf_mat_10CV)#on the CV train set
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('confusion matrix using test set: %s \n' %conf_mat_test)
+		  text_file.write('confusion matrix using 10-fold CV: %s \n' %conf_mat_10CV)
 
-		# save confusion matrix and slice into four pieces
-		confusion = metrics.confusion_matrix(self.y_test, self.y_pred_class)
-		confusion_CV = metrics.confusion_matrix(self.y_train, self.y_train_pred)
+
+		# slice confusion matrix into four pieces
 		#[row, column] for test set
-		TP = confusion[1, 1]
-		TN = confusion[0, 0]
-		FP = confusion[0, 1]
-		FN = confusion[1, 0]
+		TP = conf_mat_test[1, 1]
+		TN = conf_mat_test[0, 0]
+		FP = conf_mat_test[0, 1]
+		FN = conf_mat_test[1, 0]
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Slicing confusion matrix for test set into: TP, TN, FP, FN \n')
 
 		#[row, column] for CV train set
-		TP_CV = confusion_CV[1, 1]
-		TN_CV = confusion_CV[0, 0]
-		FP_CV = confusion_CV[0, 1]
-		FN_CV = confusion_CV[1, 0]
+		TP_CV = conf_mat_10CV[1, 1]
+		TN_CV = conf_mat_10CV[0, 0]
+		FP_CV = conf_mat_10CV[0, 1]
+		FN_CV = conf_mat_10CV[1, 0]
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Slicing confusion matrix for 10-fold CV into: TP_CV, TN_CV, FP_CV, FN_CV \n')
 
 		#metrics calculated from confusion matrix
 		# use float to perform true division, not integer division
-		print('accuracy score manual', (TP + TN) / float(TP + TN + FP + FN))
-		print('accuracy score sklearn', metrics.accuracy_score(self.y_test, self.y_pred_class))
-		print('accuracy score manual CV', (TP_CV + TN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV))
-		print('accuracy score sklearn CV', metrics.accuracy_score(self.y_train, self.y_train_pred))
+		acc_score_man_test = (TP + TN) / float(TP + TN + FP + FN)
+		acc_score_sklearn_test = metrics.accuracy_score(self.y_test, self.y_pred_class)
+		acc_score_man_CV = (TP_CV + TN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
+		acc_score_sklearn_CV = metrics.accuracy_score(self.y_train, self.y_train_pred)
+		print('accuracy score manual test: %s' %acc_score_man_test)
+		print('accuracy score sklearn test: %s' %acc_score_sklearn_test)
+		print('accuracy score manual CV: %s' %acc_score_man_CV)
+		print('accuracy score sklearn CV: %s' %acc_score_sklearn_CV)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Accuracy score: \n')
+		  text_file.write('accuracy score manual test: %s \n' %acc_score_man_test)
+		  text_file.write('accuracy score sklearn test: %s \n' %acc_score_sklearn_test)
+		  text_file.write('accuracy score manual CV: %s \n' %acc_score_man_CV)
+		  text_file.write('accuracy score sklearn CV: %s \n' %acc_score_sklearn_CV)
 
 		#something of one class put into the other
-		classification_error = (FP + FN) / float(TP + TN + FP + FN)
-		print('classification error manual', classification_error)
-		print('classification error sklearn', 1 - metrics.accuracy_score(self.y_test, self.y_pred_class))
-		classification_error_CV = (FP_CV + FN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
-		print('classification error manual CV', classification_error_CV)
-		print('classification error sklearn CV', 1 - metrics.accuracy_score(self.y_train, self.y_train_pred))
+		class_err_man_test = (FP + FN) / float(TP + TN + FP + FN)
+		class_err_sklearn_test = 1 - metrics.accuracy_score(self.y_test, self.y_pred_class)
+		class_err_man_CV = (FP_CV + FN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
+		class_err_sklearn_CV = 1 - metrics.accuracy_score(self.y_train, self.y_train_pred)
+		print('classification error manual test: %s' %class_err_man_test)
+		print('classification error sklearn test: %s' %class_err_sklearn_test)
+		print('classification error manual CV: %s' %class_err_man_CV)
+		print('classification error sklearn CV: %s' %class_err_sklearn_CV)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Classification error: \n')  
+		  text_file.write('classification error manual test: %s \n' %class_err_man_test)
+		  text_file.write('classification error sklearn test: %s \n' %class_err_sklearn_test)
+		  text_file.write('classification error manual CV: %s \n' %class_err_man_CV)
+		  text_file.write('classification error sklearn CV: %s \n' %class_err_sklearn_CV)
 
 		#same as recall or true positive rate; correctly placed positive cases
-		sensitivity = TP / float(FN + TP)
-		print('sensitivity manual', sensitivity)
-		print('sensitivity sklearn', metrics.recall_score(self.y_test, self.y_pred_class))
-		sensitivity_CV = TP_CV / float(FN_CV + TP_CV)
-		print('sensitivity manual CV', sensitivity_CV)
-		print('sensitivity sklearn CV', metrics.recall_score(self.y_train, self.y_train_pred))
+		sensitivity_man_test = TP / float(FN + TP)
+		sensitivity_sklearn_test = metrics.recall_score(self.y_test, self.y_pred_class)
+		sensitivity_man_CV = TP_CV / float(FN_CV + TP_CV)
+		sensitivity_sklearn_CV = metrics.recall_score(self.y_train, self.y_train_pred)
+		print('sensitivity manual test: %s' %sensitivity_man_test)
+		print('sensitivity sklearn test: %s' %sensitivity_sklearn_test)
+		print('sensitivity manual CV: %s' %sensitivity_man_CV)
+		print('sensitivity sklearn CV: %s' %sensitivity_sklearn_CV)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Sensitivity/Recall/True positives: \n')
+		  text_file.write('sensitivity manual test: %s \n' %sensitivity_man_test)
+		  text_file.write('sensitivity sklearn test: %s \n' %sensitivity_sklearn_test)
+		  text_file.write('sensitivity manual CV: %s \n' %sensitivity_man_CV)
+		  text_file.write('sensitivity sklearn CV: %s \n' %sensitivity_sklearn_CV)
+  
+    #calculate specificity
+		specificity_man_test = TN / (TN + FP)
+		specificity_man_CV = TN_CV / (TN_CV + FP_CV)
+		print('specificity manual test: %s' %specificity_man_test)
+		print('specificity manual CV: %s' %specificity_man_CV)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Specificity: \n')
+		  text_file.write('specificity manual test: %s \n' %specificity_man_test)
+		  text_file.write('specificity manual CV: %s \n' %specificity_man_CV)
+    
+    #calculate false positive rate
+		false_positive_rate_man_test = FP / float(TN + FP)
+		false_positive_rate_man_CV = FP_CV / float(TN_CV + FP_CV)
+		print('false positive rate manual test: %s' %false_positive_rate_man_test)
+		print('1 - specificity test: %s' %(1 - specificity_man_test))
+		print('false positive rate manual CV: %s' %false_positive_rate_man_CV)
+		print('1 - specificity CV: %s' %(1 - specificity_man_CV))
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('False positive rate or 1-specificity: \n')
+		  text_file.write('false positive rate manual test: %s \n' %false_positive_rate_man_test)
+		  text_file.write('1 - specificity test: %s \n' %(1 - specificity_man_test))
+		  text_file.write('false positive rate manual CV: %s \n' %false_positive_rate_man_CV)
+		  text_file.write('1 - specificity CV: %s \n' %(1 - specificity_man_CV))
 
-		specificity = TN / (TN + FP)
-		print('specificity manual', specificity)
-		specificity_CV = TN_CV / (TN_CV + FP_CV)
-		print('specificity manual CV', specificity_CV)
-
-		false_positive_rate = FP / float(TN + FP)
-		print('false positive rate manual', false_positive_rate)
-		print('false positive rate manual alternative', 1 - specificity)
-		false_positive_rate_CV = FP_CV / float(TN_CV + FP_CV)
-		print('false positive rate manual CV', false_positive_rate_CV)
-		print('false positive rate manual alternative CV', 1 - specificity_CV)
-
-		#how confidently the correct placement was done
-		precision = TP / float(TP + FP)
-		print('precision manual', precision)
-		print('precision sklearn', metrics.precision_score(self.y_test, self.y_pred_class))
-		precision_CV = TP_CV / float(TP_CV + FP_CV)
-		print('precision manual CV', precision_CV)
-		print('precision sklearn CV', metrics.precision_score(self.y_train, self.y_train_pred))
+		#calculate precision or how confidently the correct placement was done
+		precision_man_test = TP / float(TP + FP)
+		precision_sklearn_test = metrics.precision_score(self.y_test, self.y_pred_class)
+		precision_man_CV = TP_CV / float(TP_CV + FP_CV)
+		precision_sklearn_CV = metrics.precision_score(self.y_train, self.y_train_pred)
+		print('precision manual: %s' %precision_man_test)
+		print('precision sklearn: %s' %precision_sklearn_test)
+		print('precision manual CV: %s' %precision_man_CV)
+		print('precision sklearn CV: %s' %precision_sklearn_CV)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Precision or confidence of classification: \n')
+		  text_file.write('precision manual: %s \n' %precision_man_test)
+		  text_file.write('precision sklearn: %s \n' %precision_sklearn_test)
+		  text_file.write('precision manual CV: %s \n' %precision_man_CV)
+		  text_file.write('precision sklearn CV: %s \n' %precision_sklearn_CV)
 
 		#F1 score; uses precision and recall
-		print('F1 score', f1_score(self.y_test, self.y_pred_class))
-		print('F1 score CV', f1_score(self.y_train, self.y_train_pred))
+		f1_score_sklearn_test = f1_score(self.y_test, self.y_pred_class)
+		f1_score_sklearn_CV = f1_score(self.y_train, self.y_train_pred)
+		print('F1 score sklearn test: %s' %f1_score_sklearn_test)
+		print('F1 score sklearn CV: %s' %f1_score_sklearn_CV)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('F1 score: \n')
+		  text_file.write('F1 score sklearn test: %s \n' %f1_score_sklearn_test)
+		  text_file.write('F1 score sklearn CV: %s \n' %f1_score_sklearn_CV)
 
 		###############################################################################
 		#
@@ -345,22 +486,29 @@ class DecisionTreeGridSearch(object):
 
 		#probabilities for the CV train set
 		self.y_scores=self.tree_clf_new.predict_proba(self.X_transform_train)#train set
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Storing prediction probabilities for X_transform_train in y_scores \n')
 
 		# store the predicted probabilities for class 1
 		self.y_pred_prob = self.tree_clf_new.predict_proba(self.X_transform_test)[:, 1]#test set
-
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Storing prediction probabilities for class 1 for X_transform_train in y_pred_prob \n')
 		# histogram of predicted probabilities
 
 		# 8 bins for prediction probability on the test set
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Plotting histogram for y_pred_prob\n')
 		plt.hist(self.y_pred_prob, bins=8)
 		# x-axis limit from 0 to 1
 		plt.xlim(0,1)
-		plt.title('Histogram of predicted probabilities')
+		plt.title('Histogram of predicted probabilities for y_pred_prob or class 1')
 		plt.xlabel('Predicted probability of EP_success')
 		plt.ylabel('Frequency')
 		plt.show()
 
 		# 8 bins for prediction probability on the CV train set
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Plotting histogram for y_scores\n')
 		plt.hist(self.y_scores[:,1], bins=8)
 		# x-axis limit from 0 to 1
 		plt.xlim(0,1)
