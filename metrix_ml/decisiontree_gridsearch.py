@@ -69,13 +69,17 @@ class DecisionTreeGridSearch(object):
 		#  2--> after adding protein information
 		#  3--> carrying out some further column transformations
 		#
-
+      
 		#look at the data that is coming from processing
 		attr_database = ['IoverSigma', 'anomalousslope', 'anomalousCC', 'anomalousmulti', 'multiplicity',
 										 'diffI', 'cchalf', 'totalobservations', 'wilsonbfactor', 'lowreslimit',
 										 'anomalouscompl', 'highreslimit', 'completeness', 'totalunique', 'RmergediffI',
 										 'RmergeI', 'RmeasI', 'RmeasdiffI', 'RpimdiffI', 'RpimI', 'diffF']
 		metrix_database = self.metrix[attr_database]
+		
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Preparing input data as metrix_database with following attributes %s \n' %(attr_database))
+
 
 		#database plus manually added data
 		attr_man_add = ['IoverSigma', 'anomalousslope', 'anomalousCC', 'anomalousmulti', 'multiplicity',
@@ -86,19 +90,27 @@ class DecisionTreeGridSearch(object):
 										'No_mol_ASU', 'MW_chain', 'sites_ASU']
 		metrix_man_add = self.metrix[attr_man_add]
 
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Preparing input data as metrix_man_add with following attributes %s \n' %(attr_man_add))
+
+
 		#after column transformation expected feature list
-		#X_transform_train_ordered = X_transform_train[['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-		#                          'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-		#                          'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-		#                          'highreslimit', 'wilsonbfactor', 'anomalousslope',
-		#                          'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-		#                          'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
-		#                          'Vcell', 'solvent_content', 'Vcell/Vm<Ma>', 'Matth_coeff',
-		#                          'MW_ASU/sites_ASU/solvent_content', 'MW_chain', 'No_atom_chain',
-		#                          'No_mol_ASU', 'MW_ASU', 'sites_ASU', 'MW_ASU/sites_ASU',
-		#                          'MW_chain/No_atom_chain', 'wilson', 'bragg', 'volume_wilsonB_highres']]                              
+		attr_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+		                          'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+		                          'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+		                          'highreslimit', 'wilsonbfactor', 'anomalousslope',
+		                          'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+		                          'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+		                          'Vcell', 'solvent_content', 'Vcell/Vm<Ma>', 'Matth_coeff',
+		                          'MW_ASU/sites_ASU/solvent_content', 'MW_chain', 'No_atom_chain',
+		                          'No_mol_ASU', 'MW_ASU', 'sites_ASU', 'MW_ASU/sites_ASU',
+		                          'MW_chain/No_atom_chain', 'wilson', 'bragg', 'volume_wilsonB_highres']                          
 
 		metrix_transform = metrix_man_add.copy()
+
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Preparing input data as metrix_transform with following attributes %s \n' %(attr_transform))
+
 
 		#column transformation
 		#MW_ASU
@@ -475,17 +487,17 @@ class DecisionTreeGridSearch(object):
 		print('AUC for CV train set', metrics.roc_auc_score(self.y_train, self.y_scores[:,1]))
 		
 		
-		def scoring(X, y):
+		def scoring(X, y, cv):
 			# calculate cross_val_scores with different scoring functions for test set
-			roc_auc = cross_val_score(self.tree_clf_new, X, y,
+			roc_auc = cross_val_score(self.tree_clf_new, X, y, cv=cv,
 											scoring='roc_auc').mean()
-			accuracy = cross_val_score(self.tree_clf_new, X, y,
+			accuracy = cross_val_score(self.tree_clf_new, X, y, cv=cv,
 											scoring='accuracy').mean()
-			recall = cross_val_score(self.tree_clf_new, X, y,
+			recall = cross_val_score(self.tree_clf_new, X, y, cv=cv,
 											scoring='recall').mean()
-			precision = cross_val_score(self.tree_clf_new, X, y,
+			precision = cross_val_score(self.tree_clf_new, X, y, cv=cv,
 											scoring='precision').mean()
-			f1 = cross_val_score(self.tree_clf_new, X, y,
+			f1 = cross_val_score(self.tree_clf_new, X, y, cv=cv,
 											scoring='f1').mean()
 
 			print('ROC_AUC', roc_auc)#uses metrics.roc_auc_score
@@ -494,8 +506,8 @@ class DecisionTreeGridSearch(object):
 			print('Precision', precision)#uses metrics.precision_score
 			print('F1 score', f1)#uses metrics.f1_score
 
-		scoring(self.X_transform_test, self.y_test)
-		scoring(self.X_transform_train, self.y_train)
+		scoring(self.X_transform_test, self.y_test, cv=None)
+		scoring(self.X_transform_train, self.y_train, cv=10)
 
 def run():
 	args = parse_command_line()
