@@ -15,9 +15,6 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
 from sklearn.metrics import precision_recall_curve, roc_curve
 from sklearn.tree import export_graphviz
-from sklearn.model_selection import cross_val_score
-from sklearn.metrics import f1_score
-from sklearn.model_selection import cross_val_score
 
 
 
@@ -485,20 +482,24 @@ class DecisionTreeGridSearch(object):
 
 
 		#probabilities for the CV train set
-		self.y_scores=self.tree_clf_new.predict_proba(self.X_transform_train)#train set
+		self.y_probas_CV = cross_val_predict(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10, method='predict_proba')
+
+#		self.y_scores=self.tree_clf_new.predict_proba(self.X_transform_train)#train set
 		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-		  text_file.write('Storing prediction probabilities for X_transform_train in y_scores \n')
+		  text_file.write('Storing prediction probabilities for X_transform_train and y_train with 10-fold CV in y_probas_CV \n')
 
 		# store the predicted probabilities for class 1
-		self.y_pred_prob = self.tree_clf_new.predict_proba(self.X_transform_test)[:, 1]#test set
+		self.y_scores_CV = self.y_probas_CV[:, 1]
+#		self.y_pred_prob = self.tree_clf_new.predict_proba(self.X_transform_test)[:, 1]#test set
 		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-		  text_file.write('Storing prediction probabilities for class 1 for X_transform_train in y_pred_prob \n')
+		  text_file.write('Storing prediction probabilities for class 1 for X_transform_train and y_train in y_scores_CV \n')
 		# histogram of predicted probabilities
 
 		# 8 bins for prediction probability on the test set
 		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
 		  text_file.write('Plotting histogram for y_pred_proba\n')
-		plt.hist(self.y_pred_prob, bins=8)
+		plt.hist(self.y_probas_CV, bins=8)
+#		plt.hist(self.y_pred_prob, bins=8)
 		# x-axis limit from 0 to 1
 		plt.xlim(0,1)
 		plt.title('Histogram of predicted probabilities for y_pred_prob or class 1')
@@ -509,7 +510,8 @@ class DecisionTreeGridSearch(object):
 		# 8 bins for prediction probability on the CV train set
 		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
 		  text_file.write('Plotting histogram for y_scores\n')
-		plt.hist(self.y_scores[:,1], bins=8)
+		plt.hist(self.y_scores_CV, bins=8)
+#		plt.hist(self.y_scores[:,1], bins=8)
 		# x-axis limit from 0 to 1
 		plt.xlim(0,1)
 		plt.title('Histogram of predicted probabilities')
