@@ -15,7 +15,7 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
 from sklearn.metrics import precision_recall_curve, roc_curve
 from sklearn.tree import export_graphviz
-
+from datetime import datetime
 
 
 def parse_command_line():
@@ -347,6 +347,7 @@ class DecisionTreeGridSearch(object):
 		  text_file.write('Null accuracy in y_test: %s \n' %null_acc)
 
 	def analysis(self):
+		datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
 		# IMPORTANT: first argument is true values, second argument is predicted values
 		# this produces a 2x2 numpy array (matrix)
 		conf_mat_test = metrics.confusion_matrix(self.y_test, self.y_pred_class)
@@ -474,89 +475,65 @@ class DecisionTreeGridSearch(object):
 		  text_file.write('F1 score sklearn test: %s \n' %f1_score_sklearn_test)
 		  text_file.write('F1 score sklearn CV: %s \n' %f1_score_sklearn_CV)
 
-		###############################################################################
-		#
-		#  adjusting classification thresholds; default threshold is 0.5
-		#
-		###############################################################################
+		#probabilities of predicting y_train with X_transform_train using 10-fold CV
+		self.y_pred_proba_train_CV = cross_val_predict(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10, method='predict_proba')
 
-
-		#probabilities for the CV train set
-		self.y_probas_CV = cross_val_predict(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10, method='predict_proba')
-
+		#probabilities of predicting y_test with X_transform_test
+		self.y_pred_proba_test = self.tree_clf_new.predict_proba(self.X_transform_test)
+		
 #		self.y_scores=self.tree_clf_new.predict_proba(self.X_transform_train)#train set
 		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-		  text_file.write('Storing prediction probabilities for X_transform_train and y_train with 10-fold CV in y_probas_CV \n')
-
-		# store the predicted probabilities for class 1
-		self.y_scores_CV = self.y_probas_CV[:, 1]
-#		self.y_pred_prob = self.tree_clf_new.predict_proba(self.X_transform_test)[:, 1]#test set
-		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-		  text_file.write('Storing prediction probabilities for class 1 for X_transform_train and y_train in y_scores_CV \n')
-		# histogram of predicted probabilities
+		  text_file.write('Storing prediction probabilities for X_transform_train and y_train with 10-fold CV in y_pred_proba_train_CV \n')
+		  text_file.write('Storing prediction probabilities for X_transform_test and y_test in y_pred_proba_test \n')
 
 		# 8 bins for prediction probability on the test set
 		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-		  text_file.write('Plotting histogram for y_pred_proba\n')
-		plt.hist(self.y_probas_CV, bins=8)
-#		plt.hist(self.y_pred_prob, bins=8)
-		# x-axis limit from 0 to 1
-		plt.xlim(0,1)
-		plt.title('Histogram of predicted probabilities for y_pred_prob or class 1')
-		plt.xlabel('Predicted probability of EP_success')
-		plt.ylabel('Frequency')
-		plt.show()
+		  text_file.write('Plotting histogram for y_pred_proba_train_CV \n')
+		  text_file.write('Plotting histogram for y_pred_proba_test \n')
+		  
+		#plot histograms of probabilities  
+		def plot_hist_pred_proba(y_pred_proba, name):
+			plt.hist(y_pred_proba, bins=8)
+			plt.xlim(0,1)
+			plt.title('Histogram of predicted probabilities for y_pred_proba_%s to be class 1' %name)
+			plt.xlabel('Predicted probability of EP_success')
+			plt.ylabel('Frequency')
+			plt.savefig(os.path.join(self.outdir, 'pred_proba_'+name+datestring+'.png'))
+			plt.close()
 
-		# 8 bins for prediction probability on the CV train set
+		plot_hist_pred_proba(self.y_pred_proba_train_CV[:, 1], 'train_CV_')
+		plot_hist_pred_proba(self.y_pred_proba_test[:, 1], 'test_')
+
+		#get y_scores for the predictions to be bale to plot ROC curve
 		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-		  text_file.write('Plotting histogram for y_scores\n')
-		plt.hist(self.y_scores_CV, bins=8)
-#		plt.hist(self.y_scores[:,1], bins=8)
-		# x-axis limit from 0 to 1
-		plt.xlim(0,1)
-		plt.title('Histogram of predicted probabilities')
-		plt.xlabel('Predicted probability of EP_success')
-		plt.ylabel('Frequency')
-		plt.show()
+		  text_file.write('Getting y_scores for y_pred_proba_train_CV and y_pred_proba_test as y_scores_train_CV and y_scores_test\n')
 
-		###############################################################################
-		#
-		#  adjusting thresholds using precision vs recall curve
-		#
-		###############################################################################
+		# store the predicted probabilities for class 1
+		self.y_scores_train_CV = self.y_pred_proba_train_CV[:, 1]
+		self.y_scores_test = self.y_pred_proba_test[:, 1]
 
-		#plot Precision Recall Threshold curve for test set 
-		precisions, recalls, thresholds_forest = precision_recall_curve(self.y_test, self.y_pred_prob)
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Plotting Precision-Recall for y_test and y_scores_test \n')
+		  text_file.write('Plotting Precision-Recall for y_train and y_scores_train_CV \n')
 
-		def plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest):
+		#plot precision and recall curve
+		def plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest, name):
 				plt.plot(thresholds_forest, precisions[:-1], "b--", label="Precision")
 				plt.plot(thresholds_forest, recalls[:-1], "g--", label="Recall")
+				plt.title('Precsion-Recall plot for for EP_success classifier using %s set' %name)
 				plt.xlabel("Threshold")
 				plt.legend(loc="upper left")
 				plt.ylim([0,1])
-
-		plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest)
-		plt.show()
+				plt.savefig(os.path.join(self.outdir, 'Precision_Recall_'+name+datestring+'.png'))
+				plt.close()
+				
+		#plot Precision Recall Threshold curve for test set 
+		precisions, recalls, thresholds_forest = precision_recall_curve(self.y_test, self.y_scores_test)
+		plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest, 'test_')
 
 		#plot Precision Recall Threshold curve for CV train set 
-		precisions, recalls, thresholds_forest = precision_recall_curve(self.y_train, self.y_scores[:,1])
-
-		def plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest):
-				plt.plot(thresholds_forest, precisions[:-1], "b--", label="Precision")
-				plt.plot(thresholds_forest, recalls[:-1], "g--", label="Recall")
-				plt.xlabel("Threshold")
-				plt.legend(loc="upper left")
-				plt.ylim([0,1])
-
-		plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest)
-		plt.show()
-
-		###############################################################################
-		#
-		#  looking at classifier performance using ROC curves and
-		#  adjusting thresholds
-		#
-		###############################################################################
+		precisions, recalls, thresholds_forest = precision_recall_curve(self.y_train, self.y_scores_train_CV)
+		plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest, 'train_CV_')
 
 		# IMPORTANT: first argument is true values, second argument is predicted probabilities
 
@@ -565,64 +542,47 @@ class DecisionTreeGridSearch(object):
 		# roc_curve returns 3 objects fpr, tpr, thresholds
 		# fpr: false positive rate
 		# tpr: true positive rate
-		fpr, tpr, thresholds = metrics.roc_curve(self.y_test, self.y_pred_prob)#test set
-
-		plt.plot(fpr, tpr)
-		plt.xlim([0.0, 1.0])
-		plt.ylim([0.0, 1.0])
-		plt.rcParams['font.size'] = 12
-		plt.title('ROC curve for EP_success classifier')
-		plt.xlabel('False Positive Rate (1 - Specificity)')
-		plt.ylabel('True Positive Rate (Sensitivity)')
-		plt.grid(True)
-		plt.show()
-
-		#as found in sklearn package
-		fpr, tpr, thresholds = roc_curve(self.y_test, self.y_pred_prob)#test set
-
-		def plot_roc_curve(fpr, tpr, label=None):
+		
+		with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		  text_file.write('Plotting ROC curve for y_test and y_scores_test \n')
+		  text_file.write('Plotting ROC curve for y_train and y_scores_train_CV \n')
+		
+		#plot ROC curves
+		def plot_roc_curve(fpr, tpr, name, label=None):
 				plt.plot(fpr, tpr, linewidth=2, label=label)
 				plt.plot([0, 1], [0, 1], 'k--')
 				plt.axis([0, 1, 0, 1])
-				plt.xlabel('False Positive Rate')
-				plt.ylabel('True Positive Rate')
+				plt.title('ROC curve for EP_success classifier using %s set' %name) 
+				plt.xlabel('False Positive Rate (1 - Specificity)')
+				plt.ylabel('True Positive Rate (Sensitivity)')
+				plt.grid(True)
+				plt.savefig(os.path.join(self.outdir, 'ROC_curve_'+name+datestring+'.png'))
+				plt.close()
+				
+		#ROC curve for test set			
+		fpr, tpr, thresholds = roc_curve(self.y_test, self.y_scores_test)#test set
+		plot_roc_curve(fpr, tpr, 'test_')
+
+		#ROC curve for 10-fold CV train set
+		fpr_CV, tpr_CV, thresholds_CV = roc_curve(self.y_train, self.y_scores_train_CV)#CV train set
+		plot_roc_curve(fpr_CV, tpr_CV, 'train_CV_')
 		
-		plot_roc_curve(fpr, tpr)
-		plt.show()
-
-		#for the CV training set
-		fpr_CV, tpr_CV, thresholds_CV = metrics.roc_curve(self.y_train, self.y_scores[:,1])#CV train set
-
-		plt.plot(fpr_CV, tpr_CV)
-		plt.xlim([0.0, 1.0])
-		plt.ylim([0.0, 1.0])
-		plt.rcParams['font.size'] = 12
-		plt.title('ROC curve for EP_success classifier')
-		plt.xlabel('False Positive Rate (1 - Specificity)')
-		plt.ylabel('True Positive Rate (Sensitivity)')
-		plt.grid(True)
-		plt.show()
-
-		#as found in sklearn package
-		fpr_CV, tpr_CV, thresholds_CV = roc_curve(self.y_train, self.y_scores[:,1])#CV train set
-
-		def plot_roc_curve(fpr_CV, tpr_CV, label=None):
-				plt.plot(fpr_CV, tpr_CV, linewidth=2, label=label)
-				plt.plot([0, 1], [0, 1], 'k--')
-				plt.axis([0, 1, 0, 1])
-				plt.xlabel('False Positive Rate')
-				plt.ylabel('True Positive Rate')
-		
-		plot_roc_curve(fpr_CV, tpr_CV)
-		plt.show()
 
 		# define a function that accepts a threshold and prints sensitivity and specificity
-		def evaluate_threshold(threshold):
-				print('Sensitivity:', tpr[thresholds > threshold][-1])
-				print('Specificity:', 1 - fpr[thresholds > threshold][-1])
-		
-		print('Threshold 0.5', evaluate_threshold(0.5))
-		print('Threshold 0.4', evaluate_threshold(0.4))
+		def evaluate_threshold(tpr, fpr, threshold, name):
+		  sensitivity = tpr[thresholds > threshold][-1]
+		  specificity = 1 - fpr[thresholds > threshold][-1]
+		  with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+		    text_file.write('Sensitivity for %s: %s \n' %name, sensitivity)
+		    text_file.write('Specificity for %s: %s \n' %name, specificity)
+
+    evaluate_threshold(tpr, fpr, 0.5, 'test_')
+    
+#				print('Sensitivity:', tpr[thresholds > threshold][-1])
+#				print('Specificity:', 1 - fpr[thresholds > threshold][-1])
+#		
+#		print('Threshold 0.5', evaluate_threshold(0.5))
+#		print('Threshold 0.4', evaluate_threshold(0.4))
 
 		def evaluate_threshold_CV(threshold_CV):
 				print('Sensitivity:', tpr_CV[thresholds_CV > threshold_CV][-1])
@@ -633,8 +593,8 @@ class DecisionTreeGridSearch(object):
 
 		#calculate the area under the curve to get the performance for a classifier
 		# IMPORTANT: first argument is true values, second argument is predicted probabilities
-		print('AUC for test set', metrics.roc_auc_score(self.y_test, self.y_pred_prob))
-		print('AUC for CV train set', metrics.roc_auc_score(self.y_train, self.y_scores[:,1]))
+		print('AUC for test set', metrics.roc_auc_score(self.y_test, self.y_pred_proba_test[:, 1]))
+		print('AUC for CV train set', metrics.roc_auc_score(self.y_train, self.y_pred_proba_train_CV[:, 1]))
 		
 		
 		def scoring(X, y, cv):
