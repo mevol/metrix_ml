@@ -1,0 +1,13 @@
+Metadata-Version: 1.1
+Name: metrix-ml
+Version: 0.0.1
+Summary: A package that classifies maps
+Home-page: UNKNOWN
+Author: Melanie Vollmar
+Author-email: melanie.vollmar@diamond.ac.uk
+License: BSD
+Description: UNKNOWN
+Keywords: awesome python package
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: License :: OSI Approved :: BSD License

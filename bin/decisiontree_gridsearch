@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml import decisiontree_gridsearch
+
+if __name__=='__main__':
+  decisiontree_gridsearch.run()
