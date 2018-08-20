@@ -6,7 +6,7 @@ import numpy as np
 import subprocess
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
 from sklearn.model_selection import GridSearchCV
@@ -47,7 +47,7 @@ def load_metrix_data(csv_path):
     return pd.read_csv(csv_path)
 
 
-class DecisionTreeGridSearch(object):
+class RandomForestGridSearch(object):
   def __init__(self, metrix, outdir):
     self.metrix=metrix
     self.outdir=outdir
@@ -669,5 +669,5 @@ def run():
 
   ###############################################################################
 
-  decision_tree_grid_search = DecisionTreeGridSearch(metrix, args.outdir)
+  random_forest_grid_search = RandomForestGridSearch(metrix, args.outdir)
 

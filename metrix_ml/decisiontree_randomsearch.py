@@ -211,7 +211,7 @@ class DecisionTreeRandomSearch(object):
       text_file.write('use cv=10, scoring=accuracy \n')
 
     #building and running the grid search
-    rand_search = RandomizedSearchCV(tree_clf_rand, param_rand, cv=10,
+    rand_search = RandomizedSearchCV(tree_clf_rand, param_rand, cv=10, n_iter=288,
                               scoring='accuracy')
 
     rand_search.fit(self.X_transform_train, self.y_train)
