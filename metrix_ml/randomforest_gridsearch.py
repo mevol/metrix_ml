@@ -54,7 +54,7 @@ class RandomForestGridSearch(object):
     self.prepare_metrix_data()
     self.split_data()
     self.grid_search()
-    self.tree_best_params()
+    self.forest_best_params()
     self.predict()
     self.analysis()
 
