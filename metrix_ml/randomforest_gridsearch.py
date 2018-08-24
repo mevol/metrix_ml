@@ -187,16 +187,16 @@ class RandomForestGridSearch(object):
 
   def grid_search(self):
     print('*' *80)
-    print('*    Running GridSearch for best parameter combination for DecisionTree')
+    print('*    Running GridSearch for best parameter combination for RandomForest')
     print('*' *80)
 
-      #training a decision tree with the prepared train set and train set lables
+      #training a decision forest with the prepared train set and train set lables
 
-    #create the decision tree
+    #create the decision forest
     forest_clf = RandomForestClassifier(random_state=42)
 
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created decision tree: forest_clf \n')
+      text_file.write('Created random forest: forest_clf \n')
 
     #set up grid search
     param_grid = {"criterion": ["gini", "entropy"],
@@ -239,19 +239,19 @@ class RandomForestGridSearch(object):
     print('*    Building new forest based on best parameter combination')
     print('*' *80)
 
-    self.forest_clf_new = RandomForestClassifier(**self.best_params, random_state=42)
+    self.forest_clf_grid_new = RandomForestClassifier(**self.best_params, random_state=42)
     
     print('*' *80)
     print('*    Saving new forest based on best parameter combination as pickle')
     print('*' *80)
 
-    joblib.dump(self.forest_clf_new, os.path.join(self.outdir,'best_forest_grid_search.pkl'))
+    joblib.dump(self.forest_clf_grid_new, os.path.join(self.outdir,'best_forest_grid_search.pkl'))
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Creating pickle file for best forest as best_forest_grid_search.pkl \n')
 
 
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created new decision tree "forest_clf_new" using best parameters \n')
+      text_file.write('Created new decision forest "forest_clf_grid_new" using best parameters \n')
 
     #visualise best decision tree
     trees = forest_clf_grid_new.estimators_
@@ -270,21 +270,21 @@ class RandomForestGridSearch(object):
 
     
     
-#    self.forest_clf_new.fit(self.X_transform_train, self.y_train)
-#    dotfile = os.path.join(self.outdir, 'forest_clf_new.dot')
-#    pngfile = os.path.join(self.outdir, 'forest_clf_new.png')
+#    self.forest_clf_grid_new.fit(self.X_transform_train, self.y_train)
+#    dotfile = os.path.join(self.outdir, 'forest_clf_grid_new.dot')
+#    pngfile = os.path.join(self.outdir, 'forest_clf_grid_new.png')
 #
 #    with open(dotfile, 'w') as f:
-#        export_graphviz(self.forest_clf_new, out_file=f, feature_names=self.X_transform_train.columns,
+#        export_graphviz(self.forest_clf_grid_new, out_file=f, feature_names=self.X_transform_train.columns,
 #                       rounded=True, filled=True)
 #                        
 #    command = ["dot", "-Tpng", dotfile, "-o", pngfile]
 #    subprocess.check_call(command)
 
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Writing DOTfile and convert to PNG for "forest_clf_new" \n')
-      text_file.write('DOT filename: forest_clf_new.dot \n')
-      text_file.write('PNG filename: forest_clf_new.png \n')
+      text_file.write('Writing DOTfile and convert to PNG for "forest_clf_grid_new" \n')
+      text_file.write('DOT filename: forest_clf_grid_new.dot \n')
+      text_file.write('PNG filename: forest_clf_grid_new.png \n')
 
     print('*' *80)
     print('*    Getting basic stats for new forest')
@@ -292,46 +292,46 @@ class RandomForestGridSearch(object):
 
     #not the best measure to use as it heavily depends on the sample 
     #distribution --> accuracy
-#    print(cross_val_score(self.forest_clf_new, self.X_transform_train, self.y_train,
+#    print(cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train,
 #                    cv=10, scoring='accuracy'))
-    accuracy_each_cv = cross_val_score(self.forest_clf_new, self.X_transform_train, self.y_train,
+    accuracy_each_cv = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train,
                     cv=10, scoring='accuracy')
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Accuracy for each of 10 CV folds: %s \n' %accuracy_each_cv)
                     
-#    print(cross_val_score(self.forest_clf_new, self.X_transform_train, self.y_train,
+#    print(cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train,
 #                    cv=10, scoring='accuracy').mean())
-    accuracy_mean_cv = cross_val_score(self.forest_clf_new, self.X_transform_train, self.y_train,
+    accuracy_mean_cv = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train,
                     cv=10, scoring='accuracy').mean()
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Mean accuracy over all 10 CV folds: %s \n' %accuracy_mean_cv)
 
     # calculate cross_val_scoring with different scoring functions for CV train set
-    train_roc_auc = cross_val_score(self.forest_clf_new, self.X_transform_train, self.y_train, cv=10,
+    train_roc_auc = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='roc_auc').mean()
 #    print('ROC_AUC CV', train_roc_auc)#uses metrics.roc_auc_score
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('ROC_AUC mean for 10-fold CV: %s \n' %train_roc_auc)
                     
-    train_accuracy = cross_val_score(self.forest_clf_new, self.X_transform_train, self.y_train, cv=10,
+    train_accuracy = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='accuracy').mean()
 #    print('Accuracy CV', train_accuracy)#uses metrics.accuracy_score
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Accuracy mean for 10-fold CV: %s \n' %train_accuracy)
                     
-    train_recall = cross_val_score(self.forest_clf_new, self.X_transform_train, self.y_train, cv=10,
+    train_recall = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='recall').mean()
 #    print('Recall CV', train_recall)#uses metrics.recall_score
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Recall mean for 10-fold CV: %s \n' %train_recall)
 
-    train_precision = cross_val_score(self.forest_clf_new, self.X_transform_train, self.y_train, cv=10,
+    train_precision = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='precision').mean()
 #    print('Precision CV', train_precision)#uses metrics.precision_score
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Precision mean for 10-fold CV: %s \n' %train_precision)
 
-    train_f1 = cross_val_score(self.forest_clf_new, self.X_transform_train, self.y_train, cv=10,
+    train_f1 = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='f1').mean()
 #    print('F1 score CV', train_f1)#uses metrics.f1_score
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
@@ -344,12 +344,12 @@ class RandomForestGridSearch(object):
     print('*' *80)
 
     #try out how well the classifier works to predict from the test set
-    self.y_pred_class = self.forest_clf_new.predict(self.X_transform_test)
+    self.y_pred_class = self.forest_clf_grid_new.predict(self.X_transform_test)
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_transform_test in y_pred_class \n')
 
     #alternative way to not have to use the test set
-    self.y_train_pred = cross_val_predict(self.forest_clf_new, self.X_transform_train, self.y_train,
+    self.y_train_pred = cross_val_predict(self.forest_clf_grid_new, self.X_transform_train, self.y_train,
                       cv=10)
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_transform_train with 10-fold CV in y_train_pred \n')
@@ -524,12 +524,12 @@ class RandomForestGridSearch(object):
       text_file.write('F1 score sklearn CV: %s \n' %f1_score_sklearn_CV)
 
     #probabilities of predicting y_train with X_transform_train using 10-fold CV
-    self.y_pred_proba_train_CV = cross_val_predict(self.forest_clf_new, self.X_transform_train, self.y_train, cv=10, method='predict_proba')
+    self.y_pred_proba_train_CV = cross_val_predict(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10, method='predict_proba')
 
     #probabilities of predicting y_test with X_transform_test
-    self.y_pred_proba_test = self.forest_clf_new.predict_proba(self.X_transform_test)
+    self.y_pred_proba_test = self.forest_clf_grid_new.predict_proba(self.X_transform_test)
     
-#    self.y_scores=self.forest_clf_new.predict_proba(self.X_transform_train)#train set
+#    self.y_scores=self.forest_clf_grid_new.predict_proba(self.X_transform_train)#train set
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Storing prediction probabilities for X_transform_train and y_train with 10-fold CV in y_pred_proba_train_CV \n')
       text_file.write('Storing prediction probabilities for X_transform_test and y_test in y_pred_proba_test \n')
@@ -638,15 +638,15 @@ class RandomForestGridSearch(object):
     
     def scoring(X, y, name, cv ):
       # calculate cross_val_scores with different scoring functions for test set
-      roc_auc = cross_val_score(self.forest_clf_new, X, y, cv=cv,
+      roc_auc = cross_val_score(self.forest_clf_grid_new, X, y, cv=cv,
                       scoring='roc_auc').mean()
-      accuracy = cross_val_score(self.forest_clf_new, X, y, cv=cv,
+      accuracy = cross_val_score(self.forest_clf_grid_new, X, y, cv=cv,
                       scoring='accuracy').mean()
-      recall = cross_val_score(self.forest_clf_new, X, y, cv=cv,
+      recall = cross_val_score(self.forest_clf_grid_new, X, y, cv=cv,
                       scoring='recall').mean()
-      precision = cross_val_score(self.forest_clf_new, X, y, cv=cv,
+      precision = cross_val_score(self.forest_clf_grid_new, X, y, cv=cv,
                       scoring='precision').mean()
-      f1 = cross_val_score(self.forest_clf_new, X, y, cv=cv,
+      f1 = cross_val_score(self.forest_clf_grid_new, X, y, cv=cv,
                       scoring='f1').mean()
       with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
         text_file.write('ROC_AUC for %s: %s \n' %(name, roc_auc))
