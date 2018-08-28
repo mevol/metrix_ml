@@ -16,7 +16,7 @@ setup(
       'bin/decisiontree_gridsearch',
       'bin/decisiontree_randomsearch',
       'bin/randomforest_gridsearch',
-      'bin/decisiontree_bagpaste_gridsearch'
+      'bin/decisiontree_bag_gridsearch'
     ],
     install_requires=[
       'matplotlib',
