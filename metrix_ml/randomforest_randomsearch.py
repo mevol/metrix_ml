@@ -301,13 +301,14 @@ class RandomForestRandSearch(object):
     joblib.dump(self.forest_clf_rand_new, os.path.join(self.outdir,'best_forest_rand_search.pkl'))
     with open(os.path.join(self.outdir, 'randomforest_randomsearch.txt'), 'a') as text_file:
       text_file.write('Creating pickle file for best forest as best_forest_rand_search.pkl \n')
-
+    
     #visualise trees of best forest
-    trees = forest_clf_rand_new.estimators_
+    self.forest_clf_rand_new.fit(self.X_transform_train, self.y_train)
+    trees = self.forest_clf_rand_new.estimators_
     i_tree = 0
     for tree in trees:
       with open(os.path.join(self.outdir,'forest_clf_rand_new_tree' + str(i_tree) + '.dot'), 'w') as f:
-        export_graphviz(tree, out_file=f, feature_names=X_transform_train.columns,
+        export_graphviz(tree, out_file=f, feature_names=self.X_transform_train.columns,
                    rounded=True, filled=True)
         f.close()
       dotfile = os.path.join(self.outdir, 'forest_clf_rand_new_tree' + str(i_tree) + '.dot')

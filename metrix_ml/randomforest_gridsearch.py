@@ -306,7 +306,7 @@ class RandomForestGridSearch(object):
     i_tree = 0
     for tree in trees:
       with open(os.path.join(self.outdir,'forest_clf_grid_new_tree' + str(i_tree) + '.dot'), 'w') as f:
-        export_graphviz(tree, out_file=f, feature_names=X_transform_train.columns,
+        export_graphviz(tree, out_file=f, feature_names=self.X_transform_train.columns,
                    rounded=True, filled=True)
         f.close()
       dotfile = os.path.join(self.outdir, 'forest_clf_grid_new_tree' + str(i_tree) + '.dot')
