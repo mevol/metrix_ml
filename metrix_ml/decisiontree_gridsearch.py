@@ -1,3 +1,8 @@
+###############################################################################
+#
+#  imports and set up environment
+#
+###############################################################################
 '''Defining the environment for this class'''
 import argparse
 import pandas as pd
@@ -19,6 +24,10 @@ from sklearn.tree import export_graphviz
 from datetime import datetime
 from sklearn.externals import joblib
 
+###############################################################################
+#
+#  define command line arguments
+#
 ###############################################################################
 
 def parse_command_line():
@@ -46,11 +55,19 @@ def parse_command_line():
   return args
 
 ###############################################################################
+#
+#  load the data from CSV file
+#
+###############################################################################
 
 def load_metrix_data(csv_path):
   '''load the raw data as stored in CSV file'''
   return pd.read_csv(csv_path)
 
+###############################################################################
+#
+#  class for ML using random forest with randomised search
+#
 ###############################################################################
 
 class DecisionTreeGridSearch(object):
@@ -71,6 +88,15 @@ class DecisionTreeGridSearch(object):
     self.tree_best_params()
     self.predict()
     self.analysis()
+
+  ###############################################################################
+  #
+  #  creating 3 data frames specific to the three development milestones I had
+  #  1--> directly from data processing
+  #  2--> after adding protein information
+  #  3--> carrying out some further column transformations
+  #
+  ###############################################################################
 
   def prepare_metrix_data(self):
     '''Function to create smaller dataframes for directly after dataprocessing, after
@@ -160,7 +186,11 @@ class DecisionTreeGridSearch(object):
     with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
       text_file.write('Created the following dataframes: metrix_database, metrix_man_add, metrix_transform \n')
 
-###############################################################################
+    ###############################################################################
+    #
+    #  creating training and test set for each of the 3 dataframes
+    #
+    ###############################################################################
 
   def split_data(self):
     '''Function which splits the input data into training set and test set.
@@ -197,21 +227,24 @@ class DecisionTreeGridSearch(object):
       text_file.write('metrix_transform: X_transform_train, X_transform_test \n')
       text_file.write('y(EP_success): y_train, y_test \n')
 
-###############################################################################
+    ###############################################################################
+    #
+    #  random search for best parameter combination
+    #
+    ###############################################################################
 
   def grid_search(self):
   '''running a grid search to find the parameter combination for a decision tree
      which gives the best accuracy score'''
-     
     print('*' *80)
     print('*    Running GridSearch for best parameter combination for DecisionTree')
     print('*' *80)
 
     #create the decision tree
-    tree_clf = DecisionTreeClassifier(random_state=42)
+    tree_clf_grid = DecisionTreeClassifier(random_state=42)
 
     with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created decision tree: tree_clf \n')
+      text_file.write('Created decision tree: tree_clf_grid \n')
 
     #set up grid search
     param_grid = {"criterion": ["gini", "entropy"],
@@ -226,7 +259,7 @@ class DecisionTreeGridSearch(object):
       text_file.write('use cv=10, scoring=accuracy \n')
 
     #building and running the grid search
-    grid_search = GridSearchCV(tree_clf, param_grid, cv=10,
+    grid_search = GridSearchCV(tree_clf_grid, param_grid, cv=10,
                               scoring='accuracy')
 
     grid_search.fit(self.X_transform_train, self.y_train)
@@ -245,7 +278,11 @@ class DecisionTreeGridSearch(object):
     
     self.best_params = grid_search.best_params_
 
-###############################################################################
+    ###############################################################################
+    #
+    #  creating new tree with best parameter combination
+    #
+    ###############################################################################
 
   def tree_best_params(self):
     '''create a new decision tree using the best parameter combination found above'''
@@ -253,51 +290,51 @@ class DecisionTreeGridSearch(object):
     print('*    Building new tree based on best parameter combination')
     print('*' *80)
 
-    self.tree_clf_new = DecisionTreeClassifier(**self.best_params, random_state=42)
+    self.tree_clf_grid_new = DecisionTreeClassifier(**self.best_params, random_state=42)
 
     print('*' *80)
     print('*    Saving new tree based on best parameter combination as pickle')
     print('*' *80)
 
-    joblib.dump(self.tree_clf_new, os.path.join(self.outdir,'best_tree_grid_search.pkl'))
+    joblib.dump(self.tree_clf_grid_new, os.path.join(self.outdir,'best_tree_grid_search.pkl'))
     with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
       text_file.write('Creating pickle file for best tree as best_tree_grid_search.pkl \n')
-      text_file.write('Created new decision tree "tree_clf_new" using best parameters \n')
+      text_file.write('Created new decision tree "tree_clf_grid_new" using best parameters \n')
 
     #visualise best decision tree
-    self.tree_clf_new.fit(self.X_transform_train, self.y_train)
-    dotfile = os.path.join(self.outdir, 'tree_clf_new.dot')
-    pngfile = os.path.join(self.outdir, 'tree_clf_new.png')
+    self.tree_clf_grid_new.fit(self.X_transform_train, self.y_train)
+    dotfile = os.path.join(self.outdir, 'tree_clf_grid_new.dot')
+    pngfile = os.path.join(self.outdir, 'tree_clf_grid_new.png')
 
     with open(dotfile, 'w') as f:
-        export_graphviz(self.tree_clf_new, out_file=f, feature_names=self.X_transform_train.columns,
+        export_graphviz(self.tree_clf_grid_new, out_file=f, feature_names=self.X_transform_train.columns,
                        rounded=True, filled=True)
                         
     command = ["dot", "-Tpng", dotfile, "-o", pngfile]
     subprocess.check_call(command)
 
     with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Writing DOTfile and convert to PNG for "tree_clf_new" \n')
-      text_file.write('DOT filename: tree_clf_new.dot \n')
-      text_file.write('PNG filename: tree_clf_new.png \n')
+      text_file.write('Writing DOTfile and convert to PNG for "tree_clf_grid_new" \n')
+      text_file.write('DOT filename: tree_clf_grid_new.dot \n')
+      text_file.write('PNG filename: tree_clf_grid_new.png \n')
 
     print('*' *80)
     print('*    Getting basic stats for new tree')
     print('*' *80)
 
-    accuracy_each_cv = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train,
+    accuracy_each_cv = cross_val_score(self.tree_clf_grid_new, self.X_transform_train, self.y_train,
                     cv=10, scoring='accuracy')
-    accuracy_mean_cv = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train,
+    accuracy_mean_cv = cross_val_score(self.tree_clf_grid_new, self.X_transform_train, self.y_train,
                     cv=10, scoring='accuracy').mean()
-    train_roc_auc = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
+    train_roc_auc = cross_val_score(self.tree_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='roc_auc').mean()
-    train_accuracy = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
+    train_accuracy = cross_val_score(self.tree_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='accuracy').mean()
-    train_recall = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
+    train_recall = cross_val_score(self.tree_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='recall').mean()
-    train_precision = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
+    train_precision = cross_val_score(self.tree_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='precision').mean()
-    train_f1 = cross_val_score(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10,
+    train_f1 = cross_val_score(self.tree_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='f1').mean()
 
     with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
@@ -309,7 +346,11 @@ class DecisionTreeGridSearch(object):
       text_file.write('Precision mean for 10-fold CV: %s \n' %train_precision)
       text_file.write('F1 score mean for 10-fold CV: %s \n' %train_f1)
 
-###############################################################################
+    ###############################################################################
+    #
+    #  Predicting with test set and cross-validation set using the bets forest
+    #
+    ###############################################################################
 
   def predict(self):
     '''do predictions using the best tree an the test set as well as training set with
@@ -319,12 +360,12 @@ class DecisionTreeGridSearch(object):
     print('*' *80)
 
     #try out how well the classifier works to predict from the test set
-    self.y_pred_class = self.tree_clf_new.predict(self.X_transform_test)
+    self.y_pred_class = self.tree_clf_grid_new.predict(self.X_transform_test)
     with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_transform_test in y_pred_class \n')
 
     #alternative way to not have to use the test set
-    self.y_train_pred = cross_val_predict(self.tree_clf_new, self.X_transform_train, self.y_train,
+    self.y_train_pred = cross_val_predict(self.tree_clf_grid_new, self.X_transform_train, self.y_train,
                       cv=10)
     with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_transform_train with 10-fold CV in y_train_pred \n')
@@ -335,37 +376,33 @@ class DecisionTreeGridSearch(object):
 
     # calculate accuracy
     y_accuracy = metrics.accuracy_score(self.y_test, self.y_pred_class)
-#    print(metrics.accuracy_score(self.y_test, self.y_pred_class))
-    with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Accuracy score or agreement between y_test and y_pred_class: %s \n' %y_accuracy)
 
     # examine the class distribution of the testing set (using a Pandas Series method)
     class_dist = self.y_test.value_counts()
-#    print(self.y_test.value_counts())
-    with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Class distribution for y_test: %s \n' %class_dist)
 
     # calculate the percentage of ones
     # because y_test only contains ones and zeros, we can simply calculate the mean = percentage of ones
     ones = self.y_test.mean()
-#    print(self.y_test.mean())
-    with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Percent 1s in y_test: %s \n' %ones)
-
+ 
     # calculate the percentage of zeros
     zeros = 1 - self.y_test.mean()
-#    print(1 - self.y_test.mean())
-    with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Percent 0s in y_test: %s \n' %zeros)
 
     # calculate null accuracy in a single line of code
     # only for binary classification problems coded as 0/1
     null_acc = max(self.y_test.mean(), 1 - self.y_test.mean())
-#    print(null_acc)
+ 
     with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Accuracy score or agreement between y_test and y_pred_class: %s \n' %y_accuracy)
+      text_file.write('Class distribution for y_test: %s \n' %class_dist)
+      text_file.write('Percent 1s in y_test: %s \n' %ones)
+      text_file.write('Percent 0s in y_test: %s \n' %zeros)
       text_file.write('Null accuracy in y_test: %s \n' %null_acc)
 
-###############################################################################
+    ###############################################################################
+    #
+    #  detailed analysis and stats
+    #
+    ###############################################################################
 
   def analysis(self):
     '''detailed analysis of the output:
@@ -491,12 +528,12 @@ class DecisionTreeGridSearch(object):
       text_file.write('F1 score sklearn CV: %s \n' %f1_score_sklearn_CV)
 
     #probabilities of predicting y_train with X_transform_train using 10-fold CV
-    self.y_pred_proba_train_CV = cross_val_predict(self.tree_clf_new, self.X_transform_train, self.y_train, cv=10, method='predict_proba')
+    self.y_pred_proba_train_CV = cross_val_predict(self.tree_clf_grid_new, self.X_transform_train, self.y_train, cv=10, method='predict_proba')
 
     #probabilities of predicting y_test with X_transform_test
-    self.y_pred_proba_test = self.tree_clf_new.predict_proba(self.X_transform_test)
+    self.y_pred_proba_test = self.tree_clf_grid_new.predict_proba(self.X_transform_test)
     
-#    self.y_scores=self.tree_clf_new.predict_proba(self.X_transform_train)#train set
+#    self.y_scores=self.tree_clf_grid_new.predict_proba(self.X_transform_train)#train set
     with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
       text_file.write('Storing prediction probabilities for X_transform_train and y_train with 10-fold CV in y_pred_proba_train_CV \n')
       text_file.write('Storing prediction probabilities for X_transform_test and y_test in y_pred_proba_test \n')
@@ -514,7 +551,7 @@ class DecisionTreeGridSearch(object):
       plt.title('Histogram of predicted probabilities for y_pred_proba_%s to be class 1' %name)
       plt.xlabel('Predicted probability of EP_success')
       plt.ylabel('Frequency')
-      plt.savefig(os.path.join(self.outdir, 'pred_proba_'+name+datestring+'.png'))
+      plt.savefig(os.path.join(self.outdir, 'hist_pred_proba_tree_grid_'+name+datestring+'.png'))
       plt.close()
 
     plot_hist_pred_proba(self.y_pred_proba_train_CV[:, 1], 'train_CV_')
@@ -541,7 +578,7 @@ class DecisionTreeGridSearch(object):
         plt.xlabel("Threshold")
         plt.legend(loc="upper left")
         plt.ylim([0,1])
-        plt.savefig(os.path.join(self.outdir, 'Precision_Recall_'+name+datestring+'.png'))
+        plt.savefig(os.path.join(self.outdir, 'Precision_Recall_tree_grid_'+name+datestring+'.png'))
         plt.close()
         
     #plot Precision Recall Threshold curve for test set 
@@ -574,7 +611,7 @@ class DecisionTreeGridSearch(object):
         plt.xlabel('False Positive Rate (1 - Specificity)')
         plt.ylabel('True Positive Rate (Sensitivity)')
         plt.grid(True)
-        plt.savefig(os.path.join(self.outdir, 'ROC_curve_'+name+datestring+'.png'))
+        plt.savefig(os.path.join(self.outdir, 'ROC_curve_tree_grid_'+name+datestring+'.png'))
         plt.close()
         
     #ROC curve for test set      
@@ -611,15 +648,15 @@ class DecisionTreeGridSearch(object):
       '''trying different scoring functions for comparison to judge the performance
          of the algorithm used'''
       # calculate cross_val_scores with different scoring functions for test set
-      roc_auc = cross_val_score(self.tree_clf_new, X, y, cv=cv,
+      roc_auc = cross_val_score(self.tree_clf_grid_new, X, y, cv=cv,
                       scoring='roc_auc').mean()
-      accuracy = cross_val_score(self.tree_clf_new, X, y, cv=cv,
+      accuracy = cross_val_score(self.tree_clf_grid_new, X, y, cv=cv,
                       scoring='accuracy').mean()
-      recall = cross_val_score(self.tree_clf_new, X, y, cv=cv,
+      recall = cross_val_score(self.tree_clf_grid_new, X, y, cv=cv,
                       scoring='recall').mean()
-      precision = cross_val_score(self.tree_clf_new, X, y, cv=cv,
+      precision = cross_val_score(self.tree_clf_grid_new, X, y, cv=cv,
                       scoring='precision').mean()
-      f1 = cross_val_score(self.tree_clf_new, X, y, cv=cv,
+      f1 = cross_val_score(self.tree_clf_grid_new, X, y, cv=cv,
                       scoring='f1').mean()
       with open(os.path.join(self.outdir, 'decisiontree_gridsearch.txt'), 'a') as text_file:
         text_file.write('ROC_AUC for %s: %s \n' %(name, roc_auc))

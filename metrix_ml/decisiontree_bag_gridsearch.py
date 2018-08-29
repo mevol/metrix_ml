@@ -1,3 +1,8 @@
+###############################################################################
+#
+#  imports and set up environment
+#
+###############################################################################
 '''Defining the environment for this class'''
 import argparse
 import pandas as pd
@@ -20,6 +25,10 @@ from datetime import datetime
 from sklearn.externals import joblib
 from sklearn.ensemble import BaggingClassifier
 
+###############################################################################
+#
+#  define command line arguments
+#
 ###############################################################################
 
 def parse_command_line():
@@ -47,11 +56,19 @@ def parse_command_line():
   return args
 
 ###############################################################################
+#
+#  load the data from CSV file
+#
+###############################################################################
 
 def load_metrix_data(csv_path):
   '''load the raw data as stored in CSV file'''
   return pd.read_csv(csv_path)
 
+###############################################################################
+#
+#  class for ML using random forest with randomised search
+#
 ###############################################################################
 
 class DecisionTreeBagGridSearch(object):
@@ -92,7 +109,7 @@ class DecisionTreeBagGridSearch(object):
                       'RmergeI', 'RmeasI', 'RmeasdiffI', 'RpimdiffI', 'RpimI', 'diffF']
     metrix_database = self.metrix[attr_database]
     
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_database with following attributes %s \n' %(attr_database))
 
     #database plus manually added data
@@ -104,7 +121,7 @@ class DecisionTreeBagGridSearch(object):
                     'No_mol_ASU', 'MW_chain', 'sites_ASU']
     metrix_man_add = self.metrix[attr_man_add]
 
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_man_add with following attributes %s \n' %(attr_man_add))
 
     #after column transformation expected feature list
@@ -121,7 +138,7 @@ class DecisionTreeBagGridSearch(object):
 
     metrix_transform = metrix_man_add.copy()
 
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_transform with following attributes %s \n' %(attr_transform))
 
     #column transformation
@@ -158,10 +175,14 @@ class DecisionTreeBagGridSearch(object):
     self.X_man_add = metrix_man_add
     self.X_transform = metrix_transform
 
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Created the following dataframes: metrix_database, metrix_man_add, metrix_transform \n')
 
-###############################################################################
+    ###############################################################################
+    #
+    #  creating training and test set for each of the 3 dataframes
+    #
+    ###############################################################################
 
   def split_data(self):
     '''Function which splits the input data into training set and test set.
@@ -191,14 +212,18 @@ class DecisionTreeBagGridSearch(object):
     self.y_train = y_train
     self.y_test = y_test
 
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Spliting into training and test set 80-20 \n')
       text_file.write('metrix_database: X_database_train, X_database_test \n')
       text_file.write('metrix_man_add: X_man_add_train, X_man_add_test \n')
       text_file.write('metrix_transform: X_transform_train, X_transform_test \n')
       text_file.write('y(EP_success): y_train, y_test \n')
 
-###############################################################################
+    ###############################################################################
+    #
+    #  grid search for best parameter combination
+    #
+    ###############################################################################
 
   def grid_search(self):
     '''running a grid search to find the parameter combination for a decision tree
@@ -209,9 +234,9 @@ class DecisionTreeBagGridSearch(object):
     print('*' *80)
 
     #create the decision tree
-    tree_clf_bag_grid = DecisionTreeClassifier(random_state=42)
+    tree_clf_grid_bag = DecisionTreeClassifier(random_state=42)
 
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Created decision tree: tree_clf_bagpaste_grid \n')
 
     #set up grid search
@@ -222,39 +247,44 @@ class DecisionTreeBagGridSearch(object):
                   "min_samples_leaf": [2, 4, 6], #min number of samples in a leaf
                   "max_leaf_nodes": [5, 10, 15]}#max number of leaves
 
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Running grid search for the following parameters: %s \n' %param_grid)
       text_file.write('use cv=10, scoring=accuracy \n')
 
     #building and running the grid search
-    grid_search = GridSearchCV(tree_clf_bag_grid, param_grid, cv=10,
+    grid_search = GridSearchCV(tree_clf_grid_bag, param_grid, cv=10,
                               scoring='accuracy')
 
     grid_search.fit(self.X_transform_train, self.y_train)
 
     #get best parameter combination and its score as accuracy
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Best parameters: ' +str(grid_search.best_params_)+'\n')
     
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Best score: ' +str(grid_search.best_score_)+'\n')
     
     feature_importances = grid_search.best_estimator_.feature_importances_
     feature_importances_ls = sorted(zip(feature_importances, self.X_transform_train), reverse=True)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Feature importances: %s \n' %feature_importances_ls)
     
     self.best_params = grid_search.best_params_
     
-###############################################################################
+    ###############################################################################
+    #
+    #  creating new tree with best parameter combination and applying bagging
+    #
+    ###############################################################################
 
   def tree_best_params(self):
-    '''create a new decision tree using the best parameter combination found above'''
+    '''create a new decision tree using the best parameter combination found above
+    and implementing bagging to boost the tree'''
     print('*' *80)
     print('*    Building new tree based on best parameter combination')
     print('*' *80)
 
-    self.tree_clf_bag_grid_new = BaggingClassifier(
+    self.tree_clf_grid_bag_new = BaggingClassifier(
                                         DecisionTreeClassifier(**self.best_params, random_state=42),
                                         n_jobs=-1, bootstrap=True)
 
@@ -262,53 +292,53 @@ class DecisionTreeBagGridSearch(object):
     print('*    Saving new tree based on best parameter combination as pickle')
     print('*' *80)
 
-    joblib.dump(self.tree_clf_bag_grid_new, os.path.join(self.outdir,'best_tree_grid_search.pkl'))
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Creating pickle file for best tree as best_tree_grid_search.pkl \n')
-      text_file.write('Created new decision tree "bagpaste_tree_clf_grid_new" using best parameters \n')
+    joblib.dump(self.tree_clf_grid_bag_new, os.path.join(self.outdir,'best_tree_grid_search_bag.pkl'))
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Creating pickle file for best tree as best_tree_grid_search_bag.pkl \n')
+      text_file.write('Created new decision tree "tree_clf_grid_bag_new" using best parameters \n')
 
     #visualise best decision tree
-    self.tree_clf_bag_grid_new.fit(self.X_transform_train, self.y_train)
+    self.tree_clf_grid_bag_new.fit(self.X_transform_train, self.y_train)
     
-    trees = self.tree_clf_bag_grid_new.estimators_
+    trees = self.tree_clf_grid_bag_new.estimators_
 
     i_tree = 0
     for tree in trees:
-      with open(os.path.join(self.outdir,'tree_clf_bag_grid_new' + str(i_tree) + '.dot'), 'w') as f:
+      with open(os.path.join(self.outdir,'tree_clf_grid_bag_new' + str(i_tree) + '.dot'), 'w') as f:
         export_graphviz(tree, out_file=f, feature_names=self.X_transform_train.columns,
                    rounded=True, filled=True)
         f.close()
-      dotfile = os.path.join(self.outdir, 'tree_clf_bag_grid_new' + str(i_tree) + '.dot')
-      pngfile = os.path.join(self.outdir, 'tree_clf_bag_grid_new' + str(i_tree) + '.png')
+      dotfile = os.path.join(self.outdir, 'tree_clf_grid_bag_new' + str(i_tree) + '.dot')
+      pngfile = os.path.join(self.outdir, 'tree_clf_grid_bag_new' + str(i_tree) + '.png')
       command = ["dot", "-Tpng", dotfile, "-o", pngfile]
       subprocess.check_call(command)
       i_tree = i_tree + 1
 
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Writing DOTfile and convert to PNG for "tree_clf_bag_grid_new" \n')
-      text_file.write('DOT filename: tree_clf_bag_grid_new.dot \n')
-      text_file.write('PNG filename: tree_clf_bag_grid_new.png \n')
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Writing DOTfile and convert to PNG for "tree_clf_grid_bag_new" \n')
+      text_file.write('DOT filename: tree_clf_grid_bag_new.dot \n')
+      text_file.write('PNG filename: tree_clf_grid_bag_new.png \n')
 
     print('*' *80)
     print('*    Getting basic stats for new tree')
     print('*' *80)
 
-    accuracy_each_cv = cross_val_score(self.tree_clf_bag_grid_new, self.X_transform_train, self.y_train,
+    accuracy_each_cv = cross_val_score(self.tree_clf_grid_bag_new, self.X_transform_train, self.y_train,
                     cv=10, scoring='accuracy')
-    accuracy_mean_cv = cross_val_score(self.tree_clf_bag_grid_new, self.X_transform_train, self.y_train,
+    accuracy_mean_cv = cross_val_score(self.tree_clf_grid_bag_new, self.X_transform_train, self.y_train,
                     cv=10, scoring='accuracy').mean()
-    train_roc_auc = cross_val_score(self.tree_clf_bag_grid_new, self.X_transform_train, self.y_train, cv=10,
+    train_roc_auc = cross_val_score(self.tree_clf_grid_bag_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='roc_auc').mean()
-    train_accuracy = cross_val_score(self.tree_clf_bag_grid_new, self.X_transform_train, self.y_train, cv=10,
+    train_accuracy = cross_val_score(self.tree_clf_grid_bag_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='accuracy').mean()
-    train_recall = cross_val_score(self.tree_clf_bag_grid_new, self.X_transform_train, self.y_train, cv=10,
+    train_recall = cross_val_score(self.tree_clf_grid_bag_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='recall').mean()
-    train_precision = cross_val_score(self.tree_clf_bag_grid_new, self.X_transform_train, self.y_train, cv=10,
+    train_precision = cross_val_score(self.tree_clf_grid_bag_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='precision').mean()
-    train_f1 = cross_val_score(self.tree_clf_bag_grid_new, self.X_transform_train, self.y_train, cv=10,
+    train_f1 = cross_val_score(self.tree_clf_grid_bag_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='f1').mean()
 
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Accuracy for each of 10 CV folds: %s \n' %accuracy_each_cv)
       text_file.write('Mean accuracy over all 10 CV folds: %s \n' %accuracy_mean_cv)
       text_file.write('ROC_AUC mean for 10-fold CV: %s \n' %train_roc_auc)
@@ -317,7 +347,11 @@ class DecisionTreeBagGridSearch(object):
       text_file.write('Precision mean for 10-fold CV: %s \n' %train_precision)
       text_file.write('F1 score mean for 10-fold CV: %s \n' %train_f1)
 
-###############################################################################
+    ###############################################################################
+    #
+    #  Predicting with test set and cross-validation set using the bets forest
+    #
+    ###############################################################################
 
   def predict(self):
     '''do predictions using the best tree an the test set as well as training set with
@@ -327,14 +361,14 @@ class DecisionTreeBagGridSearch(object):
     print('*' *80)
 
     #try out how well the classifier works to predict from the test set
-    self.y_pred_class = self.tree_clf_bag_grid_new.predict(self.X_transform_test)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    self.y_pred_class = self.tree_clf_grid_bag_new.predict(self.X_transform_test)
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_transform_test in y_pred_class \n')
 
     #alternative way to not have to use the test set
-    self.y_train_pred = cross_val_predict(self.tree_clf_bag_grid_new, self.X_transform_train, self.y_train,
+    self.y_train_pred = cross_val_predict(self.tree_clf_grid_bag_new, self.X_transform_train, self.y_train,
                       cv=10)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_transform_train with 10-fold CV in y_train_pred \n')
 
     print('*' *80)
@@ -343,37 +377,33 @@ class DecisionTreeBagGridSearch(object):
 
     # calculate accuracy
     y_accuracy = metrics.accuracy_score(self.y_test, self.y_pred_class)
-#    print(metrics.accuracy_score(self.y_test, self.y_pred_class))
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Accuracy score or agreement between y_test and y_pred_class: %s \n' %y_accuracy)
 
     # examine the class distribution of the testing set (using a Pandas Series method)
     class_dist = self.y_test.value_counts()
-#    print(self.y_test.value_counts())
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Class distribution for y_test: %s \n' %class_dist)
 
     # calculate the percentage of ones
     # because y_test only contains ones and zeros, we can simply calculate the mean = percentage of ones
     ones = self.y_test.mean()
-#    print(self.y_test.mean())
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Percent 1s in y_test: %s \n' %ones)
 
     # calculate the percentage of zeros
     zeros = 1 - self.y_test.mean()
-#    print(1 - self.y_test.mean())
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Percent 0s in y_test: %s \n' %zeros)
 
     # calculate null accuracy in a single line of code
     # only for binary classification problems coded as 0/1
     null_acc = max(self.y_test.mean(), 1 - self.y_test.mean())
-#    print(null_acc)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Accuracy score or agreement between y_test and y_pred_class: %s \n' %y_accuracy)
+      text_file.write('Class distribution for y_test: %s \n' %class_dist)
+      text_file.write('Percent 1s in y_test: %s \n' %ones)
+      text_file.write('Percent 0s in y_test: %s \n' %zeros)
       text_file.write('Null accuracy in y_test: %s \n' %null_acc)
 
-###############################################################################
+    ###############################################################################
+    #
+    #  detailed analysis and stats
+    #
+    ###############################################################################
 
   def analysis(self):
     '''detailed analysis of the output:
@@ -402,7 +432,7 @@ class DecisionTreeBagGridSearch(object):
     # this produces a 2x2 numpy array (matrix)
     conf_mat_test = metrics.confusion_matrix(self.y_test, self.y_pred_class)
     conf_mat_10CV = metrics.confusion_matrix(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('confusion matrix using test set: %s \n' %conf_mat_test)
       text_file.write('confusion matrix using 10-fold CV: %s \n' %conf_mat_10CV)
 
@@ -412,7 +442,7 @@ class DecisionTreeBagGridSearch(object):
     TN = conf_mat_test[0, 0]
     FP = conf_mat_test[0, 1]
     FN = conf_mat_test[1, 0]
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Slicing confusion matrix for test set into: TP, TN, FP, FN \n')
 
     #[row, column] for CV train set
@@ -420,7 +450,7 @@ class DecisionTreeBagGridSearch(object):
     TN_CV = conf_mat_10CV[0, 0]
     FP_CV = conf_mat_10CV[0, 1]
     FN_CV = conf_mat_10CV[1, 0]
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Slicing confusion matrix for 10-fold CV into: TP_CV, TN_CV, FP_CV, FN_CV \n')
 
     #metrics calculated from confusion matrix
@@ -429,7 +459,7 @@ class DecisionTreeBagGridSearch(object):
     acc_score_sklearn_test = metrics.accuracy_score(self.y_test, self.y_pred_class)
     acc_score_man_CV = (TP_CV + TN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
     acc_score_sklearn_CV = metrics.accuracy_score(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Accuracy score: \n')
       text_file.write('accuracy score manual test: %s \n' %acc_score_man_test)
       text_file.write('accuracy score sklearn test: %s \n' %acc_score_sklearn_test)
@@ -441,7 +471,7 @@ class DecisionTreeBagGridSearch(object):
     class_err_sklearn_test = 1 - metrics.accuracy_score(self.y_test, self.y_pred_class)
     class_err_man_CV = (FP_CV + FN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
     class_err_sklearn_CV = 1 - metrics.accuracy_score(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Classification error: \n')  
       text_file.write('classification error manual test: %s \n' %class_err_man_test)
       text_file.write('classification error sklearn test: %s \n' %class_err_sklearn_test)
@@ -453,7 +483,7 @@ class DecisionTreeBagGridSearch(object):
     sensitivity_sklearn_test = metrics.recall_score(self.y_test, self.y_pred_class)
     sensitivity_man_CV = TP_CV / float(FN_CV + TP_CV)
     sensitivity_sklearn_CV = metrics.recall_score(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Sensitivity/Recall/True positives: \n')
       text_file.write('sensitivity manual test: %s \n' %sensitivity_man_test)
       text_file.write('sensitivity sklearn test: %s \n' %sensitivity_sklearn_test)
@@ -463,7 +493,7 @@ class DecisionTreeBagGridSearch(object):
     #calculate specificity
     specificity_man_test = TN / (TN + FP)
     specificity_man_CV = TN_CV / (TN_CV + FP_CV)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Specificity: \n')
       text_file.write('specificity manual test: %s \n' %specificity_man_test)
       text_file.write('specificity manual CV: %s \n' %specificity_man_CV)
@@ -471,7 +501,7 @@ class DecisionTreeBagGridSearch(object):
     #calculate false positive rate
     false_positive_rate_man_test = FP / float(TN + FP)
     false_positive_rate_man_CV = FP_CV / float(TN_CV + FP_CV)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('False positive rate or 1-specificity: \n')
       text_file.write('false positive rate manual test: %s \n' %false_positive_rate_man_test)
       text_file.write('1 - specificity test: %s \n' %(1 - specificity_man_test))
@@ -483,7 +513,7 @@ class DecisionTreeBagGridSearch(object):
     precision_sklearn_test = metrics.precision_score(self.y_test, self.y_pred_class)
     precision_man_CV = TP_CV / float(TP_CV + FP_CV)
     precision_sklearn_CV = metrics.precision_score(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Precision or confidence of classification: \n')
       text_file.write('precision manual: %s \n' %precision_man_test)
       text_file.write('precision sklearn: %s \n' %precision_sklearn_test)
@@ -493,24 +523,24 @@ class DecisionTreeBagGridSearch(object):
     #F1 score; uses precision and recall
     f1_score_sklearn_test = f1_score(self.y_test, self.y_pred_class)
     f1_score_sklearn_CV = f1_score(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('F1 score: \n')
       text_file.write('F1 score sklearn test: %s \n' %f1_score_sklearn_test)
       text_file.write('F1 score sklearn CV: %s \n' %f1_score_sklearn_CV)
 
     #probabilities of predicting y_train with X_transform_train using 10-fold CV
-    self.y_pred_proba_train_CV = cross_val_predict(self.tree_clf_bag_grid_new, self.X_transform_train, self.y_train, cv=10, method='predict_proba')
+    self.y_pred_proba_train_CV = cross_val_predict(self.tree_clf_grid_bag_new, self.X_transform_train, self.y_train, cv=10, method='predict_proba')
 
     #probabilities of predicting y_test with X_transform_test
-    self.y_pred_proba_test = self.tree_clf_bag_grid_new.predict_proba(self.X_transform_test)
+    self.y_pred_proba_test = self.tree_clf_grid_bag_new.predict_proba(self.X_transform_test)
     
-#    self.y_scores=self.tree_clf_bag_grid_new.predict_proba(self.X_transform_train)#train set
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+#    self.y_scores=self.tree_clf_grid_bag_new.predict_proba(self.X_transform_train)#train set
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Storing prediction probabilities for X_transform_train and y_train with 10-fold CV in y_pred_proba_train_CV \n')
       text_file.write('Storing prediction probabilities for X_transform_test and y_test in y_pred_proba_test \n')
 
     # 8 bins for prediction probability on the test set
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Plotting histogram for y_pred_proba_train_CV \n')
       text_file.write('Plotting histogram for y_pred_proba_test \n')
       
@@ -529,14 +559,14 @@ class DecisionTreeBagGridSearch(object):
     plot_hist_pred_proba(self.y_pred_proba_test[:, 1], 'test_')
 
     #get y_scores for the predictions to be bale to plot ROC curve
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Getting y_scores for y_pred_proba_train_CV and y_pred_proba_test as y_scores_train_CV and y_scores_test\n')
 
     # store the predicted probabilities for class 1
     self.y_scores_train_CV = self.y_pred_proba_train_CV[:, 1]
     self.y_scores_test = self.y_pred_proba_test[:, 1]
 
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Plotting Precision-Recall for y_test and y_scores_test \n')
       text_file.write('Plotting Precision-Recall for y_train and y_scores_train_CV \n')
 
@@ -568,7 +598,7 @@ class DecisionTreeBagGridSearch(object):
     # fpr: false positive rate
     # tpr: true positive rate
     
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Plotting ROC curve for y_test and y_scores_test \n')
       text_file.write('Plotting ROC curve for y_train and y_scores_train_CV \n')
     
@@ -597,7 +627,7 @@ class DecisionTreeBagGridSearch(object):
     # IMPORTANT: first argument is true values, second argument is predicted probabilities
     AUC_test = metrics.roc_auc_score(self.y_test, self.y_pred_proba_test[:, 1])
     AUC_train_CV = metrics.roc_auc_score(self.y_train, self.y_pred_proba_train_CV[:, 1])
-    with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('AUC for test set: %s \n' %AUC_test)
       text_file.write('AUC for CV train set: %s \n' %AUC_train_CV)
 
@@ -606,7 +636,7 @@ class DecisionTreeBagGridSearch(object):
       '''look at TPr and FPr to see if classification threshold needs adjusting'''
       sensitivity = tpr[thresholds > threshold][-1]
       specificity = 1 - fpr[thresholds > threshold][-1]
-      with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+      with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
         text_file.write('Sensitivity for %s at threshold %.2f: %s \n' %(name, threshold, sensitivity))
         text_file.write('Specificity for %s at threshold %.2f: %s \n' %(name, threshold, specificity))
     
@@ -619,17 +649,17 @@ class DecisionTreeBagGridSearch(object):
       '''trying different scoring functions for comparison to judge the performance
          of the algorithm used'''
       # calculate cross_val_scores with different scoring functions for test set
-      roc_auc = cross_val_score(self.tree_clf_bag_grid_new, X, y, cv=cv,
+      roc_auc = cross_val_score(self.tree_clf_grid_bag_new, X, y, cv=cv,
                       scoring='roc_auc').mean()
-      accuracy = cross_val_score(self.tree_clf_bag_grid_new, X, y, cv=cv,
+      accuracy = cross_val_score(self.tree_clf_grid_bag_new, X, y, cv=cv,
                       scoring='accuracy').mean()
-      recall = cross_val_score(self.tree_clf_bag_grid_new, X, y, cv=cv,
+      recall = cross_val_score(self.tree_clf_grid_bag_new, X, y, cv=cv,
                       scoring='recall').mean()
-      precision = cross_val_score(self.tree_clf_bag_grid_new, X, y, cv=cv,
+      precision = cross_val_score(self.tree_clf_grid_bag_new, X, y, cv=cv,
                       scoring='precision').mean()
-      f1 = cross_val_score(self.tree_clf_bag_grid_new, X, y, cv=cv,
+      f1 = cross_val_score(self.tree_clf_grid_bag_new, X, y, cv=cv,
                       scoring='f1').mean()
-      with open(os.path.join(self.outdir, 'decisiontree_bagpaste_gridsearch.txt'), 'a') as text_file:
+      with open(os.path.join(self.outdir, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
         text_file.write('ROC_AUC for %s: %s \n' %(name, roc_auc))
         text_file.write('Accuracy for %s: %s \n' %(name, accuracy))
         text_file.write('Recall for %s: %s \n' %(name, recall))

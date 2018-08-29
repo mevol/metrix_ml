@@ -1,3 +1,9 @@
+###############################################################################
+#
+#  imports and set up environment
+#
+###############################################################################
+'''Defining the environment for this class'''
 import argparse
 import pandas as pd
 import os
@@ -18,9 +24,14 @@ from sklearn.tree import export_graphviz
 from datetime import datetime
 from sklearn.externals import joblib
 
+###############################################################################
+#
+#  define command line arguments
+#
+###############################################################################
 
 def parse_command_line():
-  
+  '''defining the command line input to make it runable'''
   parser = argparse.ArgumentParser(description='Random forest grid search')
   
   parser.add_argument(
@@ -43,11 +54,31 @@ def parse_command_line():
     exit(0)
   return args
 
+###############################################################################
+#
+#  load the data from CSV file
+#
+###############################################################################
+
 def load_metrix_data(csv_path):
+  '''load the raw data as stored in CSV file'''
     return pd.read_csv(csv_path)
 
+###############################################################################
+#
+#  class for ML using random forest with randomised search
+#
+###############################################################################
 
 class RandomForestGridSearch(object):
+  '''This class is the doing the actual work in the following steps:
+     * define smaller data frames: database, man_add, transform
+     * split the data into training and test set
+     * setup and run a grid search for best paramaters to define a decsion tree
+     * create a new tree with best parameters
+     * predict on this new tree with test data and cross-validated training data
+     * analyse the predisctions with graphs and stats
+  '''
   def __init__(self, metrix, outdir):
     self.metrix=metrix
     self.outdir=outdir
@@ -58,17 +89,26 @@ class RandomForestGridSearch(object):
     self.predict()
     self.analysis()
 
+  ###############################################################################
+  #
+  #  creating 3 data frames specific to the three development milestones I had
+  #  1--> directly from data processing
+  #  2--> after adding protein information
+  #  3--> carrying out some further column transformations
+  #
+  ###############################################################################
+
   def prepare_metrix_data(self):
+    '''Function to create smaller dataframes for directly after dataprocessing, after
+       adding some protein information and after carrying out some custom solumn
+       transformations.
+    ******
+    Input: large data frame
+    Output: smaller dataframes; database, man_add, transform
+    '''
     print('*' *80)
     print('*    Preparing input dataframes metrix_database, metrix_man_add, metrix_transform')
     print('*' *80)
-    ###############################################################################
-    #
-    #  creating 3 data frames specific to the three development milestones I had
-    #  1--> directly from data processing
-    #  2--> after adding protein information
-    #  3--> carrying out some further column transformations
-    #
 
     #look at the data that is coming from processing
     attr_database = ['IoverSigma', 'anomalousslope', 'anomalousCC', 'anomalousmulti', 'multiplicity',
@@ -79,7 +119,6 @@ class RandomForestGridSearch(object):
     
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_database with following attributes %s \n' %(attr_database))
-
 
     #database plus manually added data
     attr_man_add = ['IoverSigma', 'anomalousslope', 'anomalousCC', 'anomalousmulti', 'multiplicity',
@@ -92,7 +131,6 @@ class RandomForestGridSearch(object):
 
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_man_add with following attributes %s \n' %(attr_man_add))
-
 
     #after column transformation expected feature list
     attr_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
@@ -110,7 +148,6 @@ class RandomForestGridSearch(object):
 
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_transform with following attributes %s \n' %(attr_transform))
-
 
     #column transformation
     #MW_ASU
@@ -149,17 +186,23 @@ class RandomForestGridSearch(object):
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Created the following dataframes: metrix_database, metrix_man_add, metrix_transform \n')
 
-
-  def split_data(self):
-    print('*' *80)
-    print('*    Splitting data into test and training set with test=20%')
-    print('*' *80)
-
-      ###############################################################################
+    ###############################################################################
     #
     #  creating training and test set for each of the 3 dataframes
     #
     ###############################################################################
+
+  def split_data(self):
+    '''Function which splits the input data into training set and test set.
+    ******
+    Input: a dataframe that contains the features and labels in columns and the samples
+          in rows
+    Output: sets of training and test data with an 80/20 split; X_train, X_test, y_train,
+            y_test
+    '''
+    print('*' *80)
+    print('*    Splitting data into test and training set with test=20%')
+    print('*' *80)
 
     y = self.metrix['EP_success']
     X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42)
@@ -184,19 +227,24 @@ class RandomForestGridSearch(object):
       text_file.write('metrix_transform: X_transform_train, X_transform_test \n')
       text_file.write('y(EP_success): y_train, y_test \n')
 
+    ###############################################################################
+    #
+    #  grid search for best parameter combination
+    #
+    ###############################################################################
 
   def grid_search(self):
+  '''running a randomized search to find the parameter combination for a decision tree
+     which gives the best accuracy score'''
     print('*' *80)
     print('*    Running GridSearch for best parameter combination for RandomForest')
     print('*' *80)
 
-      #training a decision forest with the prepared train set and train set lables
-
     #create the decision forest
-    forest_clf = RandomForestClassifier(random_state=42)
+    forest_clf_grid = RandomForestClassifier(random_state=42)
 
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created random forest: forest_clf \n')
+      text_file.write('Created random forest: forest_clf_grid \n')
 
     #set up grid search
     param_grid = {"criterion": ["gini", "entropy"],
@@ -207,24 +255,19 @@ class RandomForestGridSearch(object):
                  "min_samples_leaf": [2, 4, 6],
                  "max_leaf_nodes": [5, 10, 15]}
 
-
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Running grid search for the following parameters: %s \n' %param_grid)
       text_file.write('use cv=10, scoring=accuracy \n')
 
     #building and running the grid search
-    grid_search = GridSearchCV(forest_clf, param_grid, cv=10,
+    grid_search = GridSearchCV(forest_clf_grid, param_grid, cv=10,
                               scoring='accuracy')
 
     grid_search.fit(self.X_transform_train, self.y_train)
 
     #get best parameter combination and its score as accuracy
-#    print(grid_search.best_params_)
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Best parameters: ' +str(grid_search.best_params_)+'\n')
-    
-#    print(grid_search.best_score_)
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Best score: ' +str(grid_search.best_score_)+'\n')
     
     feature_importances = grid_search.best_estimator_.feature_importances_
@@ -233,14 +276,23 @@ class RandomForestGridSearch(object):
       text_file.write('Feature importances: %s \n' %feature_importances_ls)
     
     self.best_params = grid_search.best_params_
-  
+
+    ###############################################################################
+    #
+    #  creating new forest with best parameter combination
+    #
+    ###############################################################################
+
   def forest_best_params(self):
+    '''create a new random forest using the best parameter combination found above'''
     print('*' *80)
     print('*    Building new forest based on best parameter combination')
     print('*' *80)
 
     self.forest_clf_grid_new = RandomForestClassifier(**self.best_params, random_state=42)
-    
+    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Created new decision forest "forest_clf_grid_new" using best parameters \n')
+
     print('*' *80)
     print('*    Saving new forest based on best parameter combination as pickle')
     print('*' *80)
@@ -249,37 +301,19 @@ class RandomForestGridSearch(object):
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Creating pickle file for best forest as best_forest_grid_search.pkl \n')
 
-
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created new decision forest "forest_clf_grid_new" using best parameters \n')
-
     #visualise best decision tree
     trees = forest_clf_grid_new.estimators_
     i_tree = 0
     for tree in trees:
-      with open(os.path.join(self.outdir,'tree_grid' + str(i_tree) + '.dot'), 'w') as f:
+      with open(os.path.join(self.outdir,'forest_clf_grid_new_tree' + str(i_tree) + '.dot'), 'w') as f:
         export_graphviz(tree, out_file=f, feature_names=X_transform_train.columns,
                    rounded=True, filled=True)
         f.close()
-      dotfile = os.path.join(self.outdir, 'tree_grid' + str(i_tree) + '.dot')
-      pngfile = os.path.join(self.outdir, 'tree_grid' + str(i_tree) + '.png')
+      dotfile = os.path.join(self.outdir, 'forest_clf_grid_new_tree' + str(i_tree) + '.dot')
+      pngfile = os.path.join(self.outdir, 'forest_clf_grid_new_tree' + str(i_tree) + '.png')
       command = ["dot", "-Tpng", dotfile, "-o", pngfile]
       subprocess.check_call(command)
       i_tree = i_tree + 1
-
-
-    
-    
-#    self.forest_clf_grid_new.fit(self.X_transform_train, self.y_train)
-#    dotfile = os.path.join(self.outdir, 'forest_clf_grid_new.dot')
-#    pngfile = os.path.join(self.outdir, 'forest_clf_grid_new.png')
-#
-#    with open(dotfile, 'w') as f:
-#        export_graphviz(self.forest_clf_grid_new, out_file=f, feature_names=self.X_transform_train.columns,
-#                       rounded=True, filled=True)
-#                        
-#    command = ["dot", "-Tpng", dotfile, "-o", pngfile]
-#    subprocess.check_call(command)
 
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Writing DOTfile and convert to PNG for "forest_clf_grid_new" \n')
@@ -292,53 +326,39 @@ class RandomForestGridSearch(object):
 
     #not the best measure to use as it heavily depends on the sample 
     #distribution --> accuracy
-#    print(cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train,
-#                    cv=10, scoring='accuracy'))
     accuracy_each_cv = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train,
                     cv=10, scoring='accuracy')
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Accuracy for each of 10 CV folds: %s \n' %accuracy_each_cv)
-                    
-#    print(cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train,
-#                    cv=10, scoring='accuracy').mean())
     accuracy_mean_cv = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train,
                     cv=10, scoring='accuracy').mean()
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Mean accuracy over all 10 CV folds: %s \n' %accuracy_mean_cv)
-
     # calculate cross_val_scoring with different scoring functions for CV train set
     train_roc_auc = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='roc_auc').mean()
-#    print('ROC_AUC CV', train_roc_auc)#uses metrics.roc_auc_score
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('ROC_AUC mean for 10-fold CV: %s \n' %train_roc_auc)
-                    
     train_accuracy = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='accuracy').mean()
-#    print('Accuracy CV', train_accuracy)#uses metrics.accuracy_score
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Accuracy mean for 10-fold CV: %s \n' %train_accuracy)
-                    
     train_recall = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='recall').mean()
-#    print('Recall CV', train_recall)#uses metrics.recall_score
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Recall mean for 10-fold CV: %s \n' %train_recall)
-
     train_precision = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='precision').mean()
-#    print('Precision CV', train_precision)#uses metrics.precision_score
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Precision mean for 10-fold CV: %s \n' %train_precision)
-
     train_f1 = cross_val_score(self.forest_clf_grid_new, self.X_transform_train, self.y_train, cv=10,
-                    scoring='f1').mean()
-#    print('F1 score CV', train_f1)#uses metrics.f1_score
+
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Accuracy for each of 10 CV folds: %s \n' %accuracy_each_cv)
+      text_file.write('Mean accuracy over all 10 CV folds: %s \n' %accuracy_mean_cv)
+      text_file.write('ROC_AUC mean for 10-fold CV: %s \n' %train_roc_auc)
+      text_file.write('Accuracy mean for 10-fold CV: %s \n' %train_accuracy)
+      text_file.write('Recall mean for 10-fold CV: %s \n' %train_recall)
+      text_file.write('Precision mean for 10-fold CV: %s \n' %train_precision)
       text_file.write('F1 score mean for 10-fold CV: %s \n' %train_f1)
 
+    ###############################################################################
+    #
+    #  Predicting with test set and cross-validation set using the bets forest
+    #
+    ###############################################################################
 
   def predict(self):
+    '''do predictions using the best tree an the test set as well as training set with
+       10 cross-validation folds and doing some initial analysis on the output'''
     print('*' *80)
     print('*    Predict using new forest and test/train_CV set')
     print('*' *80)
@@ -360,37 +380,52 @@ class RandomForestGridSearch(object):
 
     # calculate accuracy
     y_accuracy = metrics.accuracy_score(self.y_test, self.y_pred_class)
-#    print(metrics.accuracy_score(self.y_test, self.y_pred_class))
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Accuracy score or agreement between y_test and y_pred_class: %s \n' %y_accuracy)
 
     # examine the class distribution of the testing set (using a Pandas Series method)
     class_dist = self.y_test.value_counts()
-#    print(self.y_test.value_counts())
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Class distribution for y_test: %s \n' %class_dist)
 
     # calculate the percentage of ones
     # because y_test only contains ones and zeros, we can simply calculate the mean = percentage of ones
     ones = self.y_test.mean()
-#    print(self.y_test.mean())
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Percent 1s in y_test: %s \n' %ones)
 
     # calculate the percentage of zeros
     zeros = 1 - self.y_test.mean()
-#    print(1 - self.y_test.mean())
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Percent 0s in y_test: %s \n' %zeros)
 
     # calculate null accuracy in a single line of code
     # only for binary classification problems coded as 0/1
     null_acc = max(self.y_test.mean(), 1 - self.y_test.mean())
-#    print(null_acc)
+
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Accuracy score or agreement between y_test and y_pred_class: %s \n' %y_accuracy)
+      text_file.write('Class distribution for y_test: %s \n' %class_dist)
+      text_file.write('Percent 1s in y_test: %s \n' %ones)
+      text_file.write('Percent 0s in y_test: %s \n' %zeros)
       text_file.write('Null accuracy in y_test: %s \n' %null_acc)
 
+    ###############################################################################
+    #
+    #  detailed analysis and stats
+    #
+    ###############################################################################
+
   def analysis(self):
+    '''detailed analysis of the output:
+       * create a confusion matrix
+       * split the data into TP, TN, FP, FN for test and train_CV
+       * determine accuracy score
+       * determine classification error
+       * determine sensitivity
+       * determine specificity
+       * determine false-positive rate
+       * determine precision
+       * determine F1 score
+       calculate prediction probabilities and draw plots
+       * histogram for probability to be class 1
+       * precision-recall curve
+       * look for adjustments in classification thresholds
+       * ROC curve
+       * determine ROC_AUC
+       * try different scoring functions for comparison'''
     print('*' *80)
     print('*    Detailed analysis and plotting')
     print('*' *80)
@@ -400,12 +435,9 @@ class RandomForestGridSearch(object):
     # this produces a 2x2 numpy array (matrix)
     conf_mat_test = metrics.confusion_matrix(self.y_test, self.y_pred_class)
     conf_mat_10CV = metrics.confusion_matrix(self.y_train, self.y_train_pred)
-#    print('confusion matrix using test set %s' %conf_mat_test)#on the test set
-#    print('confusion matrix using CV train set %s' %conf_mat_10CV)#on the CV train set
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('confusion matrix using test set: %s \n' %conf_mat_test)
       text_file.write('confusion matrix using 10-fold CV: %s \n' %conf_mat_10CV)
-
 
     # slice confusion matrix into four pieces
     #[row, column] for test set
@@ -430,10 +462,6 @@ class RandomForestGridSearch(object):
     acc_score_sklearn_test = metrics.accuracy_score(self.y_test, self.y_pred_class)
     acc_score_man_CV = (TP_CV + TN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
     acc_score_sklearn_CV = metrics.accuracy_score(self.y_train, self.y_train_pred)
-#    print('accuracy score manual test: %s' %acc_score_man_test)
-#    print('accuracy score sklearn test: %s' %acc_score_sklearn_test)
-#    print('accuracy score manual CV: %s' %acc_score_man_CV)
-#    print('accuracy score sklearn CV: %s' %acc_score_sklearn_CV)
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Accuracy score: \n')
       text_file.write('accuracy score manual test: %s \n' %acc_score_man_test)
@@ -446,10 +474,6 @@ class RandomForestGridSearch(object):
     class_err_sklearn_test = 1 - metrics.accuracy_score(self.y_test, self.y_pred_class)
     class_err_man_CV = (FP_CV + FN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
     class_err_sklearn_CV = 1 - metrics.accuracy_score(self.y_train, self.y_train_pred)
-#    print('classification error manual test: %s' %class_err_man_test)
-#    print('classification error sklearn test: %s' %class_err_sklearn_test)
-#    print('classification error manual CV: %s' %class_err_man_CV)
-#    print('classification error sklearn CV: %s' %class_err_sklearn_CV)
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Classification error: \n')  
       text_file.write('classification error manual test: %s \n' %class_err_man_test)
@@ -462,10 +486,6 @@ class RandomForestGridSearch(object):
     sensitivity_sklearn_test = metrics.recall_score(self.y_test, self.y_pred_class)
     sensitivity_man_CV = TP_CV / float(FN_CV + TP_CV)
     sensitivity_sklearn_CV = metrics.recall_score(self.y_train, self.y_train_pred)
-#    print('sensitivity manual test: %s' %sensitivity_man_test)
-#    print('sensitivity sklearn test: %s' %sensitivity_sklearn_test)
-#    print('sensitivity manual CV: %s' %sensitivity_man_CV)
-#    print('sensitivity sklearn CV: %s' %sensitivity_sklearn_CV)
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Sensitivity/Recall/True positives: \n')
       text_file.write('sensitivity manual test: %s \n' %sensitivity_man_test)
@@ -476,8 +496,6 @@ class RandomForestGridSearch(object):
     #calculate specificity
     specificity_man_test = TN / (TN + FP)
     specificity_man_CV = TN_CV / (TN_CV + FP_CV)
-#    print('specificity manual test: %s' %specificity_man_test)
-#    print('specificity manual CV: %s' %specificity_man_CV)
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Specificity: \n')
       text_file.write('specificity manual test: %s \n' %specificity_man_test)
@@ -486,10 +504,6 @@ class RandomForestGridSearch(object):
     #calculate false positive rate
     false_positive_rate_man_test = FP / float(TN + FP)
     false_positive_rate_man_CV = FP_CV / float(TN_CV + FP_CV)
-#    print('false positive rate manual test: %s' %false_positive_rate_man_test)
-#    print('1 - specificity test: %s' %(1 - specificity_man_test))
-#    print('false positive rate manual CV: %s' %false_positive_rate_man_CV)
-#    print('1 - specificity CV: %s' %(1 - specificity_man_CV))
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('False positive rate or 1-specificity: \n')
       text_file.write('false positive rate manual test: %s \n' %false_positive_rate_man_test)
@@ -502,10 +516,6 @@ class RandomForestGridSearch(object):
     precision_sklearn_test = metrics.precision_score(self.y_test, self.y_pred_class)
     precision_man_CV = TP_CV / float(TP_CV + FP_CV)
     precision_sklearn_CV = metrics.precision_score(self.y_train, self.y_train_pred)
-#    print('precision manual: %s' %precision_man_test)
-#    print('precision sklearn: %s' %precision_sklearn_test)
-#    print('precision manual CV: %s' %precision_man_CV)
-#    print('precision sklearn CV: %s' %precision_sklearn_CV)
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Precision or confidence of classification: \n')
       text_file.write('precision manual: %s \n' %precision_man_test)
@@ -516,8 +526,6 @@ class RandomForestGridSearch(object):
     #F1 score; uses precision and recall
     f1_score_sklearn_test = f1_score(self.y_test, self.y_pred_class)
     f1_score_sklearn_CV = f1_score(self.y_train, self.y_train_pred)
-#    print('F1 score sklearn test: %s' %f1_score_sklearn_test)
-#    print('F1 score sklearn CV: %s' %f1_score_sklearn_CV)
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('F1 score: \n')
       text_file.write('F1 score sklearn test: %s \n' %f1_score_sklearn_test)
@@ -529,7 +537,7 @@ class RandomForestGridSearch(object):
     #probabilities of predicting y_test with X_transform_test
     self.y_pred_proba_test = self.forest_clf_grid_new.predict_proba(self.X_transform_test)
     
-#    self.y_scores=self.forest_clf_grid_new.predict_proba(self.X_transform_train)#train set
+#    self.y_scores=self.forest_clf_grid_grid_new.predict_proba(self.X_transform_train)#train set
     with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Storing prediction probabilities for X_transform_train and y_train with 10-fold CV in y_pred_proba_train_CV \n')
       text_file.write('Storing prediction probabilities for X_transform_test and y_test in y_pred_proba_test \n')
@@ -546,7 +554,7 @@ class RandomForestGridSearch(object):
       plt.title('Histogram of predicted probabilities for y_pred_proba_%s to be class 1' %name)
       plt.xlabel('Predicted probability of EP_success')
       plt.ylabel('Frequency')
-      plt.savefig(os.path.join(self.outdir, 'pred_proba_'+name+datestring+'.png'))
+      plt.savefig(os.path.join(self.outdir, 'hist_pred_proba_forest_grid_'+name+datestring+'.png'))
       plt.close()
 
     plot_hist_pred_proba(self.y_pred_proba_train_CV[:, 1], 'train_CV_')
@@ -572,7 +580,7 @@ class RandomForestGridSearch(object):
         plt.xlabel("Threshold")
         plt.legend(loc="upper left")
         plt.ylim([0,1])
-        plt.savefig(os.path.join(self.outdir, 'Precision_Recall_'+name+datestring+'.png'))
+        plt.savefig(os.path.join(self.outdir, 'Precision_Recall_forest_grid_'+name+datestring+'.png'))
         plt.close()
         
     #plot Precision Recall Threshold curve for test set 
@@ -604,7 +612,7 @@ class RandomForestGridSearch(object):
         plt.xlabel('False Positive Rate (1 - Specificity)')
         plt.ylabel('True Positive Rate (Sensitivity)')
         plt.grid(True)
-        plt.savefig(os.path.join(self.outdir, 'ROC_curve_'+name+datestring+'.png'))
+        plt.savefig(os.path.join(self.outdir, 'ROC_curve_forest_grid_'+name+datestring+'.png'))
         plt.close()
         
     #ROC curve for test set      
