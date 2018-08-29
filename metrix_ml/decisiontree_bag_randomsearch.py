@@ -300,9 +300,9 @@ class DecisionTreeBagRandomSearch(object):
     print('*    Saving new tree based on best parameter combination as pickle')
     print('*' *80)
 
-    joblib.dump(self.tree_clf_rand_bag_new, os.path.join(self.outdir,'best_tree_rand_search.pkl'))
+    joblib.dump(self.tree_clf_rand_bag_new, os.path.join(self.outdir,'best_tree_rand_search_bag.pkl'))
     with open(os.path.join(self.outdir, 'decisiontree_bag_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Creating pickle file for best tree as best_tree_rand_search.pkl \n')
+      text_file.write('Creating pickle file for best tree as best_tree_rand_search_bag.pkl \n')
 
     #visualise best decision tree
     self.tree_clf_rand_bag_new.fit(self.X_transform_train, self.y_train)

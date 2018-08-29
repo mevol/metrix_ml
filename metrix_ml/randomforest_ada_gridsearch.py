@@ -23,6 +23,7 @@ from sklearn.metrics import precision_recall_curve, roc_curve
 from sklearn.tree import export_graphviz
 from datetime import datetime
 from sklearn.externals import joblib
+from sklearn.ensemble import AdaBoostClassifier
 
 ###############################################################################
 #
@@ -62,7 +63,7 @@ def parse_command_line():
 
 def load_metrix_data(csv_path):
   '''load the raw data as stored in CSV file'''
-    return pd.read_csv(csv_path)
+  return pd.read_csv(csv_path)
 
 ###############################################################################
 #
@@ -234,17 +235,17 @@ class RandomForestAdaGridSearch(object):
     ###############################################################################
 
   def grid_search(self):
-  '''running a randomized search to find the parameter combination for a decision tree
+    '''running a randomized search to find the parameter combination for a decision tree
      which gives the best accuracy score'''
     print('*' *80)
     print('*    Running GridSearch for best parameter combination for RandomForest')
     print('*' *80)
 
     #create the decision forest
-    forest_clf_grid = RandomForestClassifier(random_state=42)
+    forest_clf_grid_ada_ada = RandomForestClassifier(random_state=42)
 
     with open(os.path.join(self.outdir, 'randomforest_ada_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created random forest: forest_clf_grid \n')
+      text_file.write('Created random forest: forest_clf_grid_ada \n')
 
     #set up grid search
     param_grid = {"criterion": ["gini", "entropy"],
@@ -260,7 +261,7 @@ class RandomForestAdaGridSearch(object):
       text_file.write('use cv=10, scoring=accuracy \n')
 
     #building and running the grid search
-    grid_search = GridSearchCV(forest_clf_grid, param_grid, cv=10,
+    grid_search = GridSearchCV(forest_clf_grid_ada, param_grid, cv=10,
                               scoring='accuracy')
 
     grid_search.fit(self.X_transform_train, self.y_train)
@@ -299,9 +300,9 @@ class RandomForestAdaGridSearch(object):
     print('*    Saving new forest based on best parameter combination as pickle')
     print('*' *80)
 
-    joblib.dump(self.forest_clf_grid_ada_new, os.path.join(self.outdir,'best_forest_grid_search.pkl'))
+    joblib.dump(self.forest_clf_grid_ada_ada_new, os.path.join(self.outdir,'best_forest_grid_search_ada.pkl'))
     with open(os.path.join(self.outdir, 'randomforest_ada_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Creating pickle file for best forest as best_forest_grid_search.pkl \n')
+      text_file.write('Creating pickle file for best forest as best_forest_grid_search_ada.pkl \n')
 
     #visualise best decision tree
     self.tree_clf_grid_bag_new.fit(self.X_transform_train, self.y_train)
@@ -344,8 +345,9 @@ class RandomForestAdaGridSearch(object):
     train_precision = cross_val_score(self.forest_clf_grid_ada_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='precision').mean()
     train_f1 = cross_val_score(self.forest_clf_grid_ada_new, self.X_transform_train, self.y_train, cv=10,
+                    scoring='f1').mean()
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.outdir, 'randomforest_randomsearch.txt'), 'a') as text_file:
       text_file.write('Accuracy for each of 10 CV folds: %s \n' %accuracy_each_cv)
       text_file.write('Mean accuracy over all 10 CV folds: %s \n' %accuracy_mean_cv)
       text_file.write('ROC_AUC mean for 10-fold CV: %s \n' %train_roc_auc)
@@ -353,7 +355,7 @@ class RandomForestAdaGridSearch(object):
       text_file.write('Recall mean for 10-fold CV: %s \n' %train_recall)
       text_file.write('Precision mean for 10-fold CV: %s \n' %train_precision)
       text_file.write('F1 score mean for 10-fold CV: %s \n' %train_f1)
-
+      
     ###############################################################################
     #
     #  Predicting with test set and cross-validation set using the bets forest
@@ -541,7 +543,7 @@ class RandomForestAdaGridSearch(object):
     #probabilities of predicting y_test with X_transform_test
     self.y_pred_proba_test = self.forest_clf_grid_ada_new.predict_proba(self.X_transform_test)
     
-#    self.y_scores=self.forest_clf_grid_grid_new.predict_proba(self.X_transform_train)#train set
+#    self.y_scores=self.forest_clf_grid_ada_grid_new.predict_proba(self.X_transform_train)#train set
     with open(os.path.join(self.outdir, 'randomforest_ada_gridsearch.txt'), 'a') as text_file:
       text_file.write('Storing prediction probabilities for X_transform_train and y_train with 10-fold CV in y_pred_proba_train_CV \n')
       text_file.write('Storing prediction probabilities for X_transform_test and y_test in y_pred_proba_test \n')
