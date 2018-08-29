@@ -23,6 +23,7 @@ from sklearn.metrics import precision_recall_curve, roc_curve
 from sklearn.tree import export_graphviz
 from datetime import datetime
 from sklearn.externals import joblib
+from scipy.stats import randint
 
 ###############################################################################
 #
@@ -62,7 +63,7 @@ def parse_command_line():
 
 def load_metrix_data(csv_path):
   '''load the raw data as stored in CSV file'''
-    return pd.read_csv(csv_path)
+  return pd.read_csv(csv_path)
 
 ###############################################################################
 #
@@ -70,7 +71,7 @@ def load_metrix_data(csv_path):
 #
 ###############################################################################
 
-class RandomForestRANDSearch(object):
+class RandomForestRandSearch(object):
   '''This class is the doing the actual work in the following steps:
      * define smaller data frames: database, man_add, transform
      * split the data into training and test set
@@ -84,7 +85,7 @@ class RandomForestRANDSearch(object):
     self.outdir=outdir
     self.prepare_metrix_data()
     self.split_data()
-    self.grid_search()
+    self.rand_search()
     self.forest_best_params()
     self.predict()
     self.analysis()
@@ -234,7 +235,7 @@ class RandomForestRANDSearch(object):
     ###############################################################################
 
   def rand_search(self):
-  '''running a randomized search to find the parameter combination for a decision tree
+    '''running a randomized search to find the parameter combination for a decision tree
      which gives the best accuracy score'''
     print('*' *80)
     print('*    Running RandomizedSearch for best parameter combination for RandomForest')
@@ -260,7 +261,7 @@ class RandomForestRANDSearch(object):
       text_file.write('use cv=10, scoring=accuracy \n')
 
     #building and running the grid search
-    rand_search = RandomizedSearchCV(forest_clf_rand, param_rand, cv=10, n_iter=288
+    rand_search = RandomizedSearchCV(forest_clf_rand, param_rand, cv=10, n_iter=288,
                               scoring='accuracy')
 
     rand_search.fit(self.X_transform_train, self.y_train)
@@ -609,15 +610,15 @@ class RandomForestRANDSearch(object):
     #plot ROC curves
     def plot_roc_curve(fpr, tpr, name, label=None):
       '''plot a ROC curve to judge performance and calculate the area under the curve (AUC)'''
-        plt.plot(fpr, tpr, linewidth=2, label=label)
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.axis([0, 1, 0, 1])
-        plt.title('ROC curve for EP_success classifier using %s set' %name) 
-        plt.xlabel('False Positive Rate (1 - Specificity)')
-        plt.ylabel('True Positive Rate (Sensitivity)')
-        plt.grid(True)
-        plt.savefig(os.path.join(self.outdir, 'ROC_curve_forest_rand_'+name+datestring+'.png'))
-        plt.close()
+      plt.plot(fpr, tpr, linewidth=2, label=label)
+      plt.plot([0, 1], [0, 1], 'k--')
+      plt.axis([0, 1, 0, 1])
+      plt.title('ROC curve for EP_success classifier using %s set' %name) 
+      plt.xlabel('False Positive Rate (1 - Specificity)')
+      plt.ylabel('True Positive Rate (Sensitivity)')
+      plt.grid(True)
+      plt.savefig(os.path.join(self.outdir, 'ROC_curve_forest_rand_'+name+datestring+'.png'))
+      plt.close()
         
     #ROC curve for test set      
     fpr, tpr, thresholds = roc_curve(self.y_test, self.y_scores_test)#test set
