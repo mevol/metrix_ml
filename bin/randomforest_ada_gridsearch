@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml import randomforest_ada_gridsearch
+
+if __name__=='__main__':
+  randomforest_ada_gridsearch.run()
