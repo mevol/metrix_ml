@@ -15,8 +15,9 @@ setup(
     scripts=[
       'bin/decisiontree_gridsearch',
       'bin/decisiontree_randomsearch',
-      'bin/randomforest_gridsearch',
       'bin/decisiontree_bag_gridsearch',
+      'bin/decisiontree_bag_randomsearch',
+      'bin/randomforest_gridsearch',   
       'bin/randomforest_randomsearch'
     ],
     install_requires=[
