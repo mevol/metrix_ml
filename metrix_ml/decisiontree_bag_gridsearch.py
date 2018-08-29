@@ -90,6 +90,15 @@ class DecisionTreeBagGridSearch(object):
     self.predict()
     self.analysis()
 
+  ###############################################################################
+  #
+  #  creating 3 data frames specific to the three development milestones I had
+  #  1--> directly from data processing
+  #  2--> after adding protein information
+  #  3--> carrying out some further column transformations
+  #
+  ###############################################################################
+
   def prepare_metrix_data(self):
     '''Function to create smaller dataframes for directly after dataprocessing, after
        adding some protein information and after carrying out some custom solumn
