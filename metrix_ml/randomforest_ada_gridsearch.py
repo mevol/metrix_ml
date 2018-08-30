@@ -67,7 +67,7 @@ def load_metrix_data(csv_path):
 
 ###############################################################################
 #
-#  class for ML using random forest with randomised search
+#  class for ML using random forest with grid search and Ada boosting
 #
 ###############################################################################
 
@@ -242,7 +242,7 @@ class RandomForestAdaGridSearch(object):
     print('*' *80)
 
     #create the decision forest
-    forest_clf_grid_ada_ada = RandomForestClassifier(random_state=42)
+    forest_clf_grid_ada = RandomForestClassifier(random_state=42)
 
     with open(os.path.join(self.outdir, 'randomforest_ada_gridsearch.txt'), 'a') as text_file:
       text_file.write('Created random forest: forest_clf_grid_ada \n')
@@ -292,7 +292,7 @@ class RandomForestAdaGridSearch(object):
 
     self.forest_clf_grid_ada_new = AdaBoostClassifier(
                                 RandomForestClassifier(**self.best_params, random_state=42),
-                                algorith ="SAMME.R", learning_rate=0.5)
+                                algorithm ="SAMME.R", learning_rate=0.5)
     with open(os.path.join(self.outdir, 'randomforest_ada_gridsearch.txt'), 'a') as text_file:
       text_file.write('Created new decision forest "forest_clf_grid_ada_new" using best parameters \n')
 
