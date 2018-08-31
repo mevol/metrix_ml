@@ -56,7 +56,7 @@ def parse_command_line():
 
 ###############################################################################
 #
-#  load the data from CSV file
+#  load the data from CSV file and create output directory
 #
 ###############################################################################
 
@@ -65,9 +65,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
 
 def make_output_folder(outdir):
-  out_path = os.path.join(outdir, 'decisiontree_gridserach')
-  os.makedirs(os.path.dirname(out_path), exist_ok=True)
-  out_folder = out_path
+  out_folder = os.path.join(outdir, 'decisiontree_gridsearch')
+  os.makedirs(out_folder, exist_ok=True)
   return out_folder
 
 ###############################################################################
