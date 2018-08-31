@@ -65,6 +65,11 @@ def parse_command_line():
 def load_metrix_data(csv_path):
   '''load the raw data as stored in CSV file'''
   return pd.read_csv(csv_path)
+  
+def make_output_folder(outdir):
+  out_folder = os.path.join(outdir, 'randomforest_ada_randomsearch')
+  os.makedirs(out_folder, exist_ok=True)
+  return out_folder
 
 ###############################################################################
 #
@@ -81,9 +86,9 @@ class RandomForestAdaRandSearch(object):
      * predict on this new tree with test data and cross-validated training data
      * analyse the predisctions with graphs and stats
   '''
-  def __init__(self, metrix, outdir):
+  def __init__(self, metrix, out_folder):
     self.metrix=metrix
-    self.outdir=outdir
+    self.out_folder=out_folder
     self.prepare_metrix_data()
     self.split_data()
     self.rand_search()
@@ -119,7 +124,7 @@ class RandomForestAdaRandSearch(object):
                       'RmergeI', 'RmeasI', 'RmeasdiffI', 'RpimdiffI', 'RpimI', 'diffF']
     metrix_database = self.metrix[attr_database]
     
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_database with following attributes %s \n' %(attr_database))
 
     #database plus manually added data
@@ -131,7 +136,7 @@ class RandomForestAdaRandSearch(object):
                     'No_mol_ASU', 'MW_chain', 'sites_ASU']
     metrix_man_add = self.metrix[attr_man_add]
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_man_add with following attributes %s \n' %(attr_man_add))
 
     #after column transformation expected feature list
@@ -148,7 +153,7 @@ class RandomForestAdaRandSearch(object):
 
     metrix_transform = metrix_man_add.copy()
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_transform with following attributes %s \n' %(attr_transform))
 
     #column transformation
@@ -185,7 +190,7 @@ class RandomForestAdaRandSearch(object):
     self.X_man_add = metrix_man_add
     self.X_transform = metrix_transform
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created the following dataframes: metrix_database, metrix_man_add, metrix_transform \n')
 
     ###############################################################################
@@ -222,7 +227,7 @@ class RandomForestAdaRandSearch(object):
     self.y_train = y_train
     self.y_test = y_test
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Spliting into training and test set 80-20 \n')
       text_file.write('metrix_database: X_database_train, X_database_test \n')
       text_file.write('metrix_man_add: X_man_add_train, X_man_add_test \n')
@@ -245,7 +250,7 @@ class RandomForestAdaRandSearch(object):
     #create the decision forest
     forest_clf_rand_ada = RandomForestClassifier(random_state=42)
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created random forest: forest_clf_rand_ada \n')
 
     #set up grid search
@@ -257,24 +262,24 @@ class RandomForestAdaRandSearch(object):
                   "min_samples_leaf": randint(1, 20),
                   "max_leaf_nodes": randint(10, 20)}
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Running randomized search for the following parameters: %s \n' %param_rand)
       text_file.write('use cv=10, scoring=accuracy \n')
 
     #building and running the grid search
-    rand_search = RandomizedSearchCV(forest_clf_rand_ada, param_rand, cv=10, n_iter=288,
-                              scoring='accuracy')
+    rand_search = RandomizedSearchCV(forest_clf_rand_ada, param_rand, random_state=5,
+                              cv=10, n_iter=288, scoring='accuracy')
 
     rand_search.fit(self.X_transform_train, self.y_train)
 
     #get best parameter combination and its score as accuracy
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Best parameters: ' +str(rand_search.best_params_)+'\n')
       text_file.write('Best score: ' +str(rand_search.best_score_)+'\n')
     
     feature_importances = rand_search.best_estimator_.feature_importances_
     feature_importances_ls = sorted(zip(feature_importances, self.X_transform_train), reverse=True)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Feature importances: %s \n' %feature_importances_ls)
     
     self.best_params = rand_search.best_params_
@@ -294,7 +299,7 @@ class RandomForestAdaRandSearch(object):
     self.forest_clf_rand_ada_new = AdaBoostClassifier(
                             RandomForestClassifier(**self.best_params, random_state=42),
                             algorithm="SAMME.R", learning_rate=0.5)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created new decision forest "forest_clf_rand_ada_new" using best parameters \n')
 
     print('*' *80)
@@ -302,7 +307,7 @@ class RandomForestAdaRandSearch(object):
     print('*' *80)
 
     joblib.dump(self.forest_clf_rand_ada_new, os.path.join(self.outdir,'best_forest_rand_search_ada.pkl'))
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Creating pickle file for best forest as best_forest_rand_search_ada.pkl \n')
     
     #visualise trees of best forest
@@ -310,17 +315,17 @@ class RandomForestAdaRandSearch(object):
     trees = self.forest_clf_rand_ada_new.estimators_
     i_tree = 0
     for tree in trees:
-      with open(os.path.join(self.outdir,'forest_clf_rand_ada_new_tree' + str(i_tree) + '.dot'), 'w') as f:
+      with open(os.path.join(self.out_folder,'forest_clf_rand_ada_new_tree' + str(i_tree) + '.dot'), 'w') as f:
         export_graphviz(tree, out_file=f, feature_names=self.X_transform_train.columns,
                    rounded=True, filled=True)
         f.close()
-      dotfile = os.path.join(self.outdir, 'forest_clf_rand_ada_new_tree' + str(i_tree) + '.dot')
-      pngfile = os.path.join(self.outdir, 'forest_clf_rand_ada_new_tree' + str(i_tree) + '.png')
+      dotfile = os.path.join(self.out_folder, 'forest_clf_rand_ada_new_tree' + str(i_tree) + '.dot')
+      pngfile = os.path.join(self.out_folder, 'forest_clf_rand_ada_new_tree' + str(i_tree) + '.png')
       command = ["dot", "-Tpng", dotfile, "-o", pngfile]
       subprocess.check_call(command)
       i_tree = i_tree + 1
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Writing DOTfile and convert to PNG for "forest_clf_rand_ada_new" \n')
       text_file.write('DOT filename: forest_clf_rand_ada_new.dot \n')
       text_file.write('PNG filename: forest_clf_rand_ada_new.png \n')
@@ -347,7 +352,7 @@ class RandomForestAdaRandSearch(object):
     train_f1 = cross_val_score(self.forest_clf_rand_ada_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='f1').mean()
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Accuracy for each of 10 CV folds: %s \n' %accuracy_each_cv)
       text_file.write('Mean accuracy over all 10 CV folds: %s \n' %accuracy_mean_cv)
       text_file.write('ROC_AUC mean for 10-fold CV: %s \n' %train_roc_auc)
@@ -371,13 +376,13 @@ class RandomForestAdaRandSearch(object):
 
     #try out how well the classifier works to predict from the test set
     self.y_pred_class = self.forest_clf_rand_ada_new.predict(self.X_transform_test)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_transform_test in y_pred_class \n')
 
     #alternative way to not have to use the test set
     self.y_train_pred = cross_val_predict(self.forest_clf_rand_ada_new, self.X_transform_train, self.y_train,
                       cv=10)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_transform_train with 10-fold CV in y_train_pred \n')
 
     print('*' *80)
@@ -401,7 +406,7 @@ class RandomForestAdaRandSearch(object):
     # only for binary classification problems coded as 0/1
     null_acc = max(self.y_test.mean(), 1 - self.y_test.mean())
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Accuracy score or agreement between y_test and y_pred_class: %s \n' %y_accuracy)
       text_file.write('Class distribution for y_test: %s \n' %class_dist)
       text_file.write('Percent 1s in y_test: %s \n' %ones)
@@ -441,7 +446,7 @@ class RandomForestAdaRandSearch(object):
     # this produces a 2x2 numpy array (matrix)
     conf_mat_test = metrics.confusion_matrix(self.y_test, self.y_pred_class)
     conf_mat_10CV = metrics.confusion_matrix(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('confusion matrix using test set: %s \n' %conf_mat_test)
       text_file.write('confusion matrix using 10-fold CV: %s \n' %conf_mat_10CV)
 
@@ -451,7 +456,7 @@ class RandomForestAdaRandSearch(object):
     TN = conf_mat_test[0, 0]
     FP = conf_mat_test[0, 1]
     FN = conf_mat_test[1, 0]
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Slicing confusion matrix for test set into: TP, TN, FP, FN \n')
 
     #[row, column] for CV train set
@@ -459,7 +464,7 @@ class RandomForestAdaRandSearch(object):
     TN_CV = conf_mat_10CV[0, 0]
     FP_CV = conf_mat_10CV[0, 1]
     FN_CV = conf_mat_10CV[1, 0]
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Slicing confusion matrix for 10-fold CV into: TP_CV, TN_CV, FP_CV, FN_CV \n')
 
     #metrics calculated from confusion matrix
@@ -468,7 +473,7 @@ class RandomForestAdaRandSearch(object):
     acc_score_sklearn_test = metrics.accuracy_score(self.y_test, self.y_pred_class)
     acc_score_man_CV = (TP_CV + TN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
     acc_score_sklearn_CV = metrics.accuracy_score(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Accuracy score: \n')
       text_file.write('accuracy score manual test: %s \n' %acc_score_man_test)
       text_file.write('accuracy score sklearn test: %s \n' %acc_score_sklearn_test)
@@ -480,7 +485,7 @@ class RandomForestAdaRandSearch(object):
     class_err_sklearn_test = 1 - metrics.accuracy_score(self.y_test, self.y_pred_class)
     class_err_man_CV = (FP_CV + FN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
     class_err_sklearn_CV = 1 - metrics.accuracy_score(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Classification error: \n')  
       text_file.write('classification error manual test: %s \n' %class_err_man_test)
       text_file.write('classification error sklearn test: %s \n' %class_err_sklearn_test)
@@ -492,7 +497,7 @@ class RandomForestAdaRandSearch(object):
     sensitivity_sklearn_test = metrics.recall_score(self.y_test, self.y_pred_class)
     sensitivity_man_CV = TP_CV / float(FN_CV + TP_CV)
     sensitivity_sklearn_CV = metrics.recall_score(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Sensitivity/Recall/True positives: \n')
       text_file.write('sensitivity manual test: %s \n' %sensitivity_man_test)
       text_file.write('sensitivity sklearn test: %s \n' %sensitivity_sklearn_test)
@@ -502,7 +507,7 @@ class RandomForestAdaRandSearch(object):
     #calculate specificity
     specificity_man_test = TN / (TN + FP)
     specificity_man_CV = TN_CV / (TN_CV + FP_CV)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Specificity: \n')
       text_file.write('specificity manual test: %s \n' %specificity_man_test)
       text_file.write('specificity manual CV: %s \n' %specificity_man_CV)
@@ -510,7 +515,7 @@ class RandomForestAdaRandSearch(object):
     #calculate false positive rate
     false_positive_rate_man_test = FP / float(TN + FP)
     false_positive_rate_man_CV = FP_CV / float(TN_CV + FP_CV)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('False positive rate or 1-specificity: \n')
       text_file.write('false positive rate manual test: %s \n' %false_positive_rate_man_test)
       text_file.write('1 - specificity test: %s \n' %(1 - specificity_man_test))
@@ -522,7 +527,7 @@ class RandomForestAdaRandSearch(object):
     precision_sklearn_test = metrics.precision_score(self.y_test, self.y_pred_class)
     precision_man_CV = TP_CV / float(TP_CV + FP_CV)
     precision_sklearn_CV = metrics.precision_score(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Precision or confidence of classification: \n')
       text_file.write('precision manual: %s \n' %precision_man_test)
       text_file.write('precision sklearn: %s \n' %precision_sklearn_test)
@@ -532,7 +537,7 @@ class RandomForestAdaRandSearch(object):
     #F1 score; uses precision and recall
     f1_score_sklearn_test = f1_score(self.y_test, self.y_pred_class)
     f1_score_sklearn_CV = f1_score(self.y_train, self.y_train_pred)
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('F1 score: \n')
       text_file.write('F1 score sklearn test: %s \n' %f1_score_sklearn_test)
       text_file.write('F1 score sklearn CV: %s \n' %f1_score_sklearn_CV)
@@ -544,12 +549,12 @@ class RandomForestAdaRandSearch(object):
     self.y_pred_proba_test = self.forest_clf_rand_ada_new.predict_proba(self.X_transform_test)
     
 #    self.y_scores=self.forest_clf_rand_ada_new.predict_proba(self.X_transform_train)#train set
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Storing prediction probabilities for X_transform_train and y_train with 10-fold CV in y_pred_proba_train_CV \n')
       text_file.write('Storing prediction probabilities for X_transform_test and y_test in y_pred_proba_test \n')
 
     # 8 bins for prediction probability on the test set
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Plotting histogram for y_pred_proba_train_CV \n')
       text_file.write('Plotting histogram for y_pred_proba_test \n')
       
@@ -561,35 +566,35 @@ class RandomForestAdaRandSearch(object):
       plt.title('Histogram of predicted probabilities for y_pred_proba_%s to be class 1' %name)
       plt.xlabel('Predicted probability of EP_success')
       plt.ylabel('Frequency')
-      plt.savefig(os.path.join(self.outdir, 'hist_pred_proba_forest_rand_ada_'+name+datestring+'.png'))
+      plt.savefig(os.path.join(self.out_folder, 'hist_pred_proba_forest_rand_ada_'+name+datestring+'.png'))
       plt.close()
 
     plot_hist_pred_proba(self.y_pred_proba_train_CV[:, 1], 'train_CV_')
     plot_hist_pred_proba(self.y_pred_proba_test[:, 1], 'test_')
 
     #get y_scores for the predictions to be bale to plot ROC curve
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Getting y_scores for y_pred_proba_train_CV and y_pred_proba_test as y_scores_train_CV and y_scores_test\n')
 
     # store the predicted probabilities for class 1
     self.y_scores_train_CV = self.y_pred_proba_train_CV[:, 1]
     self.y_scores_test = self.y_pred_proba_test[:, 1]
 
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Plotting Precision-Recall for y_test and y_scores_test \n')
       text_file.write('Plotting Precision-Recall for y_train and y_scores_train_CV \n')
 
     #plot precision and recall curve
     def plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest, name):
-        '''plot precision-recall curve'''
-        plt.plot(thresholds_forest, precisions[:-1], "b--", label="Precision")
-        plt.plot(thresholds_forest, recalls[:-1], "g--", label="Recall")
-        plt.title('Precsion-Recall plot for for EP_success classifier using %s set' %name)
-        plt.xlabel("Threshold")
-        plt.legend(loc="upper left")
-        plt.ylim([0,1])
-        plt.savefig(os.path.join(self.outdir, 'Precision_Recall_forest_rand_ada_'+name+datestring+'.png'))
-        plt.close()
+      '''plot precision-recall curve'''
+      plt.plot(thresholds_forest, precisions[:-1], "b--", label="Precision")
+      plt.plot(thresholds_forest, recalls[:-1], "g--", label="Recall")
+      plt.title('Precsion-Recall plot for for EP_success classifier using %s set' %name)
+      plt.xlabel("Threshold")
+      plt.legend(loc="upper left")
+      plt.ylim([0,1])
+      plt.savefig(os.path.join(self.out_folder, 'Precision_Recall_forest_rand_ada_'+name+datestring+'.png'))
+      plt.close()
         
     #plot Precision Recall Threshold curve for test set 
     precisions, recalls, thresholds_forest = precision_recall_curve(self.y_test, self.y_scores_test)
@@ -607,7 +612,7 @@ class RandomForestAdaRandSearch(object):
     # fpr: false positive rate
     # tpr: true positive rate
     
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Plotting ROC curve for y_test and y_scores_test \n')
       text_file.write('Plotting ROC curve for y_train and y_scores_train_CV \n')
     
@@ -621,7 +626,7 @@ class RandomForestAdaRandSearch(object):
       plt.xlabel('False Positive Rate (1 - Specificity)')
       plt.ylabel('True Positive Rate (Sensitivity)')
       plt.grid(True)
-      plt.savefig(os.path.join(self.outdir, 'ROC_curve_forest_rand_ada_'+name+datestring+'.png'))
+      plt.savefig(os.path.join(self.out_folder, 'ROC_curve_forest_rand_ada_'+name+datestring+'.png'))
       plt.close()
         
     #ROC curve for test set      
@@ -636,7 +641,7 @@ class RandomForestAdaRandSearch(object):
     # IMPORTANT: first argument is true values, second argument is predicted probabilities
     AUC_test = metrics.roc_auc_score(self.y_test, self.y_pred_proba_test[:, 1])
     AUC_train_CV = metrics.roc_auc_score(self.y_train, self.y_pred_proba_train_CV[:, 1])
-    with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('AUC for test set: %s \n' %AUC_test)
       text_file.write('AUC for CV train set: %s \n' %AUC_train_CV)
 
@@ -645,7 +650,7 @@ class RandomForestAdaRandSearch(object):
       '''look at TPr and FPr to see if classification threshold needs adjusting'''
       sensitivity = tpr[thresholds > threshold][-1]
       specificity = 1 - fpr[thresholds > threshold][-1]
-      with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+      with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
         text_file.write('Sensitivity for %s at threshold %.2f: %s \n' %(name, threshold, sensitivity))
         text_file.write('Specificity for %s at threshold %.2f: %s \n' %(name, threshold, specificity))
     
@@ -668,7 +673,8 @@ class RandomForestAdaRandSearch(object):
                       scoring='precision').mean()
       f1 = cross_val_score(self.forest_clf_rand_ada_new, X, y, cv=cv,
                       scoring='f1').mean()
-      with open(os.path.join(self.outdir, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+
+      with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
         text_file.write('ROC_AUC for %s: %s \n' %(name, roc_auc))
         text_file.write('Accuracy for %s: %s \n' %(name, accuracy))
         text_file.write('Recall for %s: %s \n' %(name, recall))
@@ -687,7 +693,9 @@ def run():
   #look at the imported data to get an idea what we are working with
   metrix = load_metrix_data(args.input)
 
+  outdir = make_output_folder(args.outdir)
+
   ###############################################################################
 
-  random_forest_ada_rand_search = RandomForestAdaRandSearch(metrix, args.outdir)
+  random_forest_ada_rand_search = RandomForestAdaRandSearch(metrix, outdir)
 

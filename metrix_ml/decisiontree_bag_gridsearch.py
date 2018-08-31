@@ -85,7 +85,7 @@ class DecisionTreeBagGridSearch(object):
      * predict on this new tree with test data and cross-validated training data
      * analyse the predisctions with graphs and stats
   '''
-  def __init__(self, metrix, outdir):
+  def __init__(self, metrix, out_folder):
     self.metrix=metrix
     self.out_folder=out_folder
     self.prepare_metrix_data()
