@@ -57,7 +57,7 @@ def parse_command_line():
 
 ###############################################################################
 #
-#  load the data from CSV file
+#  load the data from CSV file and creating output directory
 #
 ###############################################################################
 
