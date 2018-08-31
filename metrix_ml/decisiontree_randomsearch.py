@@ -23,7 +23,7 @@ from sklearn.metrics import precision_recall_curve, roc_curve
 from sklearn.tree import export_graphviz
 from datetime import datetime
 from sklearn.externals import joblib
-from scipy.stats import randint 
+from scipy.stats import randint
 
 ###############################################################################
 #
@@ -66,9 +66,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
 
 def make_output_folder(outdir):
-  out_path = os.path.join(outdir, 'decisiontree_randomserach')
-  os.makedirs(os.path.dirname(out_path), exist_ok=True)
-  out_folder = out_path
+  out_folder = os.path.join(outdir, 'decisiontree_randomsearch')
+  os.makedirs(out_folder, exist_ok=True)
   return out_folder
 
 ###############################################################################
@@ -268,7 +267,7 @@ class DecisionTreeRandomSearch(object):
       text_file.write('use cv=10, scoring=accuracy \n')
 
     #building and running the grid search
-    rand_search = RandomizedSearchCV(tree_clf_rand, param_rand, cv=10, n_iter=288,
+    rand_search = RandomizedSearchCV(tree_clf_rand, param_rand, random_state=5, cv=10, n_iter=288,
                               scoring='accuracy')
 
     rand_search.fit(self.X_transform_train, self.y_train)
