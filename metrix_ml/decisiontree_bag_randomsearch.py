@@ -297,9 +297,9 @@ class DecisionTreeBagRandomSearch(object):
     print('*    Building new tree based on best parameter combination')
     print('*' *80)
 
-    self.tree_clf_rand_bag_new =BaggingClassifier(
-                                       DecisionTreeClassifier(**self.best_params, random_state=42),
-n_jobs=-1, bootstrap=True)
+    self.tree_clf_rand_bag_new = BaggingClassifier(
+                                        DecisionTreeClassifier(**self.best_params, random_state=42),
+                                        n_jobs=-1, bootstrap=True)
     with open(os.path.join(self.out_folder, 'decisiontree_bag_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created new decision tree "tree_clf_rand_bag_new" using best parameters \n')
 
