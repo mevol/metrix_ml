@@ -263,7 +263,7 @@ class DecisionTreeBagRandomSearch(object):
                   "min_samples_leaf": randint(1, 20),
                   "max_leaf_nodes": randint(10, 20)}
 
-    with open(os.path.join(self.outdir, 'decisiontree_bag_randomsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'decisiontree_bag_randomsearch.txt'), 'a') as text_file:
       text_file.write('Running grid search for the following parameters: %s \n' %param_rand)
       text_file.write('use cv=10, scoring=accuracy \n')
 
@@ -297,7 +297,9 @@ class DecisionTreeBagRandomSearch(object):
     print('*    Building new tree based on best parameter combination')
     print('*' *80)
 
-    self.tree_clf_rand_bag_new = DecisionTreeClassifier(**self.best_params, random_state=42)
+    self.tree_clf_rand_bag_new =BaggingClassifier(
+                                       DecisionTreeClassifier(**self.best_params, random_state=42),
+n_jobs=-1, bootstrap=True)
     with open(os.path.join(self.out_folder, 'decisiontree_bag_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created new decision tree "tree_clf_rand_bag_new" using best parameters \n')
 
@@ -309,9 +311,10 @@ class DecisionTreeBagRandomSearch(object):
     with open(os.path.join(self.out_folder, 'decisiontree_bag_randomsearch.txt'), 'a') as text_file:
       text_file.write('Creating pickle file for best tree as best_tree_rand_search_bag.pkl \n')
 
+
     #visualise best decision tree
     self.tree_clf_rand_bag_new.fit(self.X_transform_train, self.y_train)
-    trees = self.tree_clf_grid_bag_new.estimators_
+    trees = self.tree_clf_rand_bag_new.estimators_
 
     i_tree = 0
     for tree in trees:
@@ -341,8 +344,7 @@ class DecisionTreeBagRandomSearch(object):
     accuracy_mean_cv = cross_val_score(self.tree_clf_rand_bag_new, self.X_transform_train, self.y_train,
                     cv=10, scoring='accuracy').mean()
     # calculate cross_val_scoring with different scoring functions for CV train set
-    train_roc_auc = cross_val_score(self.tree_clf_rand_bag_new, self.X_transform_train, self.y_train, cv=10,
-                    scoring='roc_auc').mean()
+    train_roc_auc = cross_val_score(self.tree_clf_rand_bag_new, self.X_transform_train, self.y_train, cv=10, scoring='roc_auc').mean()
     train_accuracy = cross_val_score(self.tree_clf_rand_bag_new, self.X_transform_train, self.y_train, cv=10,
                     scoring='accuracy').mean()
     train_recall = cross_val_score(self.tree_clf_rand_bag_new, self.X_transform_train, self.y_train, cv=10,

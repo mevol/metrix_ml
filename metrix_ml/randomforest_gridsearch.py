@@ -271,7 +271,7 @@ class RandomForestGridSearch(object):
     grid_search.fit(self.X_transform_train, self.y_train)
 
     #get best parameter combination and its score as accuracy
-    with open(os.path.join(self.outdir, 'randomforest_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Best parameters: ' +str(grid_search.best_params_)+'\n')
       text_file.write('Best score: ' +str(grid_search.best_score_)+'\n')
     

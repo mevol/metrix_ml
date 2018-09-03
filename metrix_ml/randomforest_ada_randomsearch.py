@@ -306,7 +306,7 @@ class RandomForestAdaRandSearch(object):
     print('*    Saving new forest based on best parameter combination as pickle')
     print('*' *80)
 
-    joblib.dump(self.forest_clf_rand_ada_new, os.path.join(self.outdir,'best_forest_rand_search_ada.pkl'))
+    joblib.dump(self.forest_clf_rand_ada_new, os.path.join(self.out_folder,'best_forest_rand_search_ada.pkl'))
     with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Creating pickle file for best forest as best_forest_rand_search_ada.pkl \n')
     
