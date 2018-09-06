@@ -298,6 +298,8 @@ class RandomForestGridSearch(object):
     with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Created new decision forest "forest_clf_grid_new" using best parameters \n')
 
+    self.forest_clf_grid_new.fit(self.X_transform_train, self.y_train)
+
     print('*' *80)
     print('*    Saving new forest based on best parameter combination as pickle')
     print('*' *80)
@@ -307,7 +309,7 @@ class RandomForestGridSearch(object):
       text_file.write('Creating pickle file for best forest as best_forest_grid_search.pkl \n')
 
     #visualise best decision tree
-    trees = forest_clf_grid_new.estimators_
+    trees = self.forest_clf_grid_new.estimators_
     i_tree = 0
     for tree in trees:
       with open(os.path.join(self.out_folder,'forest_clf_grid_new_tree' + str(i_tree) + '.dot'), 'w') as f:

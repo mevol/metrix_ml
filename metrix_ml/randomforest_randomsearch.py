@@ -299,6 +299,8 @@ class RandomForestRandSearch(object):
     with open(os.path.join(self.out_folder, 'randomforest_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created new decision forest "forest_clf_rand_new" using best parameters \n')
 
+    self.forest_clf_rand_new.fit(self.X_transform_train, self.y_train)
+
     print('*' *80)
     print('*    Saving new forest based on best parameter combination as pickle')
     print('*' *80)
@@ -308,7 +310,6 @@ class RandomForestRandSearch(object):
       text_file.write('Creating pickle file for best forest as best_forest_rand_search.pkl \n')
     
     #visualise trees of best forest
-    self.forest_clf_rand_new.fit(self.X_transform_train, self.y_train)
     trees = self.forest_clf_rand_new.estimators_
     i_tree = 0
     for tree in trees:

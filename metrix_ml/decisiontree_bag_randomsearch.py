@@ -303,6 +303,8 @@ class DecisionTreeBagRandomSearch(object):
     with open(os.path.join(self.out_folder, 'decisiontree_bag_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created new decision tree "tree_clf_rand_bag_new" using best parameters \n')
 
+    self.tree_clf_rand_bag_new.fit(self.X_transform_train, self.y_train)
+
     print('*' *80)
     print('*    Saving new tree based on best parameter combination as pickle')
     print('*' *80)
@@ -313,7 +315,6 @@ class DecisionTreeBagRandomSearch(object):
 
 
     #visualise best decision tree
-    self.tree_clf_rand_bag_new.fit(self.X_transform_train, self.y_train)
     trees = self.tree_clf_rand_bag_new.estimators_
 
     i_tree = 0

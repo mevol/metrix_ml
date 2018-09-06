@@ -302,6 +302,8 @@ class DecisionTreeBagGridSearch(object):
                                         DecisionTreeClassifier(**self.best_params, random_state=42),
                                         n_jobs=-1, bootstrap=True)
 
+    self.tree_clf_grid_bag_new.fit(self.X_transform_train, self.y_train)
+    
     print('*' *80)
     print('*    Saving new tree based on best parameter combination as pickle')
     print('*' *80)
@@ -311,9 +313,7 @@ class DecisionTreeBagGridSearch(object):
       text_file.write('Creating pickle file for best tree as best_tree_grid_search_bag.pkl \n')
       text_file.write('Created new decision tree "tree_clf_grid_bag_new" using best parameters \n')
 
-    #visualise best decision tree
-    self.tree_clf_grid_bag_new.fit(self.X_transform_train, self.y_train)
-    
+    #visualise best decision tree 
     trees = self.tree_clf_grid_bag_new.estimators_
 
     i_tree = 0

@@ -300,6 +300,8 @@ class DecisionTreeRandomSearch(object):
     with open(os.path.join(self.out_folder, 'decisiontree_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created new decision tree "tree_clf_rand_new" using best parameters \n')
 
+    self.tree_clf_rand_new.fit(self.X_transform_train, self.y_train)
+
     print('*' *80)
     print('*    Saving new tree based on best parameter combination as pickle')
     print('*' *80)
@@ -309,7 +311,6 @@ class DecisionTreeRandomSearch(object):
       text_file.write('Creating pickle file for best tree as best_tree_rand_search.pkl \n')
 
     #visualise best decision tree
-    self.tree_clf_rand_new.fit(self.X_transform_train, self.y_train)
     dotfile = os.path.join(self.out_folder, 'tree_clf_rand_new.dot')
     pngfile = os.path.join(self.out_folder, 'tree_clf_rand_new.png')
 

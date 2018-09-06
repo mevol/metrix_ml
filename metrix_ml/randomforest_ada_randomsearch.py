@@ -296,9 +296,12 @@ class RandomForestAdaRandSearch(object):
     print('*    Building new forest based on best parameter combination')
     print('*' *80)
 
-    self.forest_clf_rand_ada_new = AdaBoostClassifier(
-                            RandomForestClassifier(**self.best_params, random_state=42),
-                            algorithm="SAMME.R", learning_rate=0.5)
+    self.forest_clf_rand_new = RandomForestClassifier(**self.best_params, random_state=42)
+
+    self.forest_clf_rand_ada_new = AdaBoostClassifier(self.forest_clf_rand_new, algorithm="SAMME.R", learning_rate=0.5)
+    
+    self.forest_clf_rand_ada_new.fit(self.X_transform_train, self.y_train)
+    
     with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created new decision forest "forest_clf_rand_ada_new" using best parameters \n')
 
@@ -311,24 +314,24 @@ class RandomForestAdaRandSearch(object):
       text_file.write('Creating pickle file for best forest as best_forest_rand_search_ada.pkl \n')
     
     #visualise trees of best forest
-    self.forest_clf_rand_ada_new.fit(self.X_transform_train, self.y_train)
-    trees = self.forest_clf_rand_ada_new.estimators_
-    i_tree = 0
-    for tree in trees:
-      with open(os.path.join(self.out_folder,'forest_clf_rand_ada_new_tree' + str(i_tree) + '.dot'), 'w') as f:
-        export_graphviz(tree, out_file=f, feature_names=self.X_transform_train.columns,
-                   rounded=True, filled=True)
-        f.close()
-      dotfile = os.path.join(self.out_folder, 'forest_clf_rand_ada_new_tree' + str(i_tree) + '.dot')
-      pngfile = os.path.join(self.out_folder, 'forest_clf_rand_ada_new_tree' + str(i_tree) + '.png')
-      command = ["dot", "-Tpng", dotfile, "-o", pngfile]
-      subprocess.check_call(command)
-      i_tree = i_tree + 1
+#    self.forest_clf_rand_ada_new.fit(self.X_transform_train, self.y_train)
+   
+#    trees = self.forest_clf_rand_ada_new.estimators_
+#    i_tree = 0
+#    for tree in trees:
+#      with open(os.path.join(self.out_folder,'forest_clf_rand_ada_new_tree' + str(i_tree) + '.dot'), 'w') as f:
+#        export_graphviz(tree, out_file=f, feature_names=self.X_transform_train.columns, rounded=True, filled=True)
+#        f.close()
+#      dotfile = os.path.join(self.out_folder, 'forest_clf_rand_ada_new_tree' + str(i_tree) + '.dot')
+#      pngfile = os.path.join(self.out_folder, 'forest_clf_rand_ada_new_tree' + str(i_tree) + '.png')
+#      command = ["dot", "-Tpng", dotfile, "-o", pngfile]
+#      subprocess.check_call(command)
+#      i_tree = i_tree + 1
 
-    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Writing DOTfile and convert to PNG for "forest_clf_rand_ada_new" \n')
-      text_file.write('DOT filename: forest_clf_rand_ada_new.dot \n')
-      text_file.write('PNG filename: forest_clf_rand_ada_new.png \n')
+#    with open(os.path.join(self.out_folder, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
+#      text_file.write('Writing DOTfile and convert to PNG for "forest_clf_rand_ada_new" \n')
+#      text_file.write('DOT filename: forest_clf_rand_ada_new.dot \n')
+#      text_file.write('PNG filename: forest_clf_rand_ada_new.png \n')
 
     print('*' *80)
     print('*    Getting basic stats for new forest')

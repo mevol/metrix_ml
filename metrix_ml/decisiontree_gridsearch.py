@@ -297,6 +297,8 @@ class DecisionTreeGridSearch(object):
 
     self.tree_clf_grid_new = DecisionTreeClassifier(**self.best_params, random_state=42)
 
+    self.tree_clf_grid_new.fit(self.X_transform_train, self.y_train)
+
     print('*' *80)
     print('*    Saving new tree based on best parameter combination as pickle')
     print('*' *80)
@@ -307,7 +309,6 @@ class DecisionTreeGridSearch(object):
       text_file.write('Created new decision tree "tree_clf_grid_new" using best parameters \n')
 
     #visualise best decision tree
-    self.tree_clf_grid_new.fit(self.X_transform_train, self.y_train)
     dotfile = os.path.join(self.out_folder, 'tree_clf_grid_new.dot')
     pngfile = os.path.join(self.out_folder, 'tree_clf_grid_new.png')
 
