@@ -65,9 +65,13 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
 
 def make_output_folder(outdir):
-  out_folder = os.path.join(outdir, 'randomforest_gridsearch')
-  os.makedirs(out_folder, exist_ok=True)
-  return out_folder
+  names = ['database', 'man_add', 'transform']
+  result = []
+  for name in names:
+    name = os.path.join(outdir, 'randomforest_gridsearch', name)
+    os.makedirs(name, exist_ok=True)
+    result.append(name)
+  return result
 
 ###############################################################################
 #
@@ -84,9 +88,11 @@ class RandomForestGridSearch(object):
      * predict on this new tree with test data and cross-validated training data
      * analyse the predisctions with graphs and stats
   '''
-  def __init__(self, metrix, out_folder):
+  def __init__(self, metrix, database, man_add, transform):
     self.metrix=metrix
-    self.out_folder=out_folder
+    self.database=database
+    self.man_add=man_add
+    self.transform=transform
     self.prepare_metrix_data()
     self.split_data()
     self.grid_search()
@@ -122,7 +128,7 @@ class RandomForestGridSearch(object):
                       'RmergeI', 'RmeasI', 'RmeasdiffI', 'RpimdiffI', 'RpimI', 'diffF']
     metrix_database = self.metrix[attr_database]
     
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.database, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_database with following attributes %s \n' %(attr_database))
 
     #database plus manually added data
@@ -134,7 +140,7 @@ class RandomForestGridSearch(object):
                     'No_mol_ASU', 'MW_chain', 'sites_ASU']
     metrix_man_add = self.metrix[attr_man_add]
 
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.man_add, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_man_add with following attributes %s \n' %(attr_man_add))
 
     #after column transformation expected feature list
@@ -151,7 +157,7 @@ class RandomForestGridSearch(object):
 
     metrix_transform = metrix_man_add.copy()
 
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.transform, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Preparing input data as metrix_transform with following attributes %s \n' %(attr_transform))
 
     #column transformation
@@ -188,8 +194,12 @@ class RandomForestGridSearch(object):
     self.X_man_add = metrix_man_add
     self.X_transform = metrix_transform
 
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created the following dataframes: metrix_database, metrix_man_add, metrix_transform \n')
+    with open(os.path.join(self.database, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Created the following dataframes: metrix_database \n')
+    with open(os.path.join(self.man_add, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Created the following dataframes: metrix_man_add \n')
+    with open(os.path.join(self.transform, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Created the following dataframes: metrix_transform \n')
 
     ###############################################################################
     #
@@ -225,10 +235,18 @@ class RandomForestGridSearch(object):
     self.y_train = y_train
     self.y_test = y_test
 
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.database, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Spliting into training and test set 80-20 \n')
       text_file.write('metrix_database: X_database_train, X_database_test \n')
+      text_file.write('y(EP_success): y_train, y_test \n')
+      
+    with open(os.path.join(self.man_add, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Spliting into training and test set 80-20 \n')
       text_file.write('metrix_man_add: X_man_add_train, X_man_add_test \n')
+      text_file.write('y(EP_success): y_train, y_test \n')
+      
+    with open(os.path.join(self.transform, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Spliting into training and test set 80-20 \n')
       text_file.write('metrix_transform: X_transform_train, X_transform_test \n')
       text_file.write('y(EP_success): y_train, y_test \n')
 
@@ -248,7 +266,11 @@ class RandomForestGridSearch(object):
     #create the decision forest
     forest_clf_grid = RandomForestClassifier(random_state=42)
 
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.database, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Created random forest: forest_clf_grid \n')
+    with open(os.path.join(self.man_add, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Created random forest: forest_clf_grid \n')
+    with open(os.path.join(self.transform, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Created random forest: forest_clf_grid \n')
 
     #set up grid search
@@ -260,7 +282,13 @@ class RandomForestGridSearch(object):
                  "min_samples_leaf": [2, 4, 6],
                  "max_leaf_nodes": [5, 10, 15]}
 
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.database, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Running grid search for the following parameters: %s \n' %param_grid)
+      text_file.write('use cv=10, scoring=accuracy \n')
+    with open(os.path.join(self.man_add, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Running grid search for the following parameters: %s \n' %param_grid)
+      text_file.write('use cv=10, scoring=accuracy \n')
+    with open(os.path.join(self.transform, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Running grid search for the following parameters: %s \n' %param_grid)
       text_file.write('use cv=10, scoring=accuracy \n')
 
@@ -268,19 +296,46 @@ class RandomForestGridSearch(object):
     grid_search = GridSearchCV(forest_clf_grid, param_grid, cv=10,
                               scoring='accuracy')
 
-    grid_search.fit(self.X_transform_train, self.y_train)
+#    grid_search.fit(self.X_transform_train, self.y_train)
+    
+    grid_search_database = grid_search.fit(self.X_database_train, self.y_train)
+    grid_search_man_add = grid_search.fit(self.X_man_add_train, self.y_train)
+    grid_search_transform = grid_search.fit(self.X_transform_train, self.y_train)    
 
     #get best parameter combination and its score as accuracy
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Best parameters: ' +str(grid_search.best_params_)+'\n')
-      text_file.write('Best score: ' +str(grid_search.best_score_)+'\n')
+#    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
+#      text_file.write('Best parameters: ' +str(grid_search.best_params_)+'\n')
+#      text_file.write('Best score: ' +str(grid_search.best_score_)+'\n')
+    with open(os.path.join(self.database, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Best parameters: ' +str(grid_search_database.best_params_)+'\n')
+      text_file.write('Best score: ' +str(grid_search_database.best_score_)+'\n')
+    with open(os.path.join(self.man_add, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Best parameters: ' +str(grid_search_man_add.best_params_)+'\n')
+      text_file.write('Best score: ' +str(grid_search_man_add.best_score_)+'\n')
+    with open(os.path.join(self.transform, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Best parameters: ' +str(grid_search_transform.best_params_)+'\n')
+      text_file.write('Best score: ' +str(grid_search_transform.best_score_)+'\n')
     
-    feature_importances = grid_search.best_estimator_.feature_importances_
+#    feature_importances = grid_search.best_estimator_.feature_importances_
+#    feature_importances_ls = sorted(zip(feature_importances, self.X_transform_train), reverse=True)
+#    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
+#      text_file.write('Feature importances: %s \n' %feature_importances_ls)
+    feature_importances = grid_search_database.best_estimator_.feature_importances_
+    feature_importances_ls = sorted(zip(feature_importances, self.X_database_train), reverse=True)
+    with open(os.path.join(self.database, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Feature importances: %s \n' %feature_importances_ls)
+    feature_importances = grid_search_man_add.best_estimator_.feature_importances_
+    feature_importances_ls = sorted(zip(feature_importances, self.X_man_add_train), reverse=True)
+    with open(os.path.join(self.man_add, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Feature importances: %s \n' %feature_importances_ls)
+    feature_importances = grid_search_transform.best_estimator_.feature_importances_
     feature_importances_ls = sorted(zip(feature_importances, self.X_transform_train), reverse=True)
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
+    with open(os.path.join(self.transform, 'randomforest_gridsearch.txt'), 'a') as text_file:
       text_file.write('Feature importances: %s \n' %feature_importances_ls)
     
-    self.best_params = grid_search.best_params_
+    self.best_params_database = grid_search_database.best_params_
+    self.best_params_man_add = grid_search_man_add.best_params_
+    self.best_params_transform = grid_search_transform.best_params_
 
     ###############################################################################
     #
@@ -291,22 +346,39 @@ class RandomForestGridSearch(object):
   def forest_best_params(self):
     '''create a new random forest using the best parameter combination found above'''
     print('*' *80)
-    print('*    Building new forest based on best parameter combination')
+    print('*    Building new forest based on best parameter combination and save as pickle')
     print('*' *80)
 
-    self.forest_clf_grid_new = RandomForestClassifier(**self.best_params, random_state=42)
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created new decision forest "forest_clf_grid_new" using best parameters \n')
+    self.forest_clf_grid_new_database = RandomForestClassifier(**self.best_params_database, random_state=42)
+    self.forest_clf_grid_new_database.fit(self.X_database_train, self.y_train)
+    joblib.dump(self.forest_clf_grid_new_database, os.path.join(self.database,'best_forest_grid_search_database.pkl'))
+    with open(os.path.join(self.database, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Created new decision forest "forest_clf_grid_new_database" using best parameters \n')
+      text_file.write('Creating pickle file for best forest as best_forest_grid_search_database.pkl \n')
 
-    self.forest_clf_grid_new.fit(self.X_transform_train, self.y_train)
+    self.forest_clf_grid_new_man_add = RandomForestClassifier(**self.best_params_man_add, random_state=42)
+    self.forest_clf_grid_new_man_add.fit(self.X_man_add_train, self.y_train)
+    joblib.dump(self.forest_clf_grid_new_man_add, os.path.join(self.man_add,'best_forest_grid_search_man_add.pkl'))
+    with open(os.path.join(self.man_add, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Created new decision forest "forest_clf_grid_new_man_add" using best parameters \n')
+      text_file.write('Creating pickle file for best forest as best_forest_grid_search_man_add.pkl \n')
 
-    print('*' *80)
-    print('*    Saving new forest based on best parameter combination as pickle')
-    print('*' *80)
+    self.forest_clf_grid_new_transform = RandomForestClassifier(**self.best_params_transform, random_state=42)
+    self.forest_clf_grid_new_transform.fit(self.X_transform_train, self.y_train)
+    joblib.dump(self.forest_clf_grid_new_transform, os.path.join(self.transform,'best_forest_grid_search_transform.pkl'))
+    with open(os.path.join(self.transform, 'randomforest_gridsearch.txt'), 'a') as text_file:
+      text_file.write('Created new decision forest "forest_clf_grid_new_transform" using best parameters \n')
+      text_file.write('Creating pickle file for best forest as best_forest_grid_search_transform.pkl \n')
 
-    joblib.dump(self.forest_clf_grid_new, os.path.join(self.out_folder,'best_forest_grid_search.pkl'))
-    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Creating pickle file for best forest as best_forest_grid_search.pkl \n')
+#    self.forest_clf_grid_new.fit(self.X_transform_train, self.y_train)
+
+#    print('*' *80)
+#    print('*    Saving new forest based on best parameter combination as pickle')
+#    print('*' *80)
+
+#    joblib.dump(self.forest_clf_grid_new, os.path.join(self.out_folder,'best_forest_grid_search.pkl'))
+#    with open(os.path.join(self.out_folder, 'randomforest_gridsearch.txt'), 'a') as text_file:
+#      text_file.write('Creating pickle file for best forest as best_forest_grid_search.pkl \n')
 
     #visualise best decision tree
     trees = self.forest_clf_grid_new.estimators_
@@ -683,9 +755,9 @@ def run():
   #look at the imported data to get an idea what we are working with
   metrix = load_metrix_data(args.input)
   
-  outdir = make_output_folder(args.outdir)
+  database, man_add, transform = make_output_folder(args.outdir)
 
   ###############################################################################
 
-  random_forest_grid_search = RandomForestGridSearch(metrix, outdir)
+  random_forest_grid_search = RandomForestGridSearch(metrix, database, man_add, transform)
 

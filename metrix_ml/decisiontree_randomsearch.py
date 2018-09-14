@@ -435,36 +435,16 @@ class DecisionTreeRandomSearch(object):
 
     def write_pickle(tree, directory, name):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-      joblib.dump(tree, os.path.join(directory,'best_tree_rand_search_'+name+datestring+'.pkl'))
+      joblib.dump(tree, os.path.join(directory,'best_tree_rand_'+name+datestring+'.pkl'))
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
         text_file.write('Created new decision tree "tree_clf_rand_new_%s" using best parameters \n' %name)
-        text_file.write('Creating pickle file for best tree as best_tree_rand_search_%s.pkl \n' %name)
+        text_file.write('Creating pickle file for best tree as best_tree_rand_%s.pkl \n' %name)
     
     write_pickle(self.tree_clf_rand_new_database, self.database, 'database')
     write_pickle(self.tree_clf_rand_new_man_add, self.man_add, 'man_add')
     write_pickle(self.tree_clf_rand_new_transform, self.transform, 'transform')
     write_pickle(self.tree_clf_rand_new_prot_screen_trans, self.prot_screen_trans, 'prot_screen_trans')
     
-#    joblib.dump(self.tree_clf_rand_new_database, os.path.join(self.database,'best_tree_rand_search_database'+datestring+'.pkl'))
-#    with open(os.path.join(self.database, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-#      text_file.write('Created new decision tree "tree_clf_rand_new_database" using best parameters \n')
-#      text_file.write('Creating pickle file for best tree as best_tree_rand_search_database.pkl \n')
-
-#    joblib.dump(self.tree_clf_rand_new_man_add, os.path.join(self.man_add,'best_tree_rand_search_man_add.pkl'))
-#    with open(os.path.join(self.man_add, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-#      text_file.write('Created new decision tree "tree_clf_rand_new_man_add" using best parameters \n')
-#      text_file.write('Creating pickle file for best tree as best_tree_rand_search_man_add'+datestring+'.pkl \n')
-
-#    joblib.dump(self.tree_clf_rand_new_transform, os.path.join(self.transform,'best_tree_rand_search_transform.pkl'))
-#    with open(os.path.join(self.transform, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-#      text_file.write('Created new decision tree "tree_clf_rand_new_transform" using best parameters \n')
-#      text_file.write('Creating pickle file for best tree as best_tree_rand_search_transform'+datestring+'.pkl \n')
-
-#    joblib.dump(self.tree_clf_rand_new_prot_screen_trans, os.path.join(self.prot_screen_trans,'best_tree_rand_search_prot_screen_trans.pkl'))
-#    with open(os.path.join(self.prot_screen_trans, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-#      text_file.write('Created new decision tree "tree_clf_rand_new_prot_screen_trans" using best parameters \n')
-#      text_file.write('Creating pickle file for best tree as best_tree_rand_search_prot_screen_trans'+datestring+'.pkl \n')
-
     def visualise_tree(tree, directory, columns, name):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
       dotfile = os.path.join(directory, 'tree_clf_rand_new_'+name+datestring+'.dot')
@@ -891,5 +871,5 @@ def run():
 
   ###############################################################################
 
-  random_forest_grid_search = DecisionTreeRandomSearch(metrix, database, man_add, transform, prot_screen_trans)
+  decision_tree_grid_search = DecisionTreeRandomSearch(metrix, database, man_add, transform, prot_screen_trans)
 
