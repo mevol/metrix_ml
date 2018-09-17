@@ -286,7 +286,7 @@ class DecisionTreeBagGridSearch(object):
 
     with open(os.path.join(self.prot_screen_trans, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
       text_file.write('Spliting into training and test set 80-20 \n')
-      text_file.write('metrix_database: X_prot_screen_trans_train, X_prot_screen_trans_test \n')
+      text_file.write('metrix_prot_screen_trans: X_prot_screen_trans_train, X_prot_screen_trans_test \n')
       text_file.write('y(EP_success): y_train, y_test \n')
 
     ###############################################################################
@@ -307,13 +307,13 @@ class DecisionTreeBagGridSearch(object):
     tree_clf_grid_bag = DecisionTreeClassifier(random_state=42)
 
     with open(os.path.join(self.database, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created decision tree: tree_clf_grid \n')
+      text_file.write('Created decision tree: tree_clf_grid_bag \n')
     with open(os.path.join(self.man_add, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created decision tree: tree_clf_grid \n')
+      text_file.write('Created decision tree: tree_clf_grid_bag \n')
     with open(os.path.join(self.transform, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created decision tree: tree_clf_grid \n')
+      text_file.write('Created decision tree: tree_clf_grid_bag \n')
     with open(os.path.join(self.prot_screen_trans, 'decisiontree_bag_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Created decision tree: tree_clf_grid \n')
+      text_file.write('Created decision tree: tree_clf_grid_bag \n')
 
     #set up grid search
     param_grid = {"criterion": ["gini", "entropy"],
@@ -426,7 +426,7 @@ class DecisionTreeBagGridSearch(object):
          color="b", yerr=std[indices], align="center")#add yerr=std[indices] for random forest
       plt.xticks(range(X_train.shape[1]), feature_names,rotation=60)
       plt.xlim([-1, X_train.shape[1]])
-      plt.savefig(os.path.join(directory, 'feature_importances_bar_plot_'+datestring+'.png'))
+      plt.savefig(os.path.join(directory, 'feature_importances_bar_plot_grid_bag_'+datestring+'.png'))
       plt.close()
 
     feature_importances(self.tree_clf_grid_bag_new_database, self.X_database_train, self.database)

@@ -416,7 +416,7 @@ class DecisionTreeGridSearch(object):
          color="b", align="center")#add yerr=std[indices] for random forest
       plt.xticks(range(X_train.shape[1]), feature_names,rotation=60)
       plt.xlim([-1, X_train.shape[1]])
-      plt.savefig(os.path.join(directory, 'feature_importances_bar_plot_'+datestring+'.png'))
+      plt.savefig(os.path.join(directory, 'feature_importances_bar_plot_grid_'+datestring+'.png'))
       plt.close()
 
     feature_importances(self.tree_clf_grid_new_database.feature_importances_, self.X_database_train, self.database)
