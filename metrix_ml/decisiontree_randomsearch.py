@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
 import seaborn as sns
+import scikitplot as skplt
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
@@ -411,28 +412,19 @@ class DecisionTreeRandomSearch(object):
 
     self.tree_clf_rand_new_prot_screen_trans = DecisionTreeClassifier(**self.best_params_prot_screen_trans, random_state=42)
     self.tree_clf_rand_new_prot_screen_trans.fit(self.X_prot_screen_trans_train, self.y_train)
-    
-    def feature_importances(importances, X_train, directory):
+
+    def plot_features(clf, attr, directory):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-      importances = importances
-      indices = np.argsort(importances)
-      feature_names = X_train.columns
-#      std = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)#for random forest
-      # Plot the feature importances of the forest
-      plt.figure(figsize=(20,10))
-      plt.title("Feature importances")
-      plt.bar(range(X_train.shape[1]), importances[indices],
-         color="b", align="center")#add yerr=std[indices] for random forest
-      plt.xticks(range(X_train.shape[1]), feature_names,rotation=60)
-      plt.xlim([-1, X_train.shape[1]])
+      
+      skplt.estimators.plot_feature_importances(clf, feature_names=attr, x_tick_rotation=60, max_num_features=40, figsize=(20, 19))
       plt.savefig(os.path.join(directory, 'feature_importances_bar_plot_rand_'+datestring+'.png'))
       plt.close()
-      
-    feature_importances(self.tree_clf_rand_new_database.feature_importances_, self.X_database_train, self.database)
-    feature_importances(self.tree_clf_rand_new_man_add.feature_importances_, self.X_man_add_train, self.man_add)
-    feature_importances(self.tree_clf_rand_new_transform.feature_importances_, self.X_transform_train, self.transform)
-    feature_importances(self.tree_clf_rand_new_prot_screen_trans.feature_importances_, self.X_prot_screen_trans_train, self.prot_screen_trans)
-
+   
+    plot_features(self.tree_clf_rand_new_database, self.X_database_train.columns, self.database)
+    plot_features(self.tree_clf_rand_new_man_add, self.X_man_add_train.columns, self.man_add)
+    plot_features(self.tree_clf_rand_new_transform, self.X_transform_train.columns, self.transform)
+    plot_features(self.tree_clf_rand_new_prot_screen_trans, self.X_prot_screen_trans_train.columns, self.prot_screen_trans)
+    
     def write_pickle(tree, directory, name):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
       joblib.dump(tree, os.path.join(directory,'best_tree_rand_'+name+datestring+'.pkl'))
