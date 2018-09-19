@@ -322,6 +322,30 @@ class FeatureCorrelations(object):
             csv_file.close()
     #write_corr(r,p, metrix_num)
 
+#confution matrix of features
+X_transform_train_ordered = X_transform_train[['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+                          'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+                          'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+                          'highreslimit', 'wilsonbfactor', 'anomalousslope',
+                          'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+                          'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                          'Vcell', 'solvent_content', 'Vcell/Vm<Ma>', 'Matth_coeff',
+                          'MW_ASU/sites_ASU/solvent_content', 'MW_chain', 'No_atom_chain',
+                          'No_mol_ASU', 'MW_ASU', 'sites_ASU', 'MW_ASU/sites_ASU',
+                          'MW_chain/No_atom_chain', 'wilson', 'bragg', 'volume_wilsonB_highres']]                              
+
+X_transform_train_ordered.to_csv(os.path.join(METRIX_PATH, 'X_transform_train_ordered_forR.csv'), sep=',')
+
+import seaborn as sns
+
+f, ax = plt.subplots(figsize=(10, 8))
+corr = X_transform_train_ordered.corr()
+sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool), cmap=sns.diverging_palette(255, 10, as_cmap=True),
+            square=True, ax=ax)
+plt.show()
+    
+#print(X_transform_train.columns)
+#print(X_transform_train_ordered.columns)
 
 
 
