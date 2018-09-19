@@ -267,17 +267,18 @@ class FeatureCorrelations(object):
     #
     ###############################################################################
 
-    def calculate_pearson_cc(X_train):
-        '''This functions calculates a simple statistics of
-        Pearson correlation coefficient'''
-        attr = list(X_train)
-        datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-        for a in attr:
-            corr_X_train = X_train.corr()        
-            with open(os.path.join(METRIX_PATH, 'linear_PearsonCC_values_'+datestring+'.txt'), 'a') as text_file:
-                corr_X_train[a].sort_values(ascending=False).to_csv(text_file)
-        text_file.close()
-    #calculate_pearson_cc(metrix)
+  def calculate_pearson_cc(X_train, name, directory):
+    '''This functions calculates a simple statistics of
+    Pearson correlation coefficient'''
+    attr = list(X_train)
+    datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+    for a in attr:
+      corr_X_train = X_train.corr()        
+      with open(os.path.join(directory, 'linear_PearsonCC_values_'+name+datestring+'.txt'), 'a') as text_file:
+        corr_X_train[a].sort_values(ascending=False).to_csv(text_file)
+      text_file.close()
+        
+  calculate_pearson_cc(self.X_database_train, 'database', self.database)
     
     def print_scatter_matrix(X_train):
         '''A function to create a scatter matrix of the data'''
