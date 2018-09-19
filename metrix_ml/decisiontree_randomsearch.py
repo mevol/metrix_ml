@@ -251,10 +251,18 @@ class DecisionTreeRandomSearch(object):
     print('*' *80)
 
     y = self.metrix['EP_success']
+    
+#normal split of samples    
     X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42)
     X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(self.X_man_add, y, test_size=0.2, random_state=42)
     X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
     X_prot_screen_trans_train, X_prot_screen_trans_test, y_train, y_test = train_test_split(self.X_prot_screen_trans, y, test_size=0.2, random_state=42)
+
+#stratified split of samples
+#    X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42, stratify=y)
+#    X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(self.X_man_add, y, test_size=0.2, random_state=42, stratify=y)
+#    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42, stratify=y)
+#    X_prot_screen_trans_train, X_prot_screen_trans_test, y_train, y_test = train_test_split(self.X_prot_screen_trans, y, test_size=0.2, random_state=42, stratify=y)
     
     assert self.X_database.columns.all() == X_database_train.columns.all()
     assert self.X_man_add.columns.all() == X_man_add_train.columns.all()
@@ -320,12 +328,12 @@ class DecisionTreeRandomSearch(object):
       text_file.write('Created decision tree: tree_clf_rand \n')
 
     #set up grid search
-    param_rand = {"criterion": ["gini", "entropy"],
-                  'max_features': randint(2, 16),
-                  "min_samples_split": randint(2, 20),
-                  "max_depth": randint(5, 10),
-                  "min_samples_leaf": randint(1, 20),
-                  "max_leaf_nodes": randint(10, 20)}
+    param_rand = {"criterion": ["gini", "entropy"],#metric to judge reduction of impurity
+                  'max_features': randint(2, 16),#max number of features when splitting
+                  "min_samples_split": randint(2, 20),#min samples per node to induce split
+                  "max_depth": randint(5, 10),#max number of splits to do
+                  "min_samples_leaf": randint(1, 20),#min number of samples in a leaf
+                  "max_leaf_nodes": randint(10, 20)}#max number of leaves
 
     with open(os.path.join(self.database, 'decisiontree_randomsearch.txt'), 'a') as text_file:
       text_file.write('Running grid search for the following parameters: %s \n' %param_rand)
@@ -344,7 +352,6 @@ class DecisionTreeRandomSearch(object):
     rand_search = RandomizedSearchCV(tree_clf_rand, param_rand, random_state=5, cv=10, n_iter=288,
                               scoring='accuracy')
                               
-
     rand_search_database = rand_search.fit(self.X_database_train, self.y_train)
     with open(os.path.join(self.database, 'decisiontree_randomsearch.txt'), 'a') as text_file:
       text_file.write('Best parameters: ' +str(rand_search_database.best_params_)+'\n')
@@ -416,7 +423,7 @@ class DecisionTreeRandomSearch(object):
     def plot_features(clf, attr, directory):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
       
-      skplt.estimators.plot_feature_importances(clf, feature_names=attr, x_tick_rotation=60, max_num_features=40, figsize=(20, 19))
+      skplt.estimators.plot_feature_importances(clf, feature_names=attr, x_tick_rotation=60, max_num_features=40, figsize=(25, 25))
       plt.savefig(os.path.join(directory, 'feature_importances_bar_plot_rand_'+datestring+'.png'))
       plt.close()
    
@@ -501,36 +508,45 @@ class DecisionTreeRandomSearch(object):
     print('*    Predict using new tree and test/train_CV set')
     print('*' *80)
 
-    #maybe I should look at this
-    #y_pred = classifier.fit(X_train, y_train).predict(X_test)
-
     #try out how well the classifier works to predict from the test set
-    self.y_pred_class_database = self.tree_clf_rand_new_database.predict(self.X_database_test)
+    #self.y_pred_class_database = self.tree_clf_rand_new_database.predict(self.X_database_test)
+    self.y_pred_database = self.tree_clf_rand_new_database.predict(self.X_database_test)
+    self.y_pred_proba_database = self.tree_clf_rand_new_database.predict_proba(self.X_database_test)
     with open(os.path.join(self.database, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Saving predictions for X_database_test in y_pred_class_database \n')
-    self.y_pred_class_man_add = self.tree_clf_rand_new_man_add.predict(self.X_man_add_test)
+      text_file.write('Saving predictions and probabilities for X_database_test in y_pred_database and probabilities in y_pred_proba_database \n')
+    #self.y_pred_class_man_add = self.tree_clf_rand_new_man_add.predict(self.X_man_add_test)
+    self.y_pred_man_add = self.tree_clf_rand_new_man_add.predict(self.X_man_add_test)
+    self.y_pred_proba_man_add = self.tree_clf_rand_new_man_add.predict_proba(self.X_man_add_test)
     with open(os.path.join(self.man_add, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Saving predictions for X_man_add_test in y_pred_class_man_add \n')
-    self.y_pred_class_transform = self.tree_clf_rand_new_transform.predict(self.X_transform_test)
+      text_file.write('Saving predictions and probabilities for X_man_add_test in y_pred_man_add and probabilities y_pred_proba_man_add\n')
+    #self.y_pred_class_transform = self.tree_clf_rand_new_transform.predict(self.X_transform_test)
+    self.y_pred_transform = self.tree_clf_rand_new_transform.predict(self.X_transform_test)
+    self.y_pred_proba_transform = self.tree_clf_rand_new_transform.predict_proba(self.X_transform_test)
     with open(os.path.join(self.transform, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Saving predictions for X_transform_test in y_pred_class_transform \n')
-    self.y_pred_class_prot_screen_trans = self.tree_clf_rand_new_prot_screen_trans.predict(self.X_prot_screen_trans_test)
+      text_file.write('Saving predictions and probabilities for X_transform_test in y_pred_transform and probabilities y_pred_proba_transform\n')
+    #self.y_pred_class_prot_screen_trans = self.tree_clf_rand_new_prot_screen_trans.predict(self.X_prot_screen_trans_test)
+    self.y_pred_prot_screen_trans = self.tree_clf_rand_new_prot_screen_trans.predict(self.X_prot_screen_trans_test)
+    self.y_pred_proba_prot_screen_trans = self.tree_clf_rand_new_prot_screen_trans.predict_proba(self.X_prot_screen_trans_test)
     with open(os.path.join(self.prot_screen_trans, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Saving predictions for X_transform_test in y_pred_class_prot_screen_trans \n')
+      text_file.write('Saving predictions and probabilities for X_transform_test in y_pred_class_prot_screen_trans and probabilities y_pred_proba_prot_screen_trans\n')
 
     #alternative way to not have to use the test set
-    self.y_train_pred_database = cross_val_predict(self.tree_clf_rand_new_database, self.X_database_train, self.y_train, cv=10)
+    self.y_train_CV_pred_database = cross_val_predict(self.tree_clf_rand_new_database, self.X_database_train, self.y_train, cv=10)
+    self.y_train_CV_pred_proba_database = cross_val_predict(self.tree_clf_rand_new_database, self.X_database_train, self.y_train, cv=10, method='predict_proba')
     with open(os.path.join(self.database, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Saving predictions for X_database_train with 10-fold CV in y_train_pred_database \n')
-    self.y_train_pred_man_add = cross_val_predict(self.tree_clf_rand_new_man_add, self.X_man_add_train, self.y_train, cv=10)
+      text_file.write('Saving predictions and probabilities for X_database_train with 10-fold CV in y_train_pred_database \n')
+    self.y_train_CV_pred_man_add = cross_val_predict(self.tree_clf_rand_new_man_add, self.X_man_add_train, self.y_train, cv=10)
+    self.y_train_CV_pred_proba_man_add = cross_val_predict(self.tree_clf_rand_new_man_add, self.X_man_add_train, self.y_train, cv=10, method='predict_proba')
     with open(os.path.join(self.man_add, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Saving predictions for X_man_add_train with 10-fold CV in y_train_pred_man_add \n')
-    self.y_train_pred_transform = cross_val_predict(self.tree_clf_rand_new_transform, self.X_transform_train, self.y_train, cv=10)
+      text_file.write('Saving predictions and probabilities for X_man_add_train with 10-fold CV in y_train_pred_man_add \n')
+    self.y_train_CV_pred_transform = cross_val_predict(self.tree_clf_rand_new_transform, self.X_transform_train, self.y_train, cv=10)
+    self.y_train_CV_pred_proba_transform = cross_val_predict(self.tree_clf_rand_new_transform, self.X_transform_train, self.y_train, cv=10, method='predict_proba')
     with open(os.path.join(self.transform, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Saving predictions for X_transform_train with 10-fold CV in y_train_pred_transform \n')
-    self.y_train_pred_prot_screen_trans = cross_val_predict(self.tree_clf_rand_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, cv=10)
+      text_file.write('Saving predictions and probabilities for X_transform_train with 10-fold CV in y_train_pred_transform \n')
+    self.y_train_CV_pred_prot_screen_trans = cross_val_predict(self.tree_clf_rand_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, cv=10)
+    self.y_train_CV_pred_proba_prot_screen_trans = cross_val_predict(self.tree_clf_rand_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, cv=10, method='predict_proba')
     with open(os.path.join(self.prot_screen_trans, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Saving predictions for X_prot_screen_trans_train with 10-fold CV in y_train_pred_prot_screen_trans \n')
+      text_file.write('Saving predictions and probabilities for X_prot_screen_trans_train with 10-fold CV in y_train_pred_prot_screen_trans \n')
 
     print('*' *80)
     print('*    Calculate prediction stats')
@@ -561,10 +577,10 @@ class DecisionTreeRandomSearch(object):
         text_file.write('Percent 0s in y_test: %s \n' %zeros)
         text_file.write('Null accuracy in y_test: %s \n' %null_acc)
     
-    prediction_stats(self.y_test, self.y_pred_class_database, self.database)
-    prediction_stats(self.y_test, self.y_pred_class_man_add, self.man_add)
-    prediction_stats(self.y_test, self.y_pred_class_transform, self.transform)
-    prediction_stats(self.y_test, self.y_pred_class_prot_screen_trans, self.prot_screen_trans)   
+    prediction_stats(self.y_test, self.y_pred_database, self.database)
+    prediction_stats(self.y_test, self.y_pred_man_add, self.man_add)
+    prediction_stats(self.y_test, self.y_pred_transform, self.transform)
+    prediction_stats(self.y_test, self.y_pred_prot_screen_trans, self.prot_screen_trans)   
     
     ###############################################################################
     #
@@ -594,10 +610,10 @@ class DecisionTreeRandomSearch(object):
     print('*    Detailed analysis and plotting')
     print('*' *80)
     
-    def conf_mat(y_test, y_train, y_pred_class, y_train_pred, directory):
+    def conf_mat(y_test, y_train, y_pred, y_train_pred, directory):
       # IMPORTANT: first argument is true values, second argument is predicted values
       # this produces a 2x2 numpy array (matrix)
-      conf_mat_test = metrics.confusion_matrix(y_test, y_pred_class)
+      conf_mat_test = metrics.confusion_matrix(y_test, y_pred)
       conf_mat_10CV = metrics.confusion_matrix(y_train, y_train_pred)
       def draw_conf_mat(matrix, directory, name):
         datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
@@ -633,7 +649,7 @@ class DecisionTreeRandomSearch(object):
       
       #calculate accuracy
       acc_score_man_test = (TP + TN) / float(TP + TN + FP + FN)
-      acc_score_sklearn_test = metrics.accuracy_score(y_test, y_pred_class)
+      acc_score_sklearn_test = metrics.accuracy_score(y_test, y_pred)
       acc_score_man_CV = (TP_CV + TN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
       acc_score_sklearn_CV = metrics.accuracy_score(y_train, y_train_pred)  
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
@@ -645,7 +661,7 @@ class DecisionTreeRandomSearch(object):
         
       #classification error
       class_err_man_test = (FP + FN) / float(TP + TN + FP + FN)
-      class_err_sklearn_test = 1 - metrics.accuracy_score(y_test, y_pred_class)
+      class_err_sklearn_test = 1 - metrics.accuracy_score(y_test, y_pred)
       class_err_man_CV = (FP_CV + FN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
       class_err_sklearn_CV = 1 - metrics.accuracy_score(y_train, y_train_pred)
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
@@ -657,7 +673,7 @@ class DecisionTreeRandomSearch(object):
         
       #sensitivity/recall/true positive rate; correctly placed positive cases  
       sensitivity_man_test = TP / float(FN + TP)
-      sensitivity_sklearn_test = metrics.recall_score(y_test, y_pred_class)
+      sensitivity_sklearn_test = metrics.recall_score(y_test, y_pred)
       sensitivity_man_CV = TP_CV / float(FN_CV + TP_CV)
       sensitivity_sklearn_CV = metrics.recall_score(y_train, y_train_pred)
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
@@ -687,7 +703,7 @@ class DecisionTreeRandomSearch(object):
       
       #precision/confidence of placement  
       precision_man_test = TP / float(TP + FP)
-      precision_sklearn_test = metrics.precision_score(y_test, y_pred_class)
+      precision_sklearn_test = metrics.precision_score(y_test, y_pred)
       precision_man_CV = TP_CV / float(TP_CV + FP_CV)
       precision_sklearn_CV = metrics.precision_score(y_train, y_train_pred)
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
@@ -698,33 +714,28 @@ class DecisionTreeRandomSearch(object):
         text_file.write('precision sklearn CV: %s \n' %precision_sklearn_CV)
       
       #F1 score; uses precision and recall  
-      f1_score_sklearn_test = f1_score(y_test, y_pred_class)
+      f1_score_sklearn_test = f1_score(y_test, y_pred)
       f1_score_sklearn_CV = f1_score(y_train, y_train_pred)
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
         text_file.write('F1 score: \n')
         text_file.write('F1 score sklearn test: %s \n' %f1_score_sklearn_test)
         text_file.write('F1 score sklearn CV: %s \n' %f1_score_sklearn_CV)
         
-    conf_mat(self.y_test, self.y_train, self.y_pred_class_database, self.y_train_pred_database, self.database)
-    conf_mat(self.y_test, self.y_train, self.y_pred_class_man_add, self.y_train_pred_man_add, self.man_add)
-    conf_mat(self.y_test, self.y_train, self.y_pred_class_transform, self.y_train_pred_transform, self.transform)
-    conf_mat(self.y_test, self.y_train, self.y_pred_class_prot_screen_trans, self.y_train_pred_prot_screen_trans, self.prot_screen_trans)
+    conf_mat(self.y_test, self.y_train, self.y_pred_database, self.y_train_CV_pred_database, self.database)
+    conf_mat(self.y_test, self.y_train, self.y_pred_man_add, self.y_train_CV_pred_man_add, self.man_add)
+    conf_mat(self.y_test, self.y_train, self.y_pred_transform, self.y_train_CV_pred_transform, self.transform)
+    conf_mat(self.y_test, self.y_train, self.y_pred_prot_screen_trans, self.y_train_CV_pred_prot_screen_trans, self.prot_screen_trans)
 
-    def prediction_probas(tree, X_train, y_train, X_test, y_test, directory, kind): 
+    #def prediction_probas(tree, X_train, y_train, X_test, y_test, directory, kind): 
+    def prediction_probas(tree, X_train, y_train, X_test, y_test, y_pred_proba, y_train_CV_pred_proba, directory, kind): 
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')      
-      #probabilities of predicting y_train with X_transform_train using 10-fold CV
-      self.y_pred_proba_train_CV = cross_val_predict(tree, X_train, y_train, cv=10, method='predict_proba')
-      #probabilities of predicting y_test with X_transform_test
-      self.y_pred_proba_test = tree.predict_proba(X_test)
-      #self.y_scores=self.tree_clf_rand_new.predict_proba(self.X_transform_train)#train set
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-        text_file.write('Storing prediction probabilities for X_%s_train and y_train with 10-fold CV in y_pred_proba_train_CV \n' %kind)
-        text_file.write('Storing prediction probabilities for X_%s_test and y_test in y_pred_proba_test \n' %kind)
         text_file.write('Plotting histogram for y_pred_proba_train_CV \n')
         text_file.write('Plotting histogram for y_pred_proba_test \n')
+   
       #plot histograms of probabilities  
       def plot_hist_pred_proba(y_pred_proba, name, directory):
-        plt.hist(y_pred_proba, bins=8)
+        plt.hist(y_pred_proba, bins=20)
         plt.xlim(0,1)
         plt.title('Histogram of predicted probabilities for y_pred_proba_%s to be class 1' %name)
         plt.xlabel('Predicted probability of EP_success')
@@ -732,38 +743,51 @@ class DecisionTreeRandomSearch(object):
         plt.savefig(os.path.join(directory, 'hist_pred_proba_tree_rand_'+name+datestring+'.png'))
         plt.close()
 
-      plot_hist_pred_proba(self.y_pred_proba_train_CV[:, 1], 'train_CV_', directory)
-      plot_hist_pred_proba(self.y_pred_proba_test[:, 1], 'test_', directory)
+      plot_hist_pred_proba(y_train_CV_pred_proba[:, 1], 'train_CV_', directory)
+      plot_hist_pred_proba(y_pred_proba[:, 1], 'test_', directory)
       
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-        text_file.write('Getting y_scores for y_pred_proba_train_CV and y_pred_proba_test as y_scores_train_CV and y_scores_test\n')
+        text_file.write('Getting y_scores for y_pred_proba_train_CV and y_pred_proba_test as y_scores_train_CV and y_scores_test for class 0 and 1\n')
 
-      #store the predicted probabilities for class 1
-      self.y_scores_train_CV = self.y_pred_proba_train_CV[:, 1]
-      self.y_scores_test = self.y_pred_proba_test[:, 1]
+      self.y_scores_ones = y_pred_proba[:, 1]#test data to be class 1
+      self.y_scores_zeros = y_pred_proba[:, 0]#test data to be class 0
+      self.y_scores_CV_ones = y_train_CV_pred_proba[:, 1]#training data to be class 1
+      self.y_scores_CV_zeros = y_train_CV_pred_proba[:, 0]#training data to be class 0
 
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
         text_file.write('Plotting Precision-Recall for y_test and y_scores_test \n')
         text_file.write('Plotting Precision-Recall for y_train and y_scores_train_CV \n')
       
       #plot precision and recall curve
-      def plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest, name, directory):
-        plt.plot(thresholds_forest, precisions[:-1], "b--", label="Precision")
-        plt.plot(thresholds_forest, recalls[:-1], "g--", label="Recall")
-        plt.title('Precsion-Recall plot for for EP_success classifier using %s set' %name)
+      def plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, name, classes, directory):
+        plt.plot(thresholds_tree, precisions[:-1], "b--", label="Precision")
+        plt.plot(thresholds_tree, recalls[:-1], "g--", label="Recall")
+        plt.title('Precsion-Recall plot for for EP_success classifier using %s set to be class %s' %(name, classes))
         plt.xlabel("Threshold")
         plt.legend(loc="upper left")
         plt.ylim([0,1])
-        plt.savefig(os.path.join(directory, 'Precision_Recall_tree_rand_'+name+datestring+'.png'))
+        plt.savefig(os.path.join(directory, 'Precision_Recall_tree_rand_'+name+datestring+classes+'.png'))
         plt.close()
 
-      #plot Precision Recall Threshold curve for test set 
-      precisions, recalls, thresholds_forest = precision_recall_curve(self.y_test, self.y_scores_test)
-      plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest, 'test_', directory)
-      #plot Precision Recall Threshold curve for CV train set 
-      precisions, recalls, thresholds_forest = precision_recall_curve(self.y_train, self.y_scores_train_CV)
-      plot_precision_recall_vs_threshold(precisions, recalls, thresholds_forest, 'train_CV_', directory)
-
+     #plot Precision Recall Threshold curve for test set        
+      precisions, recalls, thresholds_tree = precision_recall_curve(self.y_test, self.y_scores_ones)
+      plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, 'test_', '1', directory)
+      precisions, recalls, thresholds_tree = precision_recall_curve(self.y_test, self.y_scores_zeros)
+      plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, 'test_', '0', directory)
+      #plot Precision Recall Threshold curve for CV train set       
+      precisions, recalls, thresholds_tree = precision_recall_curve(self.y_train, self.y_scores_CV_ones)
+      plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, 'train_CV_', '1', directory)
+      precisions, recalls, thresholds_tree = precision_recall_curve(self.y_train, self.y_scores_CV_zeros)
+      plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, 'train_CV_', '0', directory)
+      
+#      def precision_recall(y_test, y_proba, name, directory):
+#        skplt.metrics.plot_precision_recall_curve(y_test, y_proba, title='Precision_Recall curve %s' %name)
+#        plt.savefig(os.path.join(directory, 'Precision_Recall_curve_skplt_tree_rand_'+name+datestring+'.png'))
+#        plt.close()
+#
+#      precision_recall(self.y_test, y_pred_proba, 'test_', directory)
+#      precision_recall(self.y_train, y_train_CV_pred_proba, 'train_CV_', directory)
+      
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
         text_file.write('Plotting ROC curve for y_test and y_scores_test \n')
         text_file.write('Plotting ROC curve for y_train and y_scores_train_CV \n')
@@ -774,33 +798,49 @@ class DecisionTreeRandomSearch(object):
       #roc_curve returns 3 objects fpr, tpr, thresholds
       #fpr: false positive rate
       #tpr: true positive rate
-    
+
       #plot ROC curves
-      def plot_roc_curve(fpr, tpr, name, label=None):
-        plt.plot(fpr, tpr, linewidth=2, label=label)
+      def plot_roc_curve(y_test, y_proba, name, directory):
+        skplt.metrics.plot_roc(y_test, y_proba, title='ROC curve %s' %name)
+        plt.savefig(os.path.join(directory, 'ROC_curve_skplt_tree_rand_'+name+datestring+'.png'))
+        plt.close()
+        
+      plot_roc_curve(self.y_train, y_train_CV_pred_proba, 'train_CV_', directory)  
+      plot_roc_curve(self.y_test, y_pred_proba, 'test_', directory)  
+    
+      def plot_roc_curve(fpr, tpr, name, classes, directory):
+        plt.plot(fpr, tpr, linewidth=2)
         plt.plot([0, 1], [0, 1], 'k--')
         plt.axis([0, 1, 0, 1])
-        plt.title('ROC curve for EP_success classifier using %s set' %name) 
+        plt.title('ROC curve for EP_success classifier using %s set for class %s' %(name, classes)) 
         plt.xlabel('False Positive Rate (1 - Specificity)')
         plt.ylabel('True Positive Rate (Sensitivity)')
         plt.grid(True)
-        plt.savefig(os.path.join(directory, 'ROC_curve_tree_rand_'+name+datestring+'.png'))
+        plt.savefig(os.path.join(directory, 'ROC_curve_tree_rand_'+name+datestring+classes+'.png'))
         plt.close()
         
       #ROC curve for test set      
-      fpr, tpr, thresholds = roc_curve(self.y_test, self.y_scores_test)#test set
-      plot_roc_curve(fpr, tpr, 'test_', directory)
-      #ROC curve for 10-fold CV train set
-      fpr_CV, tpr_CV, thresholds_CV = roc_curve(self.y_train, self.y_scores_train_CV)#CV train set
-      plot_roc_curve(fpr_CV, tpr_CV, 'train_CV_', directory)
-
+      fpr_1, tpr_1, thresholds_1 = roc_curve(self.y_test, self.y_scores_ones)
+      plot_roc_curve(fpr_1, tpr_1, 'test_', '1', directory)
+      fpr_0, tpr_0, thresholds_0 = roc_curve(self.y_test, self.y_scores_zeros)
+      plot_roc_curve(fpr_0, tpr_0, 'test_', '0', directory)
+      fpr_CV_1, tpr_CV_1, thresholds_CV_1 = roc_curve(self.y_train, self.y_scores_CV_ones)
+      plot_roc_curve(fpr_CV_1, tpr_CV_1, 'train_CV_', '1', directory)
+      fpr_CV_0, tpr_CV_0, thresholds_CV_0 = roc_curve(self.y_train, self.y_scores_CV_zeros)
+      plot_roc_curve(fpr_CV_0, tpr_CV_0, 'train_CV_', '0', directory)
+      
       #calculate the area under the curve to get the performance for a classifier
       # IMPORTANT: first argument is true values, second argument is predicted probabilities
-      AUC_test = metrics.roc_auc_score(self.y_test, self.y_pred_proba_test[:, 1])
-      AUC_train_CV = metrics.roc_auc_score(self.y_train, self.y_pred_proba_train_CV[:, 1])
+      AUC_test_class1 = metrics.roc_auc_score(self.y_test, self.y_scores_ones)
+      AUC_test_class0 = metrics.roc_auc_score(self.y_test, self.y_scores_zeros)
+      AUC_train_class1 = metrics.roc_auc_score(self.y_train, self.y_scores_CV_ones)
+      AUC_train_class0 = metrics.roc_auc_score(self.y_train, self.y_scores_CV_zeros)
+
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-        text_file.write('AUC for test set: %s \n' %AUC_test)
-        text_file.write('AUC for CV train set: %s \n' %AUC_train_CV)
+        text_file.write('AUC for test set class 1: %s \n' %AUC_test_class1)
+        text_file.write('AUC for test set class 0: %s \n' %AUC_test_class0)
+        text_file.write('AUC for CV train set class 1: %s \n' %AUC_train_class1)
+        text_file.write('AUC for CV train set class 0: %s \n' %AUC_train_class0)
 
       # define a function that accepts a threshold and prints sensitivity and specificity
       def evaluate_threshold(tpr, fpr, thresholds, threshold, name, directory):
@@ -810,22 +850,32 @@ class DecisionTreeRandomSearch(object):
           text_file.write('Sensitivity for %s at threshold %.2f: %s \n' %(name, threshold, sensitivity))
           text_file.write('Specificity for %s at threshold %.2f: %s \n' %(name, threshold, specificity))
 
-      evaluate_threshold(tpr, fpr, thresholds, 0.6, 'test_', directory)    
-      evaluate_threshold(tpr, fpr, thresholds, 0.5, 'test_', directory)
-      evaluate_threshold(tpr, fpr, thresholds, 0.4, 'test_', directory)
-      evaluate_threshold(tpr, fpr, thresholds, 0.3, 'test_', directory)
-      evaluate_threshold(tpr, fpr, thresholds, 0.2, 'test_', directory)
-      evaluate_threshold(tpr_CV, fpr_CV, thresholds_CV, 0.6, 'train_CV', directory)
-      evaluate_threshold(tpr_CV, fpr_CV, thresholds_CV, 0.5, 'train_CV', directory)
-      evaluate_threshold(tpr_CV, fpr_CV, thresholds_CV, 0.4, 'train_CV', directory)
-      evaluate_threshold(tpr_CV, fpr_CV, thresholds_CV, 0.3, 'train_CV', directory)
-      evaluate_threshold(tpr_CV, fpr_CV, thresholds_CV, 0.2, 'train_CV', directory)
+      evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.6, 'test_class1_', directory)    
+      evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.5, 'test_class1_', directory)
+      evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.4, 'test_class1_', directory)
+      evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.3, 'test_class1_', directory)
+      evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.2, 'test_class1_', directory)
+      evaluate_threshold(tpr_0, fpr_0, thresholds_0, 0.6, 'test_class0_', directory)    
+      evaluate_threshold(tpr_0, fpr_0, thresholds_0, 0.5, 'test_class0_', directory)
+      evaluate_threshold(tpr_0, fpr_0, thresholds_0, 0.4, 'test_class0_', directory)
+      evaluate_threshold(tpr_0, fpr_0, thresholds_0, 0.3, 'test_class0_', directory)
+      evaluate_threshold(tpr_0, fpr_0, thresholds_0, 0.2, 'test_class0_', directory)
+      evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.6, 'train_CV_class1_', directory)
+      evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.5, 'train_CV_class1_', directory)
+      evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.4, 'train_CV_class1_', directory)
+      evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.3, 'train_CV_class1_', directory)
+      evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.2, 'train_CV_class1_', directory)
+      evaluate_threshold(tpr_CV_0, fpr_CV_0, thresholds_CV_0, 0.6, 'train_CV_class0_', directory)
+      evaluate_threshold(tpr_CV_0, fpr_CV_0, thresholds_CV_0, 0.5, 'train_CV_class0_', directory)
+      evaluate_threshold(tpr_CV_0, fpr_CV_0, thresholds_CV_0, 0.4, 'train_CV_class0_', directory)
+      evaluate_threshold(tpr_CV_0, fpr_CV_0, thresholds_CV_0, 0.3, 'train_CV_class0_', directory)
+      evaluate_threshold(tpr_CV_0, fpr_CV_0, thresholds_CV_0, 0.2, 'train_CV_class0_', directory)
 
-    prediction_probas(self.tree_clf_rand_new_database, self.X_database_train, self.y_train, self.X_database_test, self.y_test, self.database, 'database')
-    prediction_probas(self.tree_clf_rand_new_man_add, self.X_man_add_train, self.y_train, self.X_man_add_test, self.y_test, self.man_add, 'man_add')
-    prediction_probas(self.tree_clf_rand_new_transform, self.X_transform_train, self.y_train, self.X_transform_test, self.y_test, self.transform, 'transform')
-    prediction_probas(self.tree_clf_rand_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, self.X_prot_screen_trans_test, self.y_test, self.prot_screen_trans, 'prot_screen_trans')
-
+    prediction_probas(self.tree_clf_rand_new_database, self.X_database_train, self.y_train, self.X_database_test, self.y_test, self.y_pred_proba_database, self.y_train_CV_pred_proba_database, self.database, 'database')    
+    prediction_probas(self.tree_clf_rand_new_man_add, self.X_man_add_train, self.y_train, self.X_man_add_test, self.y_test, self.y_pred_proba_man_add, self.y_train_CV_pred_proba_man_add, self.man_add, 'man_add')    
+    prediction_probas(self.tree_clf_rand_new_transform, self.X_transform_train, self.y_train, self.X_transform_test, self.y_test, self.y_pred_proba_transform, self.y_train_CV_pred_proba_transform, self.transform, 'transform')    
+    prediction_probas(self.tree_clf_rand_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, self.X_prot_screen_trans_test, self.y_test, self.y_pred_proba_prot_screen_trans, self.y_train_CV_pred_proba_prot_screen_trans, self.prot_screen_trans, 'prot_screen_trans')  
+  
     def scoring_all(tree, X_train, y_train, X_test, y_test, directory):     
       def scoring(tree, X, y, name, directory, cv):
         # calculate cross_val_scores with different scoring functions for test set
