@@ -13,7 +13,7 @@ import subprocess
 import seaborn as sns
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import mean_squared_error
 from sklearn.externals import joblib
 from sklearn.model_selection import RandomizedSearchCV
@@ -300,8 +300,9 @@ class RandomForestAdaRandSearch(object):
     print('*' *80)
 
     #create the decision forest
-    forest_clf_rand_ada = RandomForestClassifier(random_state=42)
-
+    #forest_clf_rand_ada = RandomForestClassifier(random_state=42)
+    tree_clf_rand_ada = DecisionTreeClassifier(random_state=42)
+    
     with open(os.path.join(self.database, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created random forest: forest_clf_rand_ada \n')
     with open(os.path.join(self.man_add, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
@@ -313,7 +314,7 @@ class RandomForestAdaRandSearch(object):
 
     #set up randomized search
     param_rand = {"criterion": ["gini", "entropy"],
-                  'n_estimators': randint(10, 500),
+                  #'n_estimators': randint(10, 500),
                   'max_features': randint(2, 16),
                   "min_samples_split": randint(2, 20),
                   "max_depth": randint(5, 10),
@@ -334,7 +335,7 @@ class RandomForestAdaRandSearch(object):
       text_file.write('use cv=10, scoring=accuracy \n')
 
     #building and running the randomized search
-    rand_search = RandomizedSearchCV(forest_clf_rand_ada, param_rand, random_state=5,
+    rand_search = RandomizedSearchCV(tree_clf_rand_ada, param_rand, random_state=5,
                               cv=10, n_iter=288, scoring='accuracy')
 
     rand_search_database = rand_search.fit(self.X_database_train, self.y_train)
@@ -389,26 +390,26 @@ class RandomForestAdaRandSearch(object):
     print('*' *80)
     print('*    Building new forest based on best parameter combination and save as pickle')
     print('*' *80)
+    #
+    self.tree_clf_rand_ada_new_database = AdaBoostClassifier(
+                                DecisionTreeClassifier(**self.best_params_database, random_state=42),
+                                algorithm ="SAMME.R", learning_rate=0.5, random_state=5)
+    self.tree_clf_rand_ada_new_database.fit(self.X_database_train, self.y_train)
 
-    self.forest_clf_rand_ada_new_database = AdaBoostClassifier(
-                                RandomForestClassifier(**self.best_params_database, random_state=42),
-                                algorithm ="SAMME.R", learning_rate=0.5)
-    self.forest_clf_rand_ada_new_database.fit(self.X_database_train, self.y_train)
+    self.tree_clf_rand_ada_new_man_add = AdaBoostClassifier(
+                                DecisionTreeClassifier(**self.best_params_man_add, random_state=42),
+                                algorithm ="SAMME.R", learning_rate=0.5, random_state=5)
+    self.tree_clf_rand_ada_new_man_add.fit(self.X_man_add_train, self.y_train)
 
-    self.forest_clf_rand_ada_new_man_add = AdaBoostClassifier(
-                                RandomForestClassifier(**self.best_params_man_add, random_state=42),
-                                algorithm ="SAMME.R", learning_rate=0.5)
-    self.forest_clf_rand_ada_new_man_add.fit(self.X_man_add_train, self.y_train)
+    self.tree_clf_rand_ada_new_transform = AdaBoostClassifier(
+                                DecisionTreeClassifier(**self.best_params_transform, random_state=42),
+                                algorithm ="SAMME.R", learning_rate=0.5, random_state=5)
+    self.tree_clf_rand_ada_new_transform.fit(self.X_transform_train, self.y_train)
 
-    self.forest_clf_rand_ada_new_transform = AdaBoostClassifier(
-                                RandomForestClassifier(**self.best_params_transform, random_state=42),
-                                algorithm ="SAMME.R", learning_rate=0.5)
-    self.forest_clf_rand_ada_new_transform.fit(self.X_transform_train, self.y_train)
-
-    self.forest_clf_rand_ada_new_prot_screen_trans = AdaBoostClassifier(
-                                RandomForestClassifier(**self.best_params_prot_screen_trans, random_state=42),
-                                algorithm ="SAMME.R", learning_rate=0.5)
-    self.forest_clf_rand_ada_new_prot_screen_trans.fit(self.X_prot_screen_trans_train, self.y_train)
+    self.tree_clf_rand_ada_new_prot_screen_trans = AdaBoostClassifier(
+                                DecisionTreeClassifier(**self.best_params_prot_screen_trans, random_state=42),
+                                algorithm ="SAMME.R", learning_rate=0.5, random_state=5)
+    self.tree_clf_rand_ada_new_prot_screen_trans.fit(self.X_prot_screen_trans_train, self.y_train)
 
     def feature_importances(clf, X_train, directory):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
@@ -426,10 +427,10 @@ class RandomForestAdaRandSearch(object):
       plt.savefig(os.path.join(directory, 'feature_importances_bar_plot_rand_ada_'+datestring+'.png'))
       plt.close()
 
-    feature_importances(self.forest_clf_rand_ada_new_database, self.X_database_train, self.database)
-    feature_importances(self.forest_clf_rand_ada_new_man_add, self.X_man_add_train, self.man_add)
-    feature_importances(self.forest_clf_rand_ada_new_transform, self.X_transform_train, self.transform)
-    feature_importances(self.forest_clf_rand_ada_new_prot_screen_trans, self.X_prot_screen_trans_train, self.prot_screen_trans)
+    feature_importances(self.tree_clf_rand_ada_new_database, self.X_database_train, self.database)
+    feature_importances(self.tree_clf_rand_ada_new_man_add, self.X_man_add_train, self.man_add)
+    feature_importances(self.tree_clf_rand_ada_new_transform, self.X_transform_train, self.transform)
+    feature_importances(self.tree_clf_rand_ada_new_prot_screen_trans, self.X_prot_screen_trans_train, self.prot_screen_trans)
 
     def write_pickle(forest, directory, name):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
@@ -438,10 +439,10 @@ class RandomForestAdaRandSearch(object):
         text_file.write('Created new random forest "forest_clf_rand_ada_new_%s" using best parameters \n' %name)
         text_file.write('Creating pickle file for best forest as best_forest_rand_ada_%s.pkl \n' %name)
     
-    write_pickle(self.forest_clf_rand_ada_new_database, self.database, 'database')
-    write_pickle(self.forest_clf_rand_ada_new_man_add, self.man_add, 'man_add')
-    write_pickle(self.forest_clf_rand_ada_new_transform, self.transform, 'transform')
-    write_pickle(self.forest_clf_rand_ada_new_prot_screen_trans, self.prot_screen_trans, 'prot_screen_trans')
+    write_pickle(self.tree_clf_rand_ada_new_database, self.database, 'database')
+    write_pickle(self.tree_clf_rand_ada_new_man_add, self.man_add, 'man_add')
+    write_pickle(self.tree_clf_rand_ada_new_transform, self.transform, 'transform')
+    write_pickle(self.tree_clf_rand_ada_new_prot_screen_trans, self.prot_screen_trans, 'prot_screen_trans')
 
     def visualise_tree(tree_forest, directory, columns, name):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
@@ -463,10 +464,10 @@ class RandomForestAdaRandSearch(object):
         text_file.write('PNG filename: tree_clf_rand_ada_new_%s.png \n' %name)
 
     
-    visualise_tree(self.forest_clf_rand_ada_new_database, self.database, self.X_database_train.columns, 'database')
-    visualise_tree(self.forest_clf_rand_ada_new_man_add, self.man_add, self.X_man_add_train.columns, 'man_add')
-    visualise_tree(self.forest_clf_rand_ada_new_transform, self.transform, self.X_transform_train.columns, 'transform')
-    visualise_tree(self.forest_clf_rand_ada_new_prot_screen_trans, self.prot_screen_trans, self.X_prot_screen_trans_train.columns, 'prot_screen_trans')
+    visualise_tree(self.tree_clf_rand_ada_new_database, self.database, self.X_database_train.columns, 'database')
+    visualise_tree(self.tree_clf_rand_ada_new_man_add, self.man_add, self.X_man_add_train.columns, 'man_add')
+    visualise_tree(self.tree_clf_rand_ada_new_transform, self.transform, self.X_transform_train.columns, 'transform')
+    visualise_tree(self.tree_clf_rand_ada_new_prot_screen_trans, self.prot_screen_trans, self.X_prot_screen_trans_train.columns, 'prot_screen_trans')
 
     print('*' *80)
     print('*    Getting basic stats for new forest')
@@ -492,10 +493,10 @@ class RandomForestAdaRandSearch(object):
         text_file.write('Precision mean for 10-fold CV: %s \n' %train_precision)
         text_file.write('F1 score mean for 10-fold CV: %s \n' %train_f1)
     
-    basic_stats(self.forest_clf_rand_new_database, self.X_database_train, self.database)
-    basic_stats(self.forest_clf_rand_new_man_add, self.X_man_add_train, self.man_add)
-    basic_stats(self.forest_clf_rand_new_transform, self.X_transform_train, self.transform)
-    basic_stats(self.forest_clf_rand_new_prot_screen_trans, self.X_prot_screen_trans_train, self.prot_screen_trans)
+    basic_stats(self.tree_clf_rand_ada_new_database, self.X_database_train, self.database)
+    basic_stats(self.tree_clf_rand_ada_new_man_add, self.X_man_add_train, self.man_add)
+    basic_stats(self.tree_clf_rand_ada_new_transform, self.X_transform_train, self.transform)
+    basic_stats(self.tree_clf_rand_ada_new_prot_screen_trans, self.X_prot_screen_trans_train, self.prot_screen_trans)
 
     ###############################################################################
     #
@@ -514,30 +515,30 @@ class RandomForestAdaRandSearch(object):
     #y_pred = classifier.fit(X_train, y_train).predict(X_test)
 
     #try out how well the classifier works to predict from the test set
-    self.y_pred_class_database = self.forest_clf_rand_ada_new_database.predict(self.X_database_test)
+    self.y_pred_class_database = self.tree_clf_rand_ada_new_database.predict(self.X_database_test)
     with open(os.path.join(self.database, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_database_test in y_pred_class_database \n')
-    self.y_pred_class_man_add = self.forest_clf_rand_ada_new_man_add.predict(self.X_man_add_test)
+    self.y_pred_class_man_add = self.tree_clf_rand_ada_new_man_add.predict(self.X_man_add_test)
     with open(os.path.join(self.man_add, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_man_add_test in y_pred_class_man_add \n')
-    self.y_pred_class_transform = self.forest_clf_rand_ada_new_transform.predict(self.X_transform_test)
+    self.y_pred_class_transform = self.tree_clf_rand_ada_new_transform.predict(self.X_transform_test)
     with open(os.path.join(self.transform, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_transform_test in y_pred_class_transform \n')
-    self.y_pred_class_prot_screen_trans = self.forest_clf_rand_ada_new_prot_screen_trans.predict(self.X_prot_screen_trans_test)
+    self.y_pred_class_prot_screen_trans = self.tree_clf_rand_ada_new_prot_screen_trans.predict(self.X_prot_screen_trans_test)
     with open(os.path.join(self.prot_screen_trans, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_prot_screen_trans_test in y_pred_class_prot_screen_trans \n')
 
     #alternative way to not have to use the test set
-    self.y_train_pred_database = cross_val_predict(self.forest_clf_rand_ada_new_database, self.X_database_train, self.y_train, cv=10)
+    self.y_train_pred_database = cross_val_predict(self.tree_clf_rand_ada_new_database, self.X_database_train, self.y_train, cv=10)
     with open(os.path.join(self.database, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_database_train with 10-fold CV in y_train_pred_database \n')
-    self.y_train_pred_man_add = cross_val_predict(self.forest_clf_rand_ada_new_man_add, self.X_man_add_train, self.y_train, cv=10)
+    self.y_train_pred_man_add = cross_val_predict(self.tree_clf_rand_ada_new_man_add, self.X_man_add_train, self.y_train, cv=10)
     with open(os.path.join(self.man_add, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_man_add_train with 10-fold CV in y_train_pred_man_add \n')
-    self.y_train_pred_transform = cross_val_predict(self.forest_clf_rand_ada_new_transform, self.X_transform_train, self.y_train, cv=10)
+    self.y_train_pred_transform = cross_val_predict(self.tree_clf_rand_ada_new_transform, self.X_transform_train, self.y_train, cv=10)
     with open(os.path.join(self.transform, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_transform_train with 10-fold CV in y_train_pred_transform \n')
-    self.y_train_pred_prot_screen_trans = cross_val_predict(self.forest_clf_rand_ada_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, cv=10)
+    self.y_train_pred_prot_screen_trans = cross_val_predict(self.tree_clf_rand_ada_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, cv=10)
     with open(os.path.join(self.prot_screen_trans, 'randomforest_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions for X_prot_screen_trans_train with 10-fold CV in y_train_pred_prot_screen_trans \n')
 
@@ -830,10 +831,10 @@ class RandomForestAdaRandSearch(object):
       evaluate_threshold(tpr_CV, fpr_CV, thresholds_CV, 0.3, 'train_CV', directory)
       evaluate_threshold(tpr_CV, fpr_CV, thresholds_CV, 0.2, 'train_CV', directory)
 
-    prediction_probas(self.forest_clf_rand_ada_new_database, self.X_database_train, self.y_train, self.X_database_test, self.y_test, self.database, 'database')
-    prediction_probas(self.forest_clf_rand_ada_new_man_add, self.X_man_add_train, self.y_train, self.X_man_add_test, self.y_test, self.man_add, 'man_add')
-    prediction_probas(self.forest_clf_rand_ada_new_transform, self.X_transform_train, self.y_train, self.X_transform_test, self.y_test, self.transform, 'transform')
-    prediction_probas(self.forest_clf_rand_ada_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, self.X_prot_screen_trans_test, self.y_test, self.prot_screen_trans, 'prot_screen_trans')
+    prediction_probas(self.tree_clf_rand_ada_new_database, self.X_database_train, self.y_train, self.X_database_test, self.y_test, self.database, 'database')
+    prediction_probas(self.tree_clf_rand_ada_new_man_add, self.X_man_add_train, self.y_train, self.X_man_add_test, self.y_test, self.man_add, 'man_add')
+    prediction_probas(self.tree_clf_rand_ada_new_transform, self.X_transform_train, self.y_train, self.X_transform_test, self.y_test, self.transform, 'transform')
+    prediction_probas(self.tree_clf_rand_ada_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, self.X_prot_screen_trans_test, self.y_test, self.prot_screen_trans, 'prot_screen_trans')
     
     def scoring_all(forest, X_train, y_train, X_test, y_test, directory):     
       def scoring(forest, X, y, name, directory, cv):
@@ -853,10 +854,10 @@ class RandomForestAdaRandSearch(object):
       scoring(forest, X_test, y_test, 'test', directory, cv=None)
       scoring(forest, X_train, y_train, 'train_CV', directory, cv=10)
 
-    scoring_all(self.forest_clf_rand_ada_new_database, self.X_database_train, self.y_train, self.X_database_test, self.y_test, self.database)
-    scoring_all(self.forest_clf_rand_ada_new_man_add, self.X_man_add_train, self.y_train, self.X_man_add_test, self.y_test, self.man_add)
-    scoring_all(self.forest_clf_rand_ada_new_transform, self.X_transform_train, self.y_train, self.X_transform_test, self.y_test, self.transform)
-    scoring_all(self.forest_clf_rand_ada_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, self.X_prot_screen_trans_test, self.y_test, self.prot_screen_trans)
+    scoring_all(self.tree_clf_rand_ada_new_database, self.X_database_train, self.y_train, self.X_database_test, self.y_test, self.database)
+    scoring_all(self.tree_clf_rand_ada_new_man_add, self.X_man_add_train, self.y_train, self.X_man_add_test, self.y_test, self.man_add)
+    scoring_all(self.tree_clf_rand_ada_new_transform, self.X_transform_train, self.y_train, self.X_transform_test, self.y_test, self.transform)
+    scoring_all(self.tree_clf_rand_ada_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, self.X_prot_screen_trans_test, self.y_test, self.prot_screen_trans)
 
 def run():
   args = parse_command_line()
