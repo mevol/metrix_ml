@@ -253,16 +253,16 @@ class DecisionTreeRandomSearch(object):
     y = self.metrix['EP_success']
     
 #normal split of samples    
-    X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42)
-    X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(self.X_man_add, y, test_size=0.2, random_state=42)
-    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
-    X_prot_screen_trans_train, X_prot_screen_trans_test, y_train, y_test = train_test_split(self.X_prot_screen_trans, y, test_size=0.2, random_state=42)
+#    X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42)
+#    X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(self.X_man_add, y, test_size=0.2, random_state=42)
+#    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
+#    X_prot_screen_trans_train, X_prot_screen_trans_test, y_train, y_test = train_test_split(self.X_prot_screen_trans, y, test_size=0.2, random_state=42)
 
 #stratified split of samples
-#    X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42, stratify=y)
-#    X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(self.X_man_add, y, test_size=0.2, random_state=42, stratify=y)
-#    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42, stratify=y)
-#    X_prot_screen_trans_train, X_prot_screen_trans_test, y_train, y_test = train_test_split(self.X_prot_screen_trans, y, test_size=0.2, random_state=42, stratify=y)
+    X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42, stratify=y)
+    X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(self.X_man_add, y, test_size=0.2, random_state=42, stratify=y)
+    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42, stratify=y)
+    X_prot_screen_trans_train, X_prot_screen_trans_test, y_train, y_test = train_test_split(self.X_prot_screen_trans, y, test_size=0.2, random_state=42, stratify=y)
     
     assert self.X_database.columns.all() == X_database_train.columns.all()
     assert self.X_man_add.columns.all() == X_man_add_train.columns.all()
@@ -313,8 +313,6 @@ class DecisionTreeRandomSearch(object):
     print('*    Running RandomizedSearch for best parameter combination for DecisionTree')
     print('*' *80)
 
-    #training a decision tree with the prepared train set and train set lables
-
     #create the decision tree
     tree_clf_rand = DecisionTreeClassifier(random_state=42)
 
@@ -361,7 +359,6 @@ class DecisionTreeRandomSearch(object):
     with open(os.path.join(self.database, 'decisiontree_randomsearch.txt'), 'a') as text_file:
       text_file.write('Feature importances: %s \n' %feature_importances_database_ls)
 
-
     rand_search_man_add = rand_search.fit(self.X_man_add_train, self.y_train)
     with open(os.path.join(self.man_add, 'decisiontree_randomsearch.txt'), 'a') as text_file:
       text_file.write('Best parameters: ' +str(rand_search_man_add.best_params_)+'\n')
@@ -369,8 +366,7 @@ class DecisionTreeRandomSearch(object):
     feature_importances_man_add = rand_search_man_add.best_estimator_.feature_importances_
     feature_importances_man_add_ls = sorted(zip(feature_importances_man_add, self.X_man_add_train), reverse=True)
     with open(os.path.join(self.man_add, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Feature importances: %s \n' %feature_importances_man_add_ls)  
-    
+      text_file.write('Feature importances: %s \n' %feature_importances_man_add_ls)    
     
     rand_search_transform = rand_search.fit(self.X_transform_train, self.y_train)
     with open(os.path.join(self.transform, 'decisiontree_randomsearch.txt'), 'a') as text_file:
@@ -380,7 +376,6 @@ class DecisionTreeRandomSearch(object):
     feature_importances_transform_ls = sorted(zip(feature_importances_transform, self.X_transform_train), reverse=True)
     with open(os.path.join(self.transform, 'decisiontree_randomsearch.txt'), 'a') as text_file:
       text_file.write('Feature importances: %s \n' %feature_importances_transform_ls)
-    
     
     rand_search_prot_screen_trans = rand_search.fit(self.X_prot_screen_trans_train, self.y_train)
     with open(os.path.join(self.prot_screen_trans, 'decisiontree_randomsearch.txt'), 'a') as text_file:
@@ -468,8 +463,6 @@ class DecisionTreeRandomSearch(object):
     print('*    Getting basic stats for new tree')
     print('*' *80)
 
-    #accuracy not the best measure to use as it heavily depends on the sample
-    
     def basic_stats(tree, X_train, directory):
       #distribution --> accuracy
       accuracy_each_cv = cross_val_score(tree, X_train, self.y_train, cv=10, scoring='accuracy')
@@ -726,7 +719,6 @@ class DecisionTreeRandomSearch(object):
     conf_mat(self.y_test, self.y_train, self.y_pred_transform, self.y_train_CV_pred_transform, self.transform)
     conf_mat(self.y_test, self.y_train, self.y_pred_prot_screen_trans, self.y_train_CV_pred_prot_screen_trans, self.prot_screen_trans)
 
-    #def prediction_probas(tree, X_train, y_train, X_test, y_test, directory, kind): 
     def prediction_probas(tree, X_train, y_train, X_test, y_test, y_pred_proba, y_train_CV_pred_proba, directory, kind): 
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')      
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
@@ -824,6 +816,7 @@ class DecisionTreeRandomSearch(object):
       plot_roc_curve(fpr_1, tpr_1, 'test_', '1', directory)
       fpr_0, tpr_0, thresholds_0 = roc_curve(self.y_test, self.y_scores_zeros)
       plot_roc_curve(fpr_0, tpr_0, 'test_', '0', directory)
+      #ROC curve for 10-fold CV train set      
       fpr_CV_1, tpr_CV_1, thresholds_CV_1 = roc_curve(self.y_train, self.y_scores_CV_ones)
       plot_roc_curve(fpr_CV_1, tpr_CV_1, 'train_CV_', '1', directory)
       fpr_CV_0, tpr_CV_0, thresholds_CV_0 = roc_curve(self.y_train, self.y_scores_CV_zeros)
