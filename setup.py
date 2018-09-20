@@ -20,14 +20,16 @@ setup(
       'bin/randomforest_gridsearch',   
       'bin/randomforest_randomsearch',
       'bin/randomforest_ada_gridsearch',
-      'bin/randomforest_ada_randomsearch'   
+      'bin/randomforest_ada_randomsearch',
+      'bin/feature_correlations'
     ],
     install_requires=[
       'matplotlib',
       'pandas',
       'pytest',
       'sklearn',
-      'scikit-plot'
+      'scikit-plot',
+      'scipy'
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
