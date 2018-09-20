@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml import feature_correlations
+
+if __name__=='__main__':
+  feature_correlations.run()
