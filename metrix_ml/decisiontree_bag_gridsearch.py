@@ -391,6 +391,28 @@ class DecisionTreeBagGridSearch(object):
     self.best_params_man_add = grid_search_man_add.best_params_
     self.best_params_transform = grid_search_transform.best_params_
     self.best_params_prot_screen_trans = grid_search_prot_screen_trans.best_params_
+    
+    self.feature_importances_database_ls = feature_importances_database_ls
+    self.feature_importances_man_add_ls = feature_importances_man_add_ls
+    self.feature_importances_transform_ls = feature_importances_transform_ls
+    self.feature_importances_prot_screen_trans_ls = feature_importances_prot_screen_trans_ls
+    
+    def feature_importances_best_estimator(feature_list, directory):
+      datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+      feature_list.sort(key=lambda x: x[1], reverse=True)
+      print(feature_list)
+      feature = list(zip(*feature_list))[1]
+      score = list(zip(*feature_list))[0]
+      x_pos = np.arange(len(feature))
+      plt.bar(x_pos, score,align='center')
+      plt.xticks(x_pos, feature) 
+      plt.ylabel('Feature importances for best estimator')
+      plt.show()
+    
+    feature_importances_best_estimator(self.feature_importances_database_ls, self.database)
+    feature_importances_best_estimator(self.feature_importances_man_add_ls, self.man_add)
+    feature_importances_best_estimator(self.feature_importances_transform_ls, self.transform)
+    feature_importances_best_estimator(self.feature_importances_prot_screen_trans_ls, self.prot_screen_trans)    
 
 #NOTE: BaggingClassifier does not have a parameter feature_importances so I print the ones
 #found for the base_estimator which is a DecisionTree
@@ -450,28 +472,60 @@ class DecisionTreeBagGridSearch(object):
     self.tree_clf_grid_bag_new_prot_screen_trans = BaggingClassifier(
                                         DecisionTreeClassifier(**self.best_params_prot_screen_trans, random_state=42), n_jobs=-1, bootstrap=True, random_state=42, n_estimators=100)
     self.tree_clf_grid_bag_new_prot_screen_trans.fit(self.X_prot_screen_trans_train, self.y_train)
-    
-    def feature_importances(clf, X_train, directory):
-      datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-      importances = np.mean([tree.feature_importances_ for tree in clf.estimators_], axis=0)     
-      indices = np.argsort(importances)
-      feature_names = X_train.columns
-      std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)#for random forest
-     # Plot the feature importances of the forest
-      plt.figure(figsize=(20,10))
-      plt.title("Feature importances")
-      plt.bar(range(X_train.shape[1]), importances[indices],
-         color="b", yerr=std[indices], align="center")#add yerr=std[indices] for random forest
-      plt.xticks(range(X_train.shape[1]), feature_names,rotation=60)
-      plt.xlim([-1, X_train.shape[1]])
-      plt.savefig(os.path.join(directory, 'feature_importances_bar_plot_grid_bag_old_'+datestring+'.png'))
-      plt.close()
 
-    feature_importances(self.tree_clf_grid_bag_new_database, self.X_database_train, self.database)
-    feature_importances(self.tree_clf_grid_bag_new_man_add, self.X_man_add_train, self.man_add)
-    feature_importances(self.tree_clf_grid_bag_new_transform, self.X_transform_train, self.transform)
-    feature_importances(self.tree_clf_grid_bag_new_prot_screen_trans, self.X_prot_screen_trans_train, self.prot_screen_trans)
-       
+    def feature_importances_pandas(clf, X_train, directory):     
+      feature_list = []
+      for tree in clf.estimators_:
+        feature_importances_ls = tree.feature_importances_
+        feature_list.append(feature_importances_ls)
+        
+      df = pd.DataFrame(feature_list, columns=X_train.columns)
+      df_mean = df[X_train.columns].mean(axis=0)
+      df_std = df[X_train.columns].std(axis=0)
+      df_mean.plot(kind='bar', color='b', yerr=[df_std], align="center", figsize=(20,10), title="Feature importances", rot=60)
+      plt.show()
+      
+    feature_importances_pandas(self.tree_clf_grid_bag_new_database, self.X_database_train, self.database)
+    feature_importances_pandas(self.tree_clf_grid_bag_new_man_add, self.X_man_add_train, self.man_add)
+    feature_importances_pandas(self.tree_clf_grid_bag_new_transform, self.X_transform_train, self.transform)
+    feature_importances_pandas(self.tree_clf_grid_bag_new_prot_screen_trans, self.X_prot_screen_trans_train, self.prot_screen_trans)
+      
+#      feature_importances = np.mean([tree.feature_importances_ for tree in clf.estimators_], axis=0)
+#      print(feature_importances)
+#      print(df.head())
+#      print(df.describe())
+#      print(df.info())
+#      1/0
+      #df.to_csv(os.path.join(directory, 'features.csv')
+      #plt.savefig(os.path.join(directory, 'feature_importances_bar_plot_grid_bag_old_'+datestring+'.png'))
+#      plt.close()
+          #df = pd.append(feature_importances_ls)
+      #  print(tree.feature_importances_)
+      #  print(df.head())
+        #for feature in tree.feature_importances_:
+        #  print(feature)
+            
+#    def feature_importances_web(clf, X_train, directory):
+#      importances = clf.feature_importances_
+#      std = np.std([tree.feature_importances_ for tree in clf.estimators_],
+#             axis=0)
+#      indices = np.argsort(importances)[::-1]
+#      print("Feature ranking:")
+#      for f in range(X_train.shape[1]):
+#        print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
+#      plt.figure()
+#      plt.title("Feature importances")
+#      plt.bar(range(X_train.shape[1]), importances[indices],
+#       color="r", yerr=std[indices], align="center")
+#      plt.xticks(range(X_train.shape[1]), indices)
+#      plt.xlim([-1, X_train.shape[1]])
+#      plt.show()
+
+#    feature_importances_web(self.tree_clf_grid_bag_new_database, self.X_database_train, self.database)
+#    feature_importances_web(self.tree_clf_grid_bag_new_man_add, self.X_man_add_train, self.man_add)
+#    feature_importances_web(self.tree_clf_grid_bag_new_transform, self.X_transform_train, self.transform)
+#    feature_importances_web(self.tree_clf_grid_bag_new_prot_screen_trans, self.X_prot_screen_trans_train, self.prot_screen_trans)
+              
     def write_pickle(tree, directory, name):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
       joblib.dump(tree, os.path.join(directory,'best_tree_grid_bag_'+name+datestring+'.pkl'))
