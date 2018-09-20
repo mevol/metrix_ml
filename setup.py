@@ -26,7 +26,8 @@ setup(
       'matplotlib',
       'pandas',
       'pytest',
-      'sklearn'
+      'sklearn',
+      'scikit-plot'
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
