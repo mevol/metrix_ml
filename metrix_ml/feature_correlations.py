@@ -4,17 +4,47 @@
 # create output directories
 # start the class FeatureCorrelations
 
-
+import argparse
 import pandas as pd
 import os
 import numpy as np
 import csv
 from pandas.plotting import scatter_matrix
 from datetime import datetime
-from scipy.stats import pearsonr, betai
+from scipy.stats import pearsonr#, betai
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.model_selection import train_test_split
 
+###############################################################################
+#
+#  define command line arguments
+#
+###############################################################################
+
+def parse_command_line():
+  '''defining the command line input to make it runable'''
+  parser = argparse.ArgumentParser(description='Correlation coefficient analysis of features')
+  
+  parser.add_argument(
+    '--input', 
+    type=str, 
+    dest="input",
+    default="",
+    help='The input CSV file')
+    
+  parser.add_argument(
+    '--outdir',
+    type=str,
+    dest='outdir',
+    default='',
+    help='Specify output directory')
+
+  args = parser.parse_args()
+  if args.input == '':
+    parser.print_help()
+    exit(0)
+  return args
 
 ###############################################################################
 #
@@ -30,7 +60,7 @@ def make_output_folder(outdir):
   names = ['database', 'man_add', 'transform', 'prot_screen_trans']
   result = []
   for name in names:
-    name = os.path.join(outdir, 'decisiontree_randomsearch', name)
+    name = os.path.join(outdir, 'feature_correlations', name)
     os.makedirs(name, exist_ok=True)
     result.append(name)
   return result
@@ -43,19 +73,16 @@ def make_output_folder(outdir):
 
 
 class FeatureCorrelations(object):
-    '''A class to help analyse the data;
-    try to identify linear correlations in the data;
-    calculate Pearson Correlation Coefficient with and without
-    p-values; create a scatter matrix; inout data must not contain
-    any strings or NaN values; also remove any columns with 
-    categorical data or transform them first; remove any text except column labels'''
+  '''A class to help analyse the data;
+  try to identify linear correlations in the data;
+  calculate Pearson Correlation Coefficient with and without
+  p-values; create a scatter matrix; inout data must not contain
+  any strings or NaN values; also remove any columns with 
+  categorical data or transform them first; remove any text except column labels'''
 #    def __init__(self, X_train):
 #        if X_train.isnull().any().any() == True:
 #            X_train = X_train.dropna(axis=1)
 #        pass
-
-
- 
   def __init__(self, metrix, database, man_add, transform, prot_screen_trans):
     self.metrix=metrix
     self.database=database
@@ -64,6 +91,7 @@ class FeatureCorrelations(object):
     self.prot_screen_trans=prot_screen_trans
     self.prepare_metrix_data()
     self.split_data()
+    self.plotting()
    
   ###############################################################################
   #
@@ -261,113 +289,160 @@ class FeatureCorrelations(object):
       text_file.write('metrix_transform: X_prot_screen_trans_train, X_prot_screen_trans_test \n')
       text_file.write('y(EP_success): y_train, y_test \n')
 
+    print('*' *80)
+    print('*    Ordering columns')
+    print('*' *80)
+
+
+    self.X_database_train_ordered = self.X_database_train[
+                         ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+                          'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+                          'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+                          'highreslimit', 'wilsonbfactor', 'anomalousslope',
+                          'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+                          'diffF']]                              
+
+    self.X_man_add_train_ordered = self.X_man_add_train[
+                         ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+                          'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+                          'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+                          'highreslimit', 'wilsonbfactor', 'anomalousslope',
+                          'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+                          'diffF', 'wavelength', 'Vcell', 'solvent_content', 'Matth_coeff',
+                          'MW_chain', 'No_atom_chain', 'No_mol_ASU',
+                          'sites_ASU',]]                              
+
+    self.X_transform_train_ordered = self.X_transform_train[
+                         ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+                          'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+                          'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+                          'highreslimit', 'wilsonbfactor', 'anomalousslope',
+                          'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+                          'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                          'Vcell', 'solvent_content', 'Vcell/Vm<Ma>', 'Matth_coeff',
+                          'MW_ASU/sites_ASU/solvent_content', 'MW_chain', 'No_atom_chain',
+                          'No_mol_ASU', 'MW_ASU', 'sites_ASU', 'MW_ASU/sites_ASU',
+                          'MW_chain/No_atom_chain', 'wilson', 'bragg',
+                          'volume_wilsonB_highres']]                              
+
+    self.X_prot_screen_trans_train_ordered = self.X_prot_screen_trans_train[
+                         ['highreslimit', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                          'Vcell', 'solvent_content', 'Vcell/Vm<Ma>', 'Matth_coeff',
+                          'MW_ASU/sites_ASU/solvent_content', 'MW_chain', 'No_atom_chain',
+                          'No_mol_ASU', 'MW_ASU', 'sites_ASU', 'MW_ASU/sites_ASU',
+                          'MW_chain/No_atom_chain']]                              
+
+
     ###############################################################################
     #
     #  creating training and test set for each of the 3 dataframes
     #
     ###############################################################################
-
-  def calculate_pearson_cc(X_train, name, directory):
-    '''This functions calculates a simple statistics of
-    Pearson correlation coefficient'''
-    attr = list(X_train)
-    datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-    for a in attr:
-      corr_X_train = X_train.corr()        
-      with open(os.path.join(directory, 'linear_PearsonCC_values_'+name+datestring+'.txt'), 'a') as text_file:
-        corr_X_train[a].sort_values(ascending=False).to_csv(text_file)
-      text_file.close()
-        
-  calculate_pearson_cc(self.X_database_train, 'database', self.database)
-    
-  def plot_scatter_matrix(X_train, name, directory):
-    '''A function to create a scatter matrix of the data'''
-    datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-    columns = [X_train.columns]
-    for c in columns:
-      if X_train.isnull().any().any() == True:
-        X_train = X_train.dropna(axis=1)
-        attr = list(X_train)    
-        scatter_matrix(X_train[attr], figsize=(25,20))
-        plt.savefig(os.path.join(directory, 'linear_PearsonCC_scattermatrix'+name+datestring+'.png'))
-        plt.close()
-  
-  plot_scatter_matrix(self.X_database_train, 'database', self.database)
-
-  def correlation_pvalue(X_train, name, directory):               
-    def corrcoef_loop(X_train):
+      
+  def plotting(self):      
+    def calculate_pearson_cc(X_train, name, directory): 
+      '''This functions calculates a simple statistics of
+      Pearson correlation coefficient'''
+      
+      print('*' *80)
+      print('*    Calculating Pearson Correlation Coefficient')
+      print('*' *80)      
+      
       attr = list(X_train)
-      rows = len(attr)
-      r = np.ones(shape=(rows, rows))
-      p = np.ones(shape=(rows, rows))
-      for i in range(rows):
-        for j in range(i+1, rows):
-          c1 = X_train[attr[i]]
-          c2 = X_train[attr[j]]
-          r_, p_ = pearsonr(c1, c2)
-          r[i, j] = r[j, i] = r_
-          p[i, j] = p[j, i] = p_
-    return r, p
-    
-    r,p = corrcoef_loop(metrix_num)
-
-    def write_corr(r, p, X_train, name, directory):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-      with open(os.path.join(directory,
-                           'linear_corr_pvalues_'+name+datestring+'.csv'), 'a') as csv_file:
+      for a in attr:
+        corr_X_train = X_train.corr()        
+        with open(os.path.join(directory, 'linear_PearsonCC_values_'+name+datestring+'.txt'), 'a') as text_file:
+          corr_X_train[a].sort_values(ascending=False).to_csv(text_file)
+        text_file.close()
+        
+    calculate_pearson_cc(self.X_database_train_ordered, 'database', self.database)
+    calculate_pearson_cc(self.X_man_add_train_ordered, 'man_add', self.man_add)
+    calculate_pearson_cc(self.X_transform_train_ordered, 'transform', self.transform)
+    calculate_pearson_cc(self.X_prot_screen_trans_train_ordered, 'prot_screen_trans', self.prot_screen_trans)
+    
+    def correlation_pvalue(X_train, name, directory):
+    
+      print('*' *80)
+      print('*    Calculating Pearson Correlation Coefficient with p-values')
+      print('*' *80)      
+                   
+      def corrcoef_loop(X_train):
         attr = list(X_train)
         rows = len(attr)
+        r = np.ones(shape=(rows, rows))
+        p = np.ones(shape=(rows, rows))
         for i in range(rows):
           for j in range(i+1, rows):
-            csv_file.write('%s, %s, %f, %f\n' %(attr[i], attr[j], r[i,j], p[i,j]))
-      csv_file.close()
+            c1 = X_train[attr[i]]
+            c2 = X_train[attr[j]]
+            r_, p_ = pearsonr(c1, c2)
+            r[i, j] = r[j, i] = r_
+            p[i, j] = p[j, i] = p_
+        self.r = r
+        self.p = p
+        return self.r, self.p
+            
+      corrcoef_loop(X_train)
+
+      def write_corr(r, p, X_train, name, directory):
+        datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+        with open(os.path.join(directory,
+                           'linear_corr_pvalues_'+name+datestring+'.csv'), 'a') as csv_file:
+          attr = list(X_train)
+          rows = len(attr)
+          for i in range(rows):
+            for j in range(i+1, rows):
+              csv_file.write('%s, %s, %f, %f\n' %(attr[i], attr[j], r[i,j], p[i,j]))
+        csv_file.close()
     
-    write_corr(r,p, X_train, name, directory)
+      write_corr(self.r, self.p, X_train, name, directory)
   
-  correlation_pvalue(self.X_database_train, 'database', self.database)
+    correlation_pvalue(self.X_database_train_ordered, 'database', self.database)
+    correlation_pvalue(self.X_man_add_train_ordered, 'man_add', self.man_add)
+    correlation_pvalue(self.X_transform_train_ordered, 'transform', self.transform)
+    correlation_pvalue(self.X_prot_screen_trans_train_ordered, 'prot_screen_trans', self.prot_screen_trans)
+    
+    def plot_scatter_matrix(X_train, name, directory):
+      '''A function to create a scatter matrix of the data'''
+      
+      print('*' *80)
+      print('*    Plotting Scatter Matrix for Features')
+      print('*' *80)      
+      
+      datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+      columns = [X_train.columns]
+      for c in columns:
+        if X_train.isnull().any().any() == True:
+          X_train = X_train.dropna(axis=1)
+      attr = list(X_train)    
+      scatter_matrix(X_train[attr], figsize=(25,20))
+      plt.savefig(os.path.join(directory, 'linear_PearsonCC_scattermatrix_'+name+datestring+'.png'))
+      plt.close()
   
-  def feature_conf_mat(X_train, name, directory):
-    f, ax = plt.subplots(figsize=(10, 8))
-    corr = X_train.corr()
-    sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool), cmap=sns.diverging_palette(255, 10, as_cmap=True), square=True, ax=ax)
-    plt.savefig(os.path.join(directory, 'feature_confusion_matrix_'+name+datestring+'.png'))
-
-    plt.show()
+    plot_scatter_matrix(self.X_database_train_ordered, 'database', self.database)
+    plot_scatter_matrix(self.X_man_add_train_ordered, 'man_add', self.man_add)
+    plot_scatter_matrix(self.X_transform_train_ordered, 'transform', self.transform)
+    plot_scatter_matrix(self.X_prot_screen_trans_train_ordered, 'prot_screen_trans', self.prot_screen_trans)
+  
+    def feature_conf_mat(X_train, name, directory):
     
-  feature_conf_mat(self.X_database_train, 'database', self.database)
-#  feature_conf_mat(self.X_man_add_train, 'man_add', self.man_add)
-#  feature_conf_mat(self.X_transform_train, 'transform', self.transform)
-#  feature_conf_mat(self.X_prot_screen_trans_train, 'prot_screen_trans', self.prot_screen_trans)
+      print('*' *80)
+      print('*    Plotting Confusion Matrix for Correlation Coefficients between Features')
+      print('*' *80)          
     
+      datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+      f, ax = plt.subplots(figsize=(10, 10))
+      corr = X_train.corr()
+      sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool), cmap=sns.diverging_palette(255, 10, as_cmap=True), square=True, ax=ax)
+      plt.tight_layout()
+      plt.savefig(os.path.join(directory, 'feature_confusion_matrix_'+name+datestring+'.png'))
     
+    feature_conf_mat(self.X_database_train_ordered, 'database', self.database)
+    feature_conf_mat(self.X_man_add_train_ordered, 'man_add', self.man_add)
+    feature_conf_mat(self.X_transform_train_ordered, 'transform', self.transform)
+    feature_conf_mat(self.X_prot_screen_trans_train_ordered, 'prot_screen_trans', self.prot_screen_trans)
     
-    
-    
-#confution matrix of features
-#X_transform_train_ordered = X_transform_train[['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-#                          'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-#                          'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-#                          'highreslimit', 'wilsonbfactor', 'anomalousslope',
-#                          'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-#                          'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
-#                          'Vcell', 'solvent_content', 'Vcell/Vm<Ma>', 'Matth_coeff',
-#                          'MW_ASU/sites_ASU/solvent_content', 'MW_chain', 'No_atom_chain',
-#                          'No_mol_ASU', 'MW_ASU', 'sites_ASU', 'MW_ASU/sites_ASU',
-#                          'MW_chain/No_atom_chain', 'wilson', 'bragg', 'volume_wilsonB_highres']]                              
-
-#X_transform_train_ordered.to_csv(os.path.join(METRIX_PATH, 'X_transform_train_ordered_forR.csv'), sep=',')
-
-
-
-#f, ax = plt.subplots(figsize=(10, 8))
-#corr = X_transform_train_ordered.corr()
-#sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool), cmap=sns.diverging_palette(255, 10, as_cmap=True),
-#            square=True, ax=ax)
-#plt.show()
-    
-#print(X_transform_train.columns)
-#print(X_transform_train_ordered.columns)
-
 def run():
   args = parse_command_line()
   
