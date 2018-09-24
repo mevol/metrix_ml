@@ -133,10 +133,10 @@ class DecisionTreeGridSearchManAdd(object):
 
     attr_man_add_stratified = ['anomalousCC', 'totalobservations', 'RpimdiffI', 'Matth_coeff', 'MW_chain']
                     
-    metrix_man_add = self.metrix[attr_man_add_normal]
+    metrix_man_add = self.metrix[attr_man_add_stratified]
 
     with open(os.path.join(self.man_add_features, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Preparing input data as metrix_man_add with following attributes %s \n' %(attr_man_add_normal))
+      text_file.write('Preparing input data as metrix_man_add with following attributes %s \n' %(attr_man_add_stratified))
 
     self.X_man_add = metrix_man_add
 
@@ -165,10 +165,10 @@ class DecisionTreeGridSearchManAdd(object):
     y = self.metrix['EP_success']
     
 #normal split of samples    
-    X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(self.X_man_add, y, test_size=0.2, random_state=42)
+#    X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(self.X_man_add, y, test_size=0.2, random_state=42)
 
 #stratified split of samples
-#    X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(self.X_man_add, y, test_size=0.2, random_state=42, stratify=y)
+    X_man_add_train, X_man_add_test, y_train, y_test = train_test_split(self.X_man_add, y, test_size=0.2, random_state=42, stratify=y)
 
     assert self.X_man_add.columns.all() == X_man_add_train.columns.all()
     
@@ -203,7 +203,7 @@ class DecisionTreeGridSearchManAdd(object):
 
     #set up grid search
     param_grid = {"criterion": ["gini", "entropy"],#metric to judge reduction of impurity
-                  'max_features': [1, 2, 4],#max number of features when splitting
+                  'max_features': [1, 2, 5],#max number of features when splitting
                   "min_samples_split": [5, 10, 15], #min samples per node to induce split
                   "max_depth": [3, 4, 5, 6], #max number of splits to do
                   "min_samples_leaf": [2, 4, 6], #min number of samples in a leaf
