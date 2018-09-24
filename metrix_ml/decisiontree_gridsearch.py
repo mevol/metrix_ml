@@ -354,7 +354,7 @@ class DecisionTreeGridSearch(object):
       text_file.write('Best parameters: ' +str(grid_search_database.best_params_)+'\n')
       text_file.write('Best score: ' +str(grid_search_database.best_score_)+'\n')
     feature_importances_database = grid_search_database.best_estimator_.feature_importances_
-    feature_importances_database_ls = sorted(zip(feature_importances_database, self.X_database_train), reverse=True)
+    feature_importances_database_ls = sorted(zip(feature_importances_database, self.X_database_train), reverse=True)   
     with open(os.path.join(self.database, 'decisiontree_gridsearch.txt'), 'a') as text_file:
       text_file.write('Feature importances: %s \n' %feature_importances_database_ls)
 
@@ -413,6 +413,31 @@ class DecisionTreeGridSearch(object):
 
     self.tree_clf_grid_new_prot_screen_trans = DecisionTreeClassifier(**self.best_params_prot_screen_trans, random_state=42)
     self.tree_clf_grid_new_prot_screen_trans.fit(self.X_prot_screen_trans_train, self.y_train)
+
+    def feature_importances_pandas(clf, X_train, name, directory):   
+      datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')      
+#      feature_list = []
+#      for tree in clf.estimators_:
+      feature_importances_ls = clf.feature_importances_
+#        feature_list.append(feature_importances_ls)
+        
+      df = pd.DataFrame(feature_importances_ls, columns=X_train.columns)
+#      df_mean = df[X_train.columns].mean(axis=0)
+ #     df_std = df[X_train.columns].std(axis=0)
+      #df_mean.plot(kind='bar', color='b', yerr=[df_std], align="center", figsize=(20,10), title="Feature importances", rot=60)
+      df.plot(kind='bar', color='b', align="center", figsize=(20,10))
+      plt.title('Histogram of Feature Importances over all RandomForest using features %s ' %name)
+      plt.xlabel('Features')
+      plt.savefig(os.path.join(directory, 'feature_importances_overall_bar_plot_tree_grid_'+name+datestring+'.png'))
+      plt.close()
+      
+    feature_importances_pandas(self.tree_clf_grid_new_database, self.X_database_train, 'database', self.database)
+    feature_importances_pandas(self.tree_clf_grid_new_man_add, self.X_man_add_train, 'man_add', self.man_add)
+    feature_importances_pandas(self.tree_clf_grid_new_transform, self.X_transform_train, 'transform', self.transform)
+    feature_importances_pandas(self.tree_clf_grid_new_prot_screen_trans, self.X_prot_screen_trans_train, 'prot_screen_trans', self.prot_screen_trans)
+      
+      
+      
     
     def plot_features(clf, attr, directory):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')

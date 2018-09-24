@@ -179,12 +179,11 @@ class DecisionTreeGridSearchTransform(object):
     #use np.exp to work with series object
     metrix_transform['volume_wilsonB_highres'] = metrix_transform['Vcell/Vm<Ma>'] * np.exp(metrix_transform['wilson'] * metrix_transform['bragg'])
     
+    metrix_transform_features_normal = metrix_transform[['MW_chain/No_atom_chain', 'RpimdiffI', 'MW_ASU/sites_ASU/solvent_content', 'totalobservations']].copy()
     
-    metrix_transform_features_normal = metrix_transform['MW_chain/No_atom_chain', 'RpimdiffI', 'MW_ASU/sites_ASU/solvent_content', 'totalobservations'].copy()
+    metrix_transform_features_stratified = metrix_transform[['RpimdiffI', 'No_atom_chain', 'Matth_coeff', 'totalobservations']].copy()
     
-    metrix_transform_features_stratified = metrix_transform['RpimdiffI', 'No_atom_chain', 'Matth_coeff', 'totalobservations'].copy()
-    
-    self.X_transform = metrix_transform_features_normal
+    self.X_transform = metrix_transform_features_stratified
  
     with open(os.path.join(self.transform_features, 'decisiontree_gridsearch.txt'), 'a') as text_file:
       text_file.write('Created the following dataframes: metrix_transform \n')
@@ -211,10 +210,10 @@ class DecisionTreeGridSearchTransform(object):
     y = self.metrix['EP_success']
     
 #normal split of samples    
-    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
+#    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
 
 #stratified split of samples
-#    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42, stratify=y)
+    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42, stratify=y)
  
     assert self.X_transform.columns.all() == X_transform_train.columns.all()
     
@@ -249,7 +248,7 @@ class DecisionTreeGridSearchTransform(object):
 
     #set up grid search
     param_grid = {"criterion": ["gini", "entropy"],#metric to judge reduction of impurity
-                  'max_features': [1, 2, 4, 8, 16, 29, 39],#max number of features when splitting
+                  'max_features': [1, 2, 4],#max number of features when splitting
                   "min_samples_split": [5, 10, 15], #min samples per node to induce split
                   "max_depth": [3, 4, 5, 6], #max number of splits to do
                   "min_samples_leaf": [2, 4, 6], #min number of samples in a leaf
