@@ -133,10 +133,10 @@ class DecisionTreeGridSearchDatabase(object):
     
     attr_database_stratified = ['anomalousmulti', 'multiplicity', 'totalobservations', 'RpimdiffI']
                       
-    metrix_database = self.metrix[attr_database_normal]
+    metrix_database = self.metrix[attr_database_stratified]
     
     with open(os.path.join(self.database_features, 'decisiontree_gridsearch.txt'), 'a') as text_file:
-      text_file.write('Preparing input data as metrix_database with following attributes %s \n' %(attr_database))
+      text_file.write('Preparing input data as metrix_database with following attributes %s \n' %(attr_database_stratified))
 
     
     self.X_database = metrix_database
@@ -166,10 +166,10 @@ class DecisionTreeGridSearchDatabase(object):
     y = self.metrix['EP_success']
     
 #normal split of samples    
-    X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42)
+#    X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42)
 
 #stratified split of samples
-#    X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42, stratify=y)
+    X_database_train, X_database_test, y_train, y_test = train_test_split(self.X_database, y, test_size=0.2, random_state=42, stratify=y)
 
     assert self.X_database.columns.all() == X_database_train.columns.all()
     
@@ -204,7 +204,7 @@ class DecisionTreeGridSearchDatabase(object):
 
     #set up grid search
     param_grid = {"criterion": ["gini", "entropy"],#metric to judge reduction of impurity
-                  'max_features': [1, 2, 4, 8, 16, 21],#max number of features when splitting
+                  'max_features': [1, 2, 4],#max number of features when splitting
                   "min_samples_split": [5, 10, 15], #min samples per node to induce split
                   "max_depth": [3, 4, 5, 6], #max number of splits to do
                   "min_samples_leaf": [2, 4, 6], #min number of samples in a leaf
@@ -307,16 +307,6 @@ class DecisionTreeGridSearchDatabase(object):
     
     basic_stats(self.tree_clf_grid_new_database, self.X_database_train, self.database_features)
     
-    def predictions_cv(clf, X_train, y_train, database):
-      predicted = cross_val_predict(clf, X_train, y_train, cv=10)
-      fig, ax = plt.subplots()
-      ax.scatter(y_train, predicted, edgecolors=(0, 0, 0))
-      ax.plot([y_train.min(), y_train.max()], [y_train.min(), y_train.max()], 'k--', lw=4)
-      ax.set_xlabel('Measured')
-      ax.set_ylabel('Predicted')
-      plt.show()
-    predictions_cv(self.tree_clf_grid_new_database, self.X_database_train, self.database_features)
-
     ###############################################################################
     #
     #  Predicting with test set and cross-validation set using the bets forest
