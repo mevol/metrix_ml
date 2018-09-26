@@ -192,10 +192,10 @@ class DecisionTreeRandomSearchProtScreenTrans(object):
     y = self.metrix['EP_success']
     
 #normal split of samples    
-    X_prot_screen_trans_train, X_prot_screen_trans_test, y_train, y_test = train_test_split(self.X_prot_screen_trans, y, test_size=0.2, random_state=42)
+#    X_prot_screen_trans_train, X_prot_screen_trans_test, y_train, y_test = train_test_split(self.X_prot_screen_trans, y, test_size=0.2, random_state=42)
 
 #stratified split of samples
-#    X_prot_screen_trans_train, X_prot_screen_trans_test, y_train, y_test = train_test_split(self.X_prot_screen_trans, y, test_size=0.2, random_state=42, stratify=y)
+    X_prot_screen_trans_train, X_prot_screen_trans_test, y_train, y_test = train_test_split(self.X_prot_screen_trans, y, test_size=0.2, random_state=42, stratify=y)
     
     assert self.X_prot_screen_trans.columns.all() == X_prot_screen_trans_train.columns.all()
     
@@ -272,8 +272,8 @@ class DecisionTreeRandomSearchProtScreenTrans(object):
 
     def plot_features(clf, attr, directory):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-      
       skplt.estimators.plot_feature_importances(clf, feature_names=attr, x_tick_rotation=60, max_num_features=40, figsize=(25, 25))
+      plt.tight_layout()
       plt.savefig(os.path.join(directory, 'feature_importances_bar_plot_rand_'+datestring+'.png'))
       plt.close()
    
@@ -321,6 +321,7 @@ class DecisionTreeRandomSearchProtScreenTrans(object):
       train_f1 = cross_val_score(tree, X_train, self.y_train, cv=10, scoring='f1').mean()
 
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
+        text_file.write('Get various cross_val_scores to evaluate clf performance for best parameters \n')     
         text_file.write('Accuracy for each of 10 CV folds: %s \n' %accuracy_each_cv)
         text_file.write('Mean accuracy over all 10 CV folds: %s \n' %accuracy_mean_cv)
         text_file.write('ROC_AUC mean for 10-fold CV: %s \n' %train_roc_auc)
@@ -552,9 +553,7 @@ class DecisionTreeRandomSearchProtScreenTrans(object):
         text_file.write('Getting y_scores for y_pred_proba_train_CV and y_pred_proba_test as y_scores_train_CV and y_scores_test for class 0 and 1\n')
 
       self.y_scores_ones = y_pred_proba[:, 1]#test data to be class 1
-      self.y_scores_zeros = y_pred_proba[:, 0]#test data to be class 0
       self.y_scores_CV_ones = y_train_CV_pred_proba[:, 1]#training data to be class 1
-      self.y_scores_CV_zeros = y_train_CV_pred_proba[:, 0]#training data to be class 0
 
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
         text_file.write('Plotting Precision-Recall for y_test and y_scores_test \n')
@@ -574,22 +573,10 @@ class DecisionTreeRandomSearchProtScreenTrans(object):
      #plot Precision Recall Threshold curve for test set        
       precisions, recalls, thresholds_tree = precision_recall_curve(self.y_test, self.y_scores_ones)
       plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, 'test_', '1', directory)
-      precisions, recalls, thresholds_tree = precision_recall_curve(self.y_test, self.y_scores_zeros)
-      plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, 'test_', '0', directory)
       #plot Precision Recall Threshold curve for CV train set       
       precisions, recalls, thresholds_tree = precision_recall_curve(self.y_train, self.y_scores_CV_ones)
       plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, 'train_CV_', '1', directory)
-      precisions, recalls, thresholds_tree = precision_recall_curve(self.y_train, self.y_scores_CV_zeros)
-      plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, 'train_CV_', '0', directory)
-      
-#      def precision_recall(y_test, y_proba, name, directory):
-#        skplt.metrics.plot_precision_recall_curve(y_test, y_proba, title='Precision_Recall curve %s' %name)
-#        plt.savefig(os.path.join(directory, 'Precision_Recall_curve_skplt_tree_rand_'+name+datestring+'.png'))
-#        plt.close()
-#
-#      precision_recall(self.y_test, y_pred_proba, 'test_', directory)
-#      precision_recall(self.y_train, y_train_CV_pred_proba, 'train_CV_', directory)
-      
+           
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
         text_file.write('Plotting ROC curve for y_test and y_scores_test \n')
         text_file.write('Plotting ROC curve for y_train and y_scores_train_CV \n')
@@ -624,78 +611,20 @@ class DecisionTreeRandomSearchProtScreenTrans(object):
       #ROC curve for test set      
       fpr_1, tpr_1, thresholds_1 = roc_curve(self.y_test, self.y_scores_ones)
       plot_roc_curve(fpr_1, tpr_1, 'test_', '1', directory)
-      fpr_0, tpr_0, thresholds_0 = roc_curve(self.y_test, self.y_scores_zeros)
-      plot_roc_curve(fpr_0, tpr_0, 'test_', '0', directory)
       #ROC curve for 10-fold CV train set      
       fpr_CV_1, tpr_CV_1, thresholds_CV_1 = roc_curve(self.y_train, self.y_scores_CV_ones)
       plot_roc_curve(fpr_CV_1, tpr_CV_1, 'train_CV_', '1', directory)
-      fpr_CV_0, tpr_CV_0, thresholds_CV_0 = roc_curve(self.y_train, self.y_scores_CV_zeros)
-      plot_roc_curve(fpr_CV_0, tpr_CV_0, 'train_CV_', '0', directory)
       
       #calculate the area under the curve to get the performance for a classifier
       # IMPORTANT: first argument is true values, second argument is predicted probabilities
       AUC_test_class1 = metrics.roc_auc_score(self.y_test, self.y_scores_ones)
-      AUC_test_class0 = metrics.roc_auc_score(self.y_test, self.y_scores_zeros)
       AUC_train_class1 = metrics.roc_auc_score(self.y_train, self.y_scores_CV_ones)
-      AUC_train_class0 = metrics.roc_auc_score(self.y_train, self.y_scores_CV_zeros)
 
       with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
         text_file.write('AUC for test set class 1: %s \n' %AUC_test_class1)
-        text_file.write('AUC for test set class 0: %s \n' %AUC_test_class0)
         text_file.write('AUC for CV train set class 1: %s \n' %AUC_train_class1)
-        text_file.write('AUC for CV train set class 0: %s \n' %AUC_train_class0)
-
-      # define a function that accepts a threshold and prints sensitivity and specificity
-      def evaluate_threshold(tpr, fpr, thresholds, threshold, name, directory):
-        sensitivity = tpr[thresholds > threshold][-1]
-        specificity = 1 - fpr[thresholds > threshold][-1]
-        with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-          text_file.write('Sensitivity for %s at threshold %.2f: %s \n' %(name, threshold, sensitivity))
-          text_file.write('Specificity for %s at threshold %.2f: %s \n' %(name, threshold, specificity))
-
-      evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.6, 'test_class1_', directory)    
-      evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.5, 'test_class1_', directory)
-      evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.4, 'test_class1_', directory)
-      evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.3, 'test_class1_', directory)
-      evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.2, 'test_class1_', directory)
-      evaluate_threshold(tpr_0, fpr_0, thresholds_0, 0.6, 'test_class0_', directory)    
-      evaluate_threshold(tpr_0, fpr_0, thresholds_0, 0.5, 'test_class0_', directory)
-      evaluate_threshold(tpr_0, fpr_0, thresholds_0, 0.4, 'test_class0_', directory)
-      evaluate_threshold(tpr_0, fpr_0, thresholds_0, 0.3, 'test_class0_', directory)
-      evaluate_threshold(tpr_0, fpr_0, thresholds_0, 0.2, 'test_class0_', directory)
-      evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.6, 'train_CV_class1_', directory)
-      evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.5, 'train_CV_class1_', directory)
-      evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.4, 'train_CV_class1_', directory)
-      evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.3, 'train_CV_class1_', directory)
-      evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.2, 'train_CV_class1_', directory)
-      evaluate_threshold(tpr_CV_0, fpr_CV_0, thresholds_CV_0, 0.6, 'train_CV_class0_', directory)
-      evaluate_threshold(tpr_CV_0, fpr_CV_0, thresholds_CV_0, 0.5, 'train_CV_class0_', directory)
-      evaluate_threshold(tpr_CV_0, fpr_CV_0, thresholds_CV_0, 0.4, 'train_CV_class0_', directory)
-      evaluate_threshold(tpr_CV_0, fpr_CV_0, thresholds_CV_0, 0.3, 'train_CV_class0_', directory)
-      evaluate_threshold(tpr_CV_0, fpr_CV_0, thresholds_CV_0, 0.2, 'train_CV_class0_', directory)
 
     prediction_probas(self.tree_clf_rand_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, self.X_prot_screen_trans_test, self.y_test, self.y_pred_proba_prot_screen_trans, self.y_train_CV_pred_proba_prot_screen_trans, self.prot_screen_trans_only, 'prot_screen_trans')  
-  
-    def scoring_all(tree, X_train, y_train, X_test, y_test, directory):     
-      def scoring(tree, X, y, name, directory, cv):
-        # calculate cross_val_scores with different scoring functions for test set
-        roc_auc = cross_val_score(tree, X, y, cv=cv, scoring='roc_auc').mean()
-        accuracy = cross_val_score(tree, X, y, cv=cv, scoring='accuracy').mean()
-        recall = cross_val_score(tree, X, y, cv=cv, scoring='recall').mean()
-        precision = cross_val_score(tree, X, y, cv=cv, scoring='precision').mean()
-        f1 = cross_val_score(tree, X, y, cv=cv, scoring='f1').mean()
-        with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
-          text_file.write('ROC_AUC for %s: %s \n' %(name, roc_auc))
-          text_file.write('Accuracy for %s: %s \n' %(name, accuracy))
-          text_file.write('Recall for %s: %s \n' %(name, recall))
-          text_file.write('Precision for %s: %s \n' %(name, precision))
-          text_file.write('F1 score for %s: %s \n' %(name, f1))
-
-      scoring(tree, X_test, y_test, 'test', directory, cv=None)
-      scoring(tree, X_train, y_train, 'train_CV', directory, cv=10)
-
-    scoring_all(self.tree_clf_rand_new_prot_screen_trans, self.X_prot_screen_trans_train, self.y_train, self.X_prot_screen_trans_test, self.y_test, self.prot_screen_trans_only)
-
 
 def run():
   args = parse_command_line()
