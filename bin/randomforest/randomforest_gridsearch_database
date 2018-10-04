@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.randomforest import randomforest_gridsearch_database
+
+if __name__=='__main__':
+  randomforest_gridsearch_database.run()

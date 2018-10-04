@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml import extreme_randomforest_gridsearch_prot_screen_trans
+
+if __name__=='__main__':
+  extreme_randomforest_gridsearch_prot_screen_trans.run()

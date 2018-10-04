@@ -1,6 +1,0 @@
-#!/bin/env python3
-
-from metrix_ml import decisiontree_bag_randomsearch_man_add
-
-if __name__=='__main__':
-  decisiontree_bag_randomsearch_man_add.run()
