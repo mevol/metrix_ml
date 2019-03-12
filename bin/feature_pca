@@ -1,6 +1,0 @@
-#!/bin/env python3
-
-from metrix_ml.pre_processing import pca_database
-
-if __name__=='__main__':
-  pca_database.run()

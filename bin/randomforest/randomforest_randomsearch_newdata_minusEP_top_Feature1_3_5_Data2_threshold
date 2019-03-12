@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.randomforest import randomforest_randomsearch_newdata_minusEP_top_Feature1_3_5_Data2_threshold
+
+if __name__=='__main__':
+  randomforest_randomsearch_newdata_minusEP_top_Feature1_3_5_Data2_threshold.run()

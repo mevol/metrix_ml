@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.pre_processing import pca_newdata_minusEP_tummyfeatures
+
+if __name__=='__main__':
+  pca_newdata_minusEP_tummyfeatures.run()

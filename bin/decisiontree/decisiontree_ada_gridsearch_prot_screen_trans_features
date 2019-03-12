@@ -1,6 +1,0 @@
-#!/bin/env python3
-
-from metrix_ml.decisiontree import randomforest_ada_gridsearch_prot_screen_trans_features
-
-if __name__=='__main__':
-  randomforest_ada_gridsearch_prot_screen_trans_features.run()
