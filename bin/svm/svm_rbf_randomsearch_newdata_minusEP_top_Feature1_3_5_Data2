@@ -1,6 +1,0 @@
-#!/bin/env python3
-
-from metrix_ml.svm import svm_rbf_randomsearch_newdata_minusEP_top_Feature1_3_5_Data2
-
-if __name__=='__main__':
-  svm_rbf_randomsearch_newdata_minusEP_top_Feature1_3_5_Data2.run()

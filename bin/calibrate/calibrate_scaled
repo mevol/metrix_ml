@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.calibrate import calibrate_scaled
+
+if __name__=='__main__':
+  calibrate_scaled.run()

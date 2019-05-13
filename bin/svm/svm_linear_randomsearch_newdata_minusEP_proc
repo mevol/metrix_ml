@@ -1,6 +1,0 @@
-#!/bin/env python3
-
-from metrix_ml.svm import svm_linear_randomsearch_newdata_minusEP_proc
-
-if __name__=='__main__':
-  svm_linear_randomsearch_newdata_minusEP_proc.run()
