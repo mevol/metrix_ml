@@ -103,11 +103,15 @@ class Calibrate(object):
     print('*' *80)
 
     #database plus manually added data
-    data_initial = ['lowreslimit', 'anomalousslope', 'anomalousCC', 'diffI', 'diffF']
+    data_initial = ['lowreslimit', 'anomalousslope', 'anomalousCC', 'diffI', 'diffF', 'f']
 
     y = self.data['EP_success']
     self.y = y
     print(self.y)
+    
+    with open(os.path.join(self.calibrate, 'calibrate.txt'), 'a') as text_file:
+      text_file.write(str(self.y))
+      text_file.write('\n')
 
     data_initial = self.data[data_initial]  
     X_data_initial = data_initial.fillna(0)
@@ -116,6 +120,8 @@ class Calibrate(object):
     print(self.X_data_initial)
     
     with open(os.path.join(self.calibrate, 'calibrate.txt'), 'a') as text_file:
+      text_file.write(str(self.X_data_initial))
+      text_file.write('\n')
       text_file.write('Split calibration data into y and X \n')
 
    
@@ -148,6 +154,10 @@ class Calibrate(object):
     cal_acc = clf_cccv.score(self.X_data_initial, self.y)
 
     print(cal_acc)
+
+    with open(os.path.join(self.calibrate, 'calibrate.txt'), 'a') as text_file:
+      text_file.write(str(cal_acc))
+      text_file.write('\n')
 
   
 def run():

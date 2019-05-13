@@ -7,6 +7,10 @@
 import argparse
 import pandas as pd
 import os
+
+import matplotlib
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
@@ -130,7 +134,7 @@ class RandomForestRandSearch(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
+                      'diffF', 'f','wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
                       'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
                       'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
                       'MW_chain', 'sites_ASU']
@@ -140,7 +144,7 @@ class RandomForestRandSearch(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
@@ -256,7 +260,7 @@ class RandomForestRandSearch(object):
     print('*' *80)
 
     #create the decision forest
-    forest_clf_rand = RandomForestClassifier(random_state=0, class_weight='balanced')
+    forest_clf_rand = RandomForestClassifier(random_state=0, class_weight='balanced', n_jobs=-1)
 
     with open(os.path.join(self.newdata_minusEP, 'randomforest_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created random forest: forest_clf_rand \n')
@@ -277,7 +281,7 @@ class RandomForestRandSearch(object):
 
     #building and running the grid search
     rand_search = RandomizedSearchCV(forest_clf_rand, param_rand, random_state=5,
-                              cv=3, n_iter=500, scoring='accuracy')
+                              cv=3, n_iter=500, scoring='accuracy', n_jobs=-1)
 
     rand_search_transform = rand_search.fit(self.X_newdata_transform_train, self.y_train)
     with open(os.path.join(self.newdata_minusEP, 'randomforest_randomsearch.txt'), 'a') as text_file:
@@ -320,7 +324,7 @@ class RandomForestRandSearch(object):
     print('*    Building new forest based on best parameter combination and save as pickle')
     print('*' *80)
 
-    self.forest_clf_rand_new_transform = RandomForestClassifier(**self.best_params_transform, random_state=42)
+    self.forest_clf_rand_new_transform = RandomForestClassifier(**self.best_params_transform, random_state=42, n_jobs=-1)
     self.forest_clf_rand_new_transform.fit(self.X_newdata_transform_train, self.y_train)
 
     def feature_importances_pandas(clf, X_train, name, directory):   

@@ -12,6 +12,10 @@ import csv
 from pandas.plotting import scatter_matrix
 from datetime import datetime
 from scipy.stats import pearsonr#, betai
+
+import matplotlib
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import matplotlib.colorbar as mpl
 import seaborn as sns
@@ -115,7 +119,7 @@ class FeatureCorrelations(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
+                      'diffF', 'f','wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
                       'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
                       'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
                       'MW_chain', 'sites_ASU']
@@ -125,7 +129,7 @@ class FeatureCorrelations(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
@@ -229,7 +233,7 @@ class FeatureCorrelations(object):
                           'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                           'highreslimit', 'wilsonbfactor', 'wilson', 'bragg', 'anomalousslope',
                           'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                          'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                          'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
                           'Vcell', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
                           'cell_alpha', 'cell_beta', 'cell_gamma','solvent_content',
                           'Vcell/Vm<Ma>', 'volume_wilsonB_highres', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
@@ -281,13 +285,17 @@ class FeatureCorrelations(object):
             r_, p_ = pearsonr(c1, c2)
             r[i, j] = r[j, i] = r_
             p[i, j] = p[j, i] = p_
+        print(r)
+        r_squared = r**2
+        print(r_squared)
+        self.r_squared = r_squared
         self.r = r
         self.p = p
-        return self.r, self.p
+        return self.r, self.p, self.r_squared
             
       corrcoef_loop(X_train)
 
-      def write_corr(r, p, X_train, name, directory):
+      def write_corr(r, p, r_squared, X_train, name, directory):
         datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
         with open(os.path.join(directory,
                            'linear_corr_pvalues_'+name+datestring+'.csv'), 'a') as csv_file:
@@ -295,10 +303,10 @@ class FeatureCorrelations(object):
           rows = len(attr)
           for i in range(rows):
             for j in range(i+1, rows):
-              csv_file.write('%s, %s, %f, %f\n' %(attr[i], attr[j], r[i,j], p[i,j]))
+              csv_file.write('%s, %s, %f, %f, %f\n' %(attr[i], attr[j], r[i,j], p[i,j], r_squared[i,j]))
         csv_file.close()
     
-      write_corr(self.r, self.p, X_train, name, directory)
+      write_corr(self.r, self.p, self.r_squared, X_train, name, directory)
   
     correlation_pvalue(self.X_newdata_transform_train_ordered, 'newdata_minusEP', self.newdata_minusEP)
     
@@ -333,51 +341,52 @@ class FeatureCorrelations(object):
       label_map = {
         'IoverSigma' : '$I/\sigma$', 
         'cchalf' : "$CC_{1/2}$", 
-        'RmergediffI' : '$R_{merge}diffI$', 
         'RmergeI' : '$R_{merge}I$',
+        'RmergediffI' : '$R_{merge}\Delta I$', 
         'RmeasI' : '$R_{meas}I$',
-        'RmeasdiffI' : '$R_{meas}diffI$',
-        'RpimdiffI' : '$R_{p.i.m.}diffI$',
+        'RmeasdiffI' : '$R_{meas}\Delta I$',
         'RpimI' : '$R_{p.i.m.}I$',
-        'totalobservations' : 'Total number observations',
-        'totalunique' : 'Total number unique observations',
-        'multiplicity' : 'Multiplicity',
-        'completeness' : 'Completeness',
-        'lowreslimit' : 'Low resolution limit',
-        'highreslimit' : 'High resolution limit',
-        'wilsonbfactor' : 'Wilson B factor',
-        'anomalousslope' : 'Anomalous slope',
+        'RpimdiffI' : '$R_{p.i.m.}\Delta I$',
+        'totalobservations' : '$N_{obs_total}$',
+        'totalunique' : '$N_{obs_unique}$',
+        'multiplicity' : 'M',
+        'completeness' : 'T',
+        'lowreslimit' : '$d_{max}$',
+        'highreslimit' : '$d_{min}$',
+        'wilsonbfactor' : 'B',
+        'anomalousslope' : '$m_{anom}$',
         'anomalousCC' : '$CC_{anom}$',
-        'anomalousmulti' : 'Anomalous multiplicity',
-        'anomalouscompl' : 'Anomalous completeness',
+        'anomalousmulti' : '$M_{anom}$',
+        'anomalouscompl' : '$T_{anom}$',
         'diffI' : '$\Delta I/\sigma I$',
         'diffF' : '$\Delta F/F$',
-        'wavelength' : 'Wavelength',
-        'wavelength**3' : '$Wavelength^{3}$',
-        'wavelength**3/Vcell' : '$Wavelength^{3}/V_{cell}$',
+        'f' : "$f''_{theor}$",
+        'wavelength' : '$\lambda$',
+        'wavelength**3' : '$\lambda ^{3}$',
+        'wavelength**3/Vcell' : '$\lambda _{V}$',
         'Vcell' : '$V_{cell}$',
-        'sg_number' : 'Space group number',
-        'cell_a' : 'cell_a',
-        'cell_b' : 'cell_b',
-        'cell_c' : 'cell_c',
-        'cell_alpha' : 'cell_alpha',
-        'cell_beta' : 'cell_beta',
-        'cell_gamma' : 'cell_gamma',
-        'solvent_content' : 'Solvent content',
-        'Vcell/Vm<Ma>' : '$N_{atomcell}$',
-        'Matth_coeff' : '$V_{M}$',
-        'MW_ASU/sites_ASU/solvent_content' : '$MWS_{ASU}/Solvent content$',
+        'sg_number' : '$N_{sg}$',
+        'cell_a' : 'a',
+        'cell_b' : 'b',
+        'cell_c' : 'c',
+        'cell_alpha' : r"$\alpha$",
+        'cell_beta' : r"$\beta$",
+        'cell_gamma' : r'$\gamma$',
+        'solvent_content' : '$V_{S}$',
+        'Vcell/Vm<Ma>' : '$N_{cell}$',
+        'Matth_coeff' : '$V_{m}$',
+        'MW_ASU/sites_ASU/solvent_content' : '$MWS_{ASU_Vs}$',
         'MW_chain' : '$MW_{chain}$',
         'No_atom_chain' : '$N_{atomchain}$',
         'No_mol_ASU' : '$N_{molASU}$',
         'MW_ASU' : '$MW_{ASU}$',
-        'sites_ASU' : '$sites_{ASU}$',
+        'sites_ASU' : '$N_{sites_ASU}$',
         'MW_ASU/sites_ASU' : '$MWS_{ASU}$',
-        'IoverSigma/MW_ASU' : '$(I/\sigma)/MW_{ASU}$',
+        'IoverSigma/MW_ASU' : '$(I_{ASU}$',
         'MW_chain/No_atom_chain' : '$AV_{Z}$',
-        'wilson' : 'Wilson',
-        'bragg' : 'Bragg',
-        'volume_wilsonB_highres' : '$N_{atomcell}*Wilson*Bragg$'}
+        'wilson' : '-2B',
+        'bragg' : '$d_{inv}$',
+        'volume_wilsonB_highres' : 'L'}
 
       yticklabels = [label_map[key] for key in corr.columns]
       xticklabels = [label_map[key] for key in corr.columns]

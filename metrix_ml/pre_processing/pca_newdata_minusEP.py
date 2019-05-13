@@ -6,6 +6,10 @@
 '''Defining the environment for this class'''
 import argparse
 import pandas as pd
+
+import matplotlib
+matplotlib.use("Agg")
+
 import pylab as pl
 import os
 import matplotlib.pyplot as plt
@@ -119,7 +123,7 @@ class FeatureDecomposition(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
+                      'diffF', 'f','wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
                       'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
                       'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
                       'MW_chain', 'sites_ASU'
@@ -130,7 +134,7 @@ class FeatureDecomposition(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
@@ -296,7 +300,7 @@ class FeatureDecomposition(object):
              'PC-23', 'PC-24', 'PC-25', 'PC-26', 'PC-27', 'PC-28', 'PC-29',
              'PC-30', 'PC-31', 'PC-32', 'PC-33', 'PC-34', 'PC-35', 'PC-36',
              'PC-37', 'PC-38', 'PC-39', 'PC-40', 'PC-41', 'PC-42', 'PC-43',
-             'PC-44', 'PC-45', 'PC-46', 'PC-47']   
+             'PC-44', 'PC-45', 'PC-46', 'PC-47', 'PC-48']   
       
       plt.rcdefaults()
       fig, ax = plt.subplots(dpi=600)
@@ -514,6 +518,7 @@ class FeatureDecomposition(object):
       p45_i = plt.bar(ind_i, df_i.iloc[44], width, color='sandybrown', hatch="*")      
       p46_i = plt.bar(ind_i, df_i.iloc[45], width, color='lawngreen', hatch="*")
       p47_i = plt.bar(ind_i, df_i.iloc[46], width, color='plum', hatch="*")
+      p48_i = plt.bar(ind_i, df_i.iloc[47], width, color='red', hatch="+")
            
       plt.title('Feature dominance in each PC', fontsize=20)
       plt.xlabel('Number of PCs', fontsize=20)

@@ -7,6 +7,10 @@
 import argparse
 import pandas as pd
 import os
+
+import matplotlib
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
@@ -132,7 +136,7 @@ class SVMGridSearch(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
+                      'diffF', 'f','wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
                       'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
                       'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
                       'MW_chain', 'sites_ASU']
@@ -142,7 +146,7 @@ class SVMGridSearch(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
@@ -285,7 +289,7 @@ class SVMGridSearch(object):
       text_file.write('use cv=3, scoring=accuracy \n')
 
     #building and running the grid search
-    rand_search = RandomizedSearchCV(svc_clf_rand, param_rand, cv=3, scoring='accuracy', random_state=5, n_iter=500)
+    rand_search = RandomizedSearchCV(svc_clf_rand, param_rand, cv=3, scoring='accuracy', random_state=5, n_iter=500, n_jobs=-1)
 
     rand_search_transform = rand_search.fit(self.X_newdata_transform_train, self.y_train)
     with open(os.path.join(self.newdata_minusEP, 'svm_randomsearch.txt'), 'a') as text_file:
@@ -354,7 +358,7 @@ class SVMGridSearch(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'wavelength3', 'wavelength3_Vcell',
+                      'diffF', 'f','wavelength', 'wavelength3', 'wavelength3_Vcell',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell_VmMa', 'Matth_coeff', 'MW_ASU_sites_ASU_solvent_content',
@@ -367,24 +371,26 @@ class SVMGridSearch(object):
     #print(feature_names)
     #print(len(feature_names))
 
-    def plot_coefficients(coef, feature_names, top_features=47):
+    def plot_coefficients(coef, feature_names, top_features=48):
       '''Once a linear SVM is fit to data (e.g., svm.fit(features, labels)), the coefficients can be accessed with svm.coef_. Recall that a linear SVM creates a hyperplane that uses support vectors to maximise the distance between the two classes. The weights obtained from svm.coef_ represent the vector coordinates which are orthogonal to the hyperplane and their direction indicates the predicted class. The absolute size of the coefficients in relation to each other can then be used to determine feature importance for the data separation task.'''
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
       coef = coef.ravel()
-      #print(len(top_features))
+      print(top_features)
       top_positive_coefficients = np.argsort(coef)[-top_features:]
       top_negative_coefficients = np.argsort(coef)[:top_features]
       top_coefficients = np.hstack([top_negative_coefficients, top_positive_coefficients])
+      print(len(top_coefficients))
       # create plot
       plt.figure(figsize=(20, 10))
       colors = ['red' if c < 0 else 'blue' for c in coef[top_coefficients]]
       plt.bar(np.arange(2 * top_features), coef[top_coefficients], color=colors)
       feature_names = np.array(feature_names)
       plt.xticks(np.arange(top_features), feature_names[top_coefficients], rotation=90, ha='right')
+      #plt.xticks(np.arange(2 * top_features), feature_names[top_coefficients], rotation=90, ha='right')
       plt.tight_layout()
       plt.savefig(os.path.join(self.newdata_minusEP, 'feature_importances_overall_bar_plot_grid_'+datestring+'.png'))
 
-    plot_coefficients(coef, cv.get_feature_names())
+    #plot_coefficients(coef, cv.get_feature_names())
 
     with open(os.path.join(self.newdata_minusEP, 'svm_randomsearch.txt'), 'a') as text_file:
       text_file.write('Plotted features importances with feature names: %s \n' %feature_names)

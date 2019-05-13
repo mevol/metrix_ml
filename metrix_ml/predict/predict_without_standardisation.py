@@ -101,7 +101,7 @@ class PredictUnknown(object):
     print('*' *80)
 
     #database plus manually added data
-    data_initial = ['lowreslimit', 'anomalousslope', 'anomalousCC', 'diffI', 'diffF']
+    data_initial = ['lowreslimit', 'anomalousslope', 'anomalousCC', 'diffI', 'diffF', 'f']
 
     data_initial = self.data[data_initial]  
     X_data_initial = data_initial.fillna(0)

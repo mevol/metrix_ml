@@ -7,6 +7,10 @@
 import argparse
 import pandas as pd
 import os
+
+import matplotlib
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -115,7 +119,7 @@ class RecursiveFeatureElimination(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
+                      'diffF', 'f','wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
                       'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
                       'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
                       'MW_chain', 'sites_ASU']
@@ -125,7 +129,7 @@ class RecursiveFeatureElimination(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
@@ -254,7 +258,7 @@ class RecursiveFeatureElimination(object):
        'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations', 'totalunique',
        'multiplicity', 'completeness', 'lowreslimit', 'highreslimit',
        'wilsonbfactor', 'anomalousslope', 'anomalousCC', 'anomalousmulti',
-       'anomalouscompl', 'diffI', 'diffF', 'wavelength', 'sg_number', 'cell_a',
+       'anomalouscompl', 'diffI', 'diffF', 'f', 'wavelength', 'sg_number', 'cell_a',
        'cell_b', 'cell_c', 'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell',
        'solvent_content', 'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
        'MW_chain', 'sites_ASU', 'MW_ASU',
