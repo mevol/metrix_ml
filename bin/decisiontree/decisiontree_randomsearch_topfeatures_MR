@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.decisiontree import decisiontree_randomsearch_topfeatures_MR
+
+if __name__=='__main__':
+  decisiontree_randomsearch_topfeatures_MR.run()

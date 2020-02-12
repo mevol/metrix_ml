@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.predict import predict_without_standardisation_MR
+
+if __name__=='__main__':
+  predict_without_standardisation_MR.run()

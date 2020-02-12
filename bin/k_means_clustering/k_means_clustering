@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.k_means_clustering import k_means_clustering
+
+if __name__=='__main__':
+  k_means_clustering.run()

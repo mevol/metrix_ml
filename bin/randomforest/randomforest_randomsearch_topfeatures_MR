@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.randomforest import randomforest_randomsearch_topfeatures_MR
+
+if __name__=='__main__':
+  randomforest_randomsearch_topfeatures_MR.run()

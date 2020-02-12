@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.svm import svm_rbf_randomsearch_MR
+
+if __name__=='__main__':
+  svm_rbf_randomsearch_MR.run()

@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.pre_processing import feature_analysis_plotting_MR
+
+if __name__=='__main__':
+  feature_analysis_plotting_MR.run()

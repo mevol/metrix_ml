@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.pre_processing import pca_MR
+
+if __name__=='__main__':
+  pca_MR.run()

@@ -1,0 +1,6 @@
+#!/bin/env python3
+
+from metrix_ml.dbscan_clustering import dbscan_clustering
+
+if __name__=='__main__':
+  dbscan_clustering.run()
