@@ -139,7 +139,8 @@ class DecisionTreeBagRandomSearch(object):
                       'MW_chain', 'sites_ASU']
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
-    self.X_newdata_transform = metrix_newdata_initial[['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF', 'f']]
+#    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF']]
+    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC']]
     
     self.X_newdata_transform = self.X_newdata_transform.fillna(0)
 
@@ -209,7 +210,7 @@ class DecisionTreeBagRandomSearch(object):
     param_rand = {"base_estimator__criterion": ["gini", "entropy"],#metric to judge reduction of impurity
                   'base_estimator__class_weight': ['balanced', None],
                   'n_estimators': randint(100, 10000),#number of base estimators to use
-                  'base_estimator__max_features': randint(2, 6),#max number of features when splitting
+                  #'base_estimator__max_features': randint(2, 5),#max number of features when splitting
                   "base_estimator__min_samples_split": randint(2, 20),#min samples per node to induce split
                   "base_estimator__max_depth": randint(5, 10),#max number of splits to do
                   "base_estimator__min_samples_leaf": randint(1, 20),#min number of samples in a leaf
@@ -237,12 +238,12 @@ class DecisionTreeBagRandomSearch(object):
     base_estimator_dict["max_depth"] = base_estimator_dict.pop('base_estimator__max_depth')
     base_estimator_dict["min_samples_leaf"] = base_estimator_dict.pop('base_estimator__min_samples_leaf')
     base_estimator_dict["max_leaf_nodes"] = base_estimator_dict.pop('base_estimator__max_leaf_nodes')
-    base_estimator_dict['max_features'] = base_estimator_dict.pop('base_estimator__max_features')
+    #base_estimator_dict['max_features'] = base_estimator_dict.pop('base_estimator__max_features')
       
     bag_dict = rand_search_transform.best_params_.copy()
     keysToRemove2 = ("base_estimator__criterion",
                     'base_estimator__class_weight',
-                    'base_estimator__max_features',
+                    #'base_estimator__max_features',
                     "base_estimator__min_samples_split",
                     "base_estimator__max_depth",
                     "base_estimator__min_samples_leaf",
@@ -270,7 +271,7 @@ class DecisionTreeBagRandomSearch(object):
     self.tree_clf_rand_bag_new_transform = BaggingClassifier(clf2, **self.best_params_bag, n_jobs=-1, bootstrap=True, random_state=100)
     self.tree_clf_rand_bag_new_transform.fit(self.X_newdata_transform_train, self.y_train)
     
-    attr_newdata_transform = ['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF', 'f']
+    attr_newdata_transform = ['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF']
         
     def feature_importances_pandas(clf, X_train, name, directory):   
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')      

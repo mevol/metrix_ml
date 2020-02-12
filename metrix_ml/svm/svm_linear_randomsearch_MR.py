@@ -76,8 +76,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
 
 def make_output_folder(outdir):
-  name = os.path.join(outdir, 'svm_randomsearch')
-  output_dir = os.makedirs(name, exist_ok=True)
+  output_dir = os.path.join(outdir, 'svm_linear_randomsearch')
+  os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
 ###############################################################################
@@ -122,21 +122,19 @@ class SVMGridSearch(object):
     print('*' *80)
 
     #database plus manually added data
-    self.X_metrix = self.metrix[['IoverSigma', 'cchalf', 'RmergeI',
-                                 'RmergediffI', 'RmeasI', 'RmeasdiffI', 'RpimI',
-                                 'RpimdiffI', 'totalobservations', 'totalunique',
-                                 'multiplicity', 'completeness', 'lowreslimit',
-                                 'highreslimit', 'wilsonbfactor', 'sg_number',
-                                 'Vcell', 'solvent_content', 'Matth_coeff',
-                                 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                                 'MW_ASU', 'TFZ', 'LLG', 'PAK',
-                                 'mr_reso', 'mr_sg', 'mr_sg_no', 'RMSD', 'VRMS',
-                                 'eLLG', 'tncs', 'seq_ident', 'model_res']]
+    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
     self.X_metrix = self.X_metrix.fillna(0)
 
     with open(os.path.join(self.output_dir,
-              'svm_randomsearch.txt'), 'a') as text_file:
+              'svm_linear_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created dataframe X_metrix \n')
       text_file.write('with columns: \n')
       text_file.write(str(self.X_metrix.columns)+ '\n')
@@ -172,7 +170,7 @@ class SVMGridSearch(object):
     self.y_test = y_test
     
     with open(os.path.join(self.output_dir,
-              'svm_randomsearch.txt'), 'a') as text_file:
+              'svm_linear_randomsearch.txt'), 'a') as text_file:
       text_file.write('Spliting into training and test set 80-20 \n')
       text_file.write('metrix_transform: X_metrix_train, X_metrix_test \n')
       text_file.write('y(EP_success): y_train, y_test \n')
@@ -207,7 +205,7 @@ class SVMGridSearch(object):
                        random_state=100)
 
     with open(os.path.join(self.output_dir,
-              'svm_randomsearch.txt'), 'a') as text_file:
+              'svm_linear_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created SVM: svc_clf_grid \n')
 
     #set up grid search
@@ -216,7 +214,7 @@ class SVMGridSearch(object):
                  }
 
     with open(os.path.join(self.output_dir,
-              'svm_randomsearch.txt'), 'a') as text_file:
+              'svm_linear_randomsearch.txt'), 'a') as text_file:
       text_file.write('Running grid search for the following parameters: %s \n' %param_rand)
       text_file.write('use cv=3, scoring=accuracy \n')
 
@@ -231,7 +229,7 @@ class SVMGridSearch(object):
 
     rand_search_fitted = rand_search.fit(self.X_metrix_train_std, self.y_train)
     with open(os.path.join(self.output_dir,
-              'svm_randomsearch.txt'), 'a') as text_file:
+              'svm_linear_randomsearch.txt'), 'a') as text_file:
       text_file.write('Best parameters: ' +str(rand_search_fitted.best_params_)+'\n')
       text_file.write('Best score: ' +str(rand_search_fitted.best_score_)+'\n')
     
@@ -265,7 +263,7 @@ class SVMGridSearch(object):
       joblib.dump(svm, os.path.join(directory,
                                     'best_svm_rand_'+datestring+'.pkl'))
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Created new SVM "svm_clf_rand_new" using best parameters \n')
         text_file.write('Creating pickle file for best svm as best_svm_rand_.pkl \n')
     
@@ -304,7 +302,7 @@ class SVMGridSearch(object):
                                           cv=3).mean()
 
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Get various cross_val_scores to evaluate clf performance for best parameters \n')     
         text_file.write('Mean accuracy over all 3 CV folds: %s \n' %accuracy_mean_cv)
         text_file.write('ROC_AUC mean for 3-fold CV: %s \n' %roc_auc_mean_cv)
@@ -318,14 +316,14 @@ class SVMGridSearch(object):
     
     cv = CountVectorizer(lowercase=False)
     #print(cv)
-    cv.fit(['IoverSigma', 'cchalf', 'RmergeI', 'RmergediffI', 'RmeasI',
-            'RmeasdiffI', 'RpimI', 'RpimdiffI', 'totalobservations',
-            'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-            'highreslimit', 'wilsonbfactor', 'sg_number', 'Vcell',
-            'solvent_content', 'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
-            'MW_chain', 'MW_ASU', 'TFZ', 'LLG', 'PAK', 'mr_reso', 'mr_sg',
-            'mr_sg_no', 'RMSD', 'VRMS', 'eLLG', 'tncs', 'seq_ident',
-            'model_res'])
+    cv.fit(['IoverSigma', 'completeness', 'RmergeI',
+                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+                    'mr_reso', 'VRMS', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu'])
     #print(cv)                  
     #print(len(cv.vocabulary_))
     feature_names = cv.get_feature_names()
@@ -369,7 +367,7 @@ class SVMGridSearch(object):
 #    plot_coefficients(coef, cv.get_feature_names())
 
     with open(os.path.join(self.output_dir,
-              'svm_randomsearch.txt'), 'a') as text_file:
+              'svm_linear_randomsearch.txt'), 'a') as text_file:
       text_file.write('Plotted features importances with feature names: %s \n' %feature_names)
     
 ###############################################################################
@@ -390,7 +388,7 @@ class SVMGridSearch(object):
     self.y_pred = self.svc_clf_rand_new.predict(self.X_metrix_test_std)
     self.y_pred_proba = self.svc_clf_rand_new.predict_proba(self.X_metrix_test_std)
     with open(os.path.join(self.output_dir,
-              'svm_randomsearch.txt'), 'a') as text_file:
+              'svm_linear_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions and probabilities for X_metrix_test in y_pred and y_pred_proba \n')
 
     #alternative way to not have to use the test set
@@ -404,7 +402,7 @@ class SVMGridSearch(object):
                                                    cv=3,
                                                    method='predict_proba')
     with open(os.path.join(self.output_dir,
-              'svm_randomsearch.txt'), 'a') as text_file:
+              'svm_linear_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions and probabilities for X_metrix_train with 3-fold CV in y_train_CV_pred \n')
 
     confidence_train = self.svc_clf_rand_new.decision_function(self.X_metrix_train_std)
@@ -449,7 +447,7 @@ class SVMGridSearch(object):
       null_acc = max(self.y_test.mean(), 1 - self.y_test.mean())
 
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Accuracy score or agreement between y_test and y_pred: %s \n' %y_accuracy)
         text_file.write('Class distribution for y_test: %s \n' %class_dist)
         text_file.write('Percent 1s in y_test: %s \n' %ones)
@@ -521,7 +519,7 @@ class SVMGridSearch(object):
       FN_CV = conf_mat_3CV[1, 0]
 
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('confusion matrix using test set: %s \n' %conf_mat_test)
         text_file.write('confusion matrix using 10-fold CV: %s \n' %conf_mat_3CV)
         text_file.write('Slicing confusion matrix for test set into: TP, TN, FP, FN \n')
@@ -533,7 +531,7 @@ class SVMGridSearch(object):
       acc_score_man_CV = (TP_CV + TN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
       acc_score_sklearn_CV = metrics.accuracy_score(y_train, y_train_pred)  
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Accuracy score: \n')
         text_file.write('accuracy score manual test: %s \n' %acc_score_man_test)
         text_file.write('accuracy score sklearn test: %s \n' %acc_score_sklearn_test)
@@ -546,7 +544,7 @@ class SVMGridSearch(object):
       class_err_man_CV = (FP_CV + FN_CV) / float(TP_CV + TN_CV + FP_CV + FN_CV)
       class_err_sklearn_CV = 1 - metrics.accuracy_score(y_train, y_train_pred)
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Classification error: \n')  
         text_file.write('classification error manual test: %s \n' %class_err_man_test)
         text_file.write('classification error sklearn test: %s \n' %class_err_sklearn_test)
@@ -559,7 +557,7 @@ class SVMGridSearch(object):
       sensitivity_man_CV = TP_CV / float(FN_CV + TP_CV)
       sensitivity_sklearn_CV = metrics.recall_score(y_train, y_train_pred)
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Sensitivity/Recall/True positives: \n')
         text_file.write('sensitivity manual test: %s \n' %sensitivity_man_test)
         text_file.write('sensitivity sklearn test: %s \n' %sensitivity_sklearn_test)
@@ -570,7 +568,7 @@ class SVMGridSearch(object):
       specificity_man_test = TN / (TN + FP)
       specificity_man_CV = TN_CV / (TN_CV + FP_CV)
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Specificity: \n')
         text_file.write('specificity manual test: %s \n' %specificity_man_test)
         text_file.write('specificity manual CV: %s \n' %specificity_man_CV)
@@ -579,7 +577,7 @@ class SVMGridSearch(object):
       false_positive_rate_man_test = FP / float(TN + FP)
       false_positive_rate_man_CV = FP_CV / float(TN_CV + FP_CV)
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('False positive rate or 1-specificity: \n')
         text_file.write('false positive rate manual test: %s \n' %false_positive_rate_man_test)
         text_file.write('1 - specificity test: %s \n' %(1 - specificity_man_test))
@@ -592,7 +590,7 @@ class SVMGridSearch(object):
       precision_man_CV = TP_CV / float(TP_CV + FP_CV)
       precision_sklearn_CV = metrics.precision_score(y_train, y_train_pred)
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Precision or confidence of classification: \n')
         text_file.write('precision manual: %s \n' %precision_man_test)
         text_file.write('precision sklearn: %s \n' %precision_sklearn_test)
@@ -603,7 +601,7 @@ class SVMGridSearch(object):
       f1_score_sklearn_test = f1_score(y_test, y_pred)
       f1_score_sklearn_CV = f1_score(y_train, y_train_pred)
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('F1 score: \n')
         text_file.write('F1 score sklearn test: %s \n' %f1_score_sklearn_test)
         text_file.write('F1 score sklearn CV: %s \n' %f1_score_sklearn_CV)
@@ -615,10 +613,10 @@ class SVMGridSearch(object):
              self.output_dir)
    
     def prediction_probas(svm, X_train, y_train, X_test, y_test, y_pred_proba,
-                                        y_train_CV_pred_proba, directory, kind): 
+                                        y_train_CV_pred_proba, directory): 
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')      
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Plotting histogram for y_pred_proba_train_CV \n')
         text_file.write('Plotting histogram for y_pred_proba_test \n')
    
@@ -637,14 +635,14 @@ class SVMGridSearch(object):
       plot_hist_pred_proba(y_pred_proba[:, 1], directory)
       
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Getting y_scores for y_pred_proba_train_CV and y_pred_proba_test as y_scores_train_CV and y_scores_test for class 0 and 1\n')
 
       self.y_scores_ones = y_pred_proba[:, 1]#test data to be class 1
       self.y_scores_CV_ones = y_train_CV_pred_proba[:, 1]#training data to be class 1
 
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Plotting Precision-Recall for y_test and y_scores_test \n')
         text_file.write('Plotting Precision-Recall for y_train and y_scores_train_CV \n')
       
@@ -678,7 +676,7 @@ class SVMGridSearch(object):
 #      plot_precision_recall_vs_threshold(precisions, recalls, thresholds_svm, 'train_CV_', '1', directory)
 
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('Plotting ROC curve for y_test and y_scores_test \n')
         text_file.write('Plotting ROC curve for y_train and y_scores_train_CV \n')
 
@@ -724,7 +722,7 @@ class SVMGridSearch(object):
 #      AUC_train_class1 = metrics.roc_auc_score(self.y_train, self.y_scores_CV_ones)
 
       with open(os.path.join(directory,
-                'svm_randomsearch.txt'), 'a') as text_file:
+                'svm_linear_randomsearch.txt'), 'a') as text_file:
         text_file.write('AUC for test set class 1: %s \n' %AUC_test_class1)
 #        text_file.write('AUC for CV train set class 1: %s \n' %AUC_train_class1)
 

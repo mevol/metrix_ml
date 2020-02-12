@@ -17,8 +17,8 @@ import numpy as np
 import subprocess
 import seaborn as sns
 import scikitplot as skplt
-import plotly.plotly as py
-import plotly.tools as tls
+#import plotly.plotly as py
+#import plotly.tools as tls
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -66,8 +66,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
 
 def make_output_folder(outdir):
-  name = os.path.join(outdir, 'pca')
-  output_dir = os.makedirs(name, exist_ok=True)
+  output_dir = os.path.join(outdir, 'pca')
+  os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
 ###############################################################################
@@ -109,16 +109,14 @@ class FeatureDecomposition(object):
     print('*' *80)
 
     #database plus manually added data
-    self.X_metrix = self.metrix[['IoverSigma', 'cchalf', 'RmergeI',
-                                 'RmergediffI', 'RmeasI', 'RmeasdiffI', 'RpimI',
-                                 'RpimdiffI', 'totalobservations', 'totalunique',
-                                 'multiplicity', 'completeness', 'lowreslimit',
-                                 'highreslimit', 'wilsonbfactor', 'sg_number',
-                                 'Vcell', 'solvent_content', 'Matth_coeff',
-                                 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                                 'MW_ASU', 'TFZ', 'LLG', 'PAK',
-                                 'mr_reso', 'mr_sg', 'mr_sg_no', 'RMSD', 'VRMS',
-                                 'eLLG', 'tncs', 'seq_ident', 'model_res']]
+    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
     self.X_metrix = self.X_metrix.fillna(0)
 
@@ -225,7 +223,7 @@ class FeatureDecomposition(object):
              'PC-9', 'PC-10', 'PC-11', 'PC-12', 'PC-13', 'PC-14', 'PC-15',
              'PC-16', 'PC-17', 'PC-18', 'PC-19', 'PC-20', 'PC-21', 'PC-22',
              'PC-23', 'PC-24', 'PC-25', 'PC-26', 'PC-27', 'PC-28', 'PC-29',
-             'PC-30', 'PC-31', 'PC-32', 'PC-33', 'PC-34', 'PC-35']   
+             'PC-30', 'PC-31']   
       
       plt.rcdefaults()
       fig, ax = plt.subplots(dpi=600)
@@ -440,10 +438,17 @@ class FeatureDecomposition(object):
       p29_i = plt.bar(ind_i, df_i.iloc[28], width, color='mediumpurple', hatch="/")
       p30_i = plt.bar(ind_i, df_i.iloc[29], width, color='sandybrown', hatch="/")
       p31_i = plt.bar(ind_i, df_i.iloc[30], width, color='lawngreen', hatch="/")
-      p32_i = plt.bar(ind_i, df_i.iloc[31], width, color='plum', hatch="/")
-      p33_i = plt.bar(ind_i, df_i.iloc[32], width, color='red', hatch="*")
-      p34_i = plt.bar(ind_i, df_i.iloc[33], width, color='green', hatch="*")
-      p35_i = plt.bar(ind_i, df_i.iloc[34], width, color='blue', hatch="*")
+#      p32_i = plt.bar(ind_i, df_i.iloc[31], width, color='plum', hatch="/")
+#      p33_i = plt.bar(ind_i, df_i.iloc[32], width, color='red', hatch="*")
+#      p34_i = plt.bar(ind_i, df_i.iloc[33], width, color='green', hatch="*")
+#      p35_i = plt.bar(ind_i, df_i.iloc[34], width, color='blue', hatch="*")
+#      p36_i = plt.bar(ind_i, df_i.iloc[35], width, color='yellow', hatch="*")
+#      p37_i = plt.bar(ind_i, df_i.iloc[36], width, color='cyan', hatch="*")
+#      p38_i = plt.bar(ind_i, df_i.iloc[37], width, color='darkorange', hatch="*")
+#      p39_i = plt.bar(ind_i, df_i.iloc[38], width, color='lightcoral', hatch="*")
+#      p40_i = plt.bar(ind_i, df_i.iloc[39], width, color='gray', hatch="*")
+#      p41_i = plt.bar(ind_i, df_i.iloc[40], width, color='darkmagenta', hatch="*")
+#      p42_i = plt.bar(ind_i, df_i.iloc[41], width, color='lavender', hatch="*")
            
       plt.title('Feature dominance in each PC', fontsize=20)
       plt.xlabel('Number of PCs', fontsize=20)

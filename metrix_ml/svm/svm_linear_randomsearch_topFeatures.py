@@ -142,7 +142,8 @@ class SVMGridSearch(object):
                       'MW_chain', 'sites_ASU']
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
-    self.X_newdata_transform = metrix_newdata_initial[['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF', 'f']]
+#    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF']]
+    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC']]
 
     self.X_newdata_transform = self.X_newdata_transform.fillna(0)
 
@@ -290,18 +291,19 @@ class SVMGridSearch(object):
     
     cv = CountVectorizer(lowercase=False)
     #print(cv)
-    cv.fit(['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
-                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f','wavelength', 'wavelength3', 'wavelength3_Vcell',
-                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
-                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
-                      'Vcell_VmMa', 'Matth_coeff', 'MW_ASU_sites_ASU_solvent_content',
-                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
-                      'MW_ASU_sites_ASU', 'MW_chain_No_atom_chain', 'wilson', 'bragg',
-                      'volume_wilsonB_highres', 'IoverSigma_MW_ASU'])
+#    cv.fit(['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f','wavelength', 'wavelength3', 'wavelength3_Vcell',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell_VmMa', 'Matth_coeff', 'MW_ASU_sites_ASU_solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU_sites_ASU', 'MW_chain_No_atom_chain', 'wilson', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma_MW_ASU'])
+    cv.fit(['IoverSigma'])
     #print(cv)                  
     #print(len(cv.vocabulary_))
     feature_names = cv.get_feature_names()

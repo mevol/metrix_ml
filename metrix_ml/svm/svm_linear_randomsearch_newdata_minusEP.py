@@ -141,19 +141,31 @@ class SVMGridSearch(object):
                       'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
                       'MW_chain', 'sites_ASU']
 
+#    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
+                      
     attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
                       'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                      'diffF', 'f', 'wavelength',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
                       'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
-                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'bragg',
                       'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
-                      
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
     #print('initial columns length: %d' %len(metrix_newdata_initial.columns))
@@ -180,11 +192,11 @@ class SVMGridSearch(object):
     #MW_ASU/sites_ASU/solvent_content
     metrix_newdata_transform['MW_ASU/sites_ASU/solvent_content'] = metrix_newdata_transform['MW_ASU/sites_ASU'] / metrix_newdata_transform['solvent_content']
 
-    #wavelength**3
-    metrix_newdata_transform['wavelength**3'] = metrix_newdata_transform['wavelength'] ** 3
+#    #wavelength**3
+#    metrix_newdata_transform['wavelength**3'] = metrix_newdata_transform['wavelength'] ** 3
 
-    #wavelenght**3/Vcell
-    metrix_newdata_transform['wavelength**3/Vcell'] = metrix_newdata_transform['wavelength**3'] / metrix_newdata_transform['Vcell']
+#    #wavelenght**3/Vcell
+#    metrix_newdata_transform['wavelength**3/Vcell'] = metrix_newdata_transform['wavelength**3'] / metrix_newdata_transform['Vcell']
 
     #Vcell/Vm<Ma>
     metrix_newdata_transform['Vcell/Vm<Ma>'] = metrix_newdata_transform['Vcell'] / (metrix_newdata_transform['Matth_coeff'] * metrix_newdata_transform['MW_chain/No_atom_chain'])
@@ -208,6 +220,20 @@ class SVMGridSearch(object):
     #print(np.where(np.isnan(self.X_newdata_transform)))
     #self.X_newdata_transform = np.nan_to_num(self.X_newdata_transform)
     self.X_newdata_transform = self.X_newdata_transform.fillna(0)
+    
+    self.X_newdata_transform = self.X_newdata_transform[['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+                      'diffF', 'f', 'wavelength',
+                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'bragg',
+                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']]
+    
 
     with open(os.path.join(self.newdata_minusEP, 'svm_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created the following dataframes: metrix_transform \n')
@@ -316,8 +342,12 @@ class SVMGridSearch(object):
     self.svc_clf_grid_new_transform.fit(self.X_newdata_transform_train, self.y_train)
     
     coef = self.svc_clf_grid_new_transform.coef_
+    coef_ravel = coef.ravel()
+    print(coef_ravel)
+    
+#    print(coef)
 
-    #print('length coef: %d' %len(coef))
+#    print('length coef: %d' %len(coef))
 
     intercept = self.svc_clf_grid_new_transform.intercept_
 
@@ -358,12 +388,12 @@ class SVMGridSearch(object):
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f','wavelength', 'wavelength3', 'wavelength3_Vcell',
+                      'diffF', 'f',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell_VmMa', 'Matth_coeff', 'MW_ASU_sites_ASU_solvent_content',
                       'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
-                      'MW_ASU_sites_ASU', 'MW_chain_No_atom_chain', 'wilson', 'bragg',
+                      'MW_ASU_sites_ASU', 'MW_chain_No_atom_chain', 'bragg',
                       'volume_wilsonB_highres', 'IoverSigma_MW_ASU'])
     #print(cv)                  
     #print(len(cv.vocabulary_))
@@ -371,7 +401,7 @@ class SVMGridSearch(object):
     #print(feature_names)
     #print(len(feature_names))
 
-    def plot_coefficients(coef, feature_names, top_features=48):
+    def plot_coefficients(coef, feature_names, top_features=43):
       '''Once a linear SVM is fit to data (e.g., svm.fit(features, labels)), the coefficients can be accessed with svm.coef_. Recall that a linear SVM creates a hyperplane that uses support vectors to maximise the distance between the two classes. The weights obtained from svm.coef_ represent the vector coordinates which are orthogonal to the hyperplane and their direction indicates the predicted class. The absolute size of the coefficients in relation to each other can then be used to determine feature importance for the data separation task.'''
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
       coef = coef.ravel()
@@ -390,7 +420,7 @@ class SVMGridSearch(object):
       plt.tight_layout()
       plt.savefig(os.path.join(self.newdata_minusEP, 'feature_importances_overall_bar_plot_grid_'+datestring+'.png'))
 
-    #plot_coefficients(coef, cv.get_feature_names())
+#    plot_coefficients(coef, cv.get_feature_names())
 
     with open(os.path.join(self.newdata_minusEP, 'svm_randomsearch.txt'), 'a') as text_file:
       text_file.write('Plotted features importances with feature names: %s \n' %feature_names)

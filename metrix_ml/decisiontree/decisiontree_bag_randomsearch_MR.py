@@ -73,8 +73,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
   
 def make_output_folder(outdir):
-  name = os.path.join(outdir,'decisiontree_bag_randomsearch')
-  output_dir = os.makedirs(name, exist_ok=True)
+  output_dir = os.path.join(outdir,'decisiontree_bag_randomsearch')
+  os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
 ###############################################################################
@@ -120,16 +120,14 @@ class DecisionTreeBagRandSearch(object):
     print('*' *80)
 
     #database plus manually added data
-    self.X_metrix = self.metrix[['IoverSigma', 'cchalf', 'RmergeI',
-                                 'RmergediffI', 'RmeasI', 'RmeasdiffI', 'RpimI',
-                                 'RpimdiffI', 'totalobservations', 'totalunique',
-                                 'multiplicity', 'completeness', 'lowreslimit',
-                                 'highreslimit', 'wilsonbfactor', 'sg_number',
-                                 'Vcell', 'solvent_content', 'Matth_coeff',
-                                 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                                 'MW_ASU', 'TFZ', 'LLG', 'PAK',
-                                 'mr_reso', 'mr_sg_no', 'RMSD', 'VRMS',
-                                 'eLLG', 'tncs', 'seq_ident', 'model_res']]
+    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
     self.X_metrix = self.X_metrix.fillna(0)
 
@@ -205,7 +203,7 @@ class DecisionTreeBagRandSearch(object):
     param_rand = {"base_estimator__criterion": ["gini", "entropy"],#metric to judge reduction of impurity
                   'base_estimator__class_weight': ['balanced', None],
                   'n_estimators': randint(100, 10000),#number of base estimators to use
-                  'base_estimator__max_features': randint(2, 30),#max number of features when splitting
+                  'base_estimator__max_features': randint(2, 31),#max number of features when splitting
                   "base_estimator__min_samples_split": randint(2, 20),#min samples per node to induce split
                   "base_estimator__max_depth": randint(5, 10),#max number of splits to do
                   "base_estimator__min_samples_leaf": randint(1, 20),#min number of samples in a leaf
@@ -277,7 +275,7 @@ class DecisionTreeBagRandSearch(object):
                                                    bootstrap=True,
                                                    random_state=100)
     
-    self.tree_clf_rand_bag_new_.fit(self.X_metrix_train,
+    self.tree_clf_rand_bag_new.fit(self.X_metrix_train,
                                     self.y_train)
     
 #    attr_newdata_transform = ['wavelength', 'mr_reso', 'mr_sg_no', 'RMSD', 'VRMS', 'eLLG', 'tncs',
@@ -288,7 +286,9 @@ class DecisionTreeBagRandSearch(object):
 #       'anomalousmulti', 'RmergediffI', 'totalobservations', 'anomalouscompl',
 #       'cchalf', 'totalunique']
 
-    feature_importances_ls = np.mean([tree.feature_importances_ for tree in self.tree_clf_rand_ada_new.estimators_], axis=0)
+    feature_importances = np.mean([tree.feature_importances_ for tree in self.tree_clf_rand_bag_new.estimators_], axis=0)
+    feature_importances_ls = sorted(zip(feature_importances, 
+                                        self.X_metrix.columns), reverse=True)
     with open(os.path.join(self.output_dir,
               'decisiontree_bag_randomsearch.txt'), 'a') as text_file:
       text_file.write('Feature importances: %s \n' %feature_importances_ls)

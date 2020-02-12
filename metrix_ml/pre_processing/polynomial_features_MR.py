@@ -60,8 +60,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path, na_filter=False, skipinitialspace=True, thousands=',')
 
 def make_output_folder(outdir):
-  name = os.path.join(outdir, 'polynomial_features')
-  output_dir =  os.makedirs(name, exist_ok=True)
+  output_dir = os.path.join(outdir, 'polynomial_features')
+  os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
 ###############################################################################
@@ -103,16 +103,14 @@ class CreatePolynomialFeatures(object):
     print('*' *80)
 
     #database plus manually added data
-    self.X_metrix = self.metrix[['IoverSigma', 'cchalf', 'RmergeI',
-                                 'RmergediffI', 'RmeasI', 'RmeasdiffI', 'RpimI',
-                                 'RpimdiffI', 'totalobservations', 'totalunique',
-                                 'multiplicity', 'completeness', 'lowreslimit',
-                                 'highreslimit', 'wilsonbfactor', 'sg_number',
-                                 'Vcell', 'solvent_content', 'Matth_coeff',
-                                 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                                 'MW_ASU', 'TFZ', 'LLG', 'PAK',
-                                 'mr_reso', 'mr_sg', 'mr_sg_no', 'RMSD', 'VRMS',
-                                 'eLLG', 'tncs', 'seq_ident', 'model_res']]
+    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
     self.X_metrix = self.X_metrix.fillna(0)
     
@@ -221,7 +219,7 @@ class CreatePolynomialFeatures(object):
         plt.close()
         
       feature_importances_best_25(self.feature_importances_ls[:25],
-                                  self.newdata_minusEP)  
+                                  self.output_dir)  
       
       def feature_importances_pandas(clf, X_train, feature_names, directory):   
         datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')      

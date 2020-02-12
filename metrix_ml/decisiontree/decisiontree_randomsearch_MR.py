@@ -72,8 +72,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
 
 def make_output_folder(outdir):
-  name = os.path.join(outdir, 'decisiontree_randomsearch')
-  output_dir = os.makedirs(name, exist_ok=True)
+  output_dir = os.path.join(outdir, 'decisiontree_randomsearch')
+  os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
 ###############################################################################
@@ -82,7 +82,7 @@ def make_output_folder(outdir):
 #
 ###############################################################################
 
-class DecisionTreeRandSearchTrans(object):
+class DecisionTreeRandSearch(object):
   '''This class is the doing the actual work in the following steps:
      * define smaller data frames: database, man_add, transform
      * split the data into training and test set
@@ -118,16 +118,14 @@ class DecisionTreeRandSearchTrans(object):
     print('*' *80)
 
     #database plus manually added data
-    self.X_metrix = self.metrix[['IoverSigma', 'cchalf', 'RmergeI',
-                                 'RmergediffI', 'RmeasI', 'RmeasdiffI', 'RpimI',
-                                 'RpimdiffI', 'totalobservations', 'totalunique',
-                                 'multiplicity', 'completeness', 'lowreslimit',
-                                 'highreslimit', 'wilsonbfactor', 'sg_number',
-                                 'Vcell', 'solvent_content', 'Matth_coeff',
-                                 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                                 'MW_ASU', 'TFZ', 'LLG', 'PAK',
-                                 'mr_reso', 'mr_sg_no', 'RMSD', 'VRMS',
-                                 'eLLG', 'tncs', 'seq_ident', 'model_res']]
+    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
     self.X_metrix = self.X_metrix.fillna(0)
 
@@ -196,7 +194,7 @@ class DecisionTreeRandSearchTrans(object):
 
     #set up grid search
     param_rand = {"criterion": ["gini", "entropy"],#metric to judge reduction of impurity
-                  'max_features': randint(2, 30),#max number of features when splitting
+                  'max_features': randint(2, 31),#max number of features when splitting
                   "min_samples_split": randint(2, 20),#min samples per node to induce split
                   "max_depth": randint(3, 10),#max number of splits to do
                   "min_samples_leaf": randint(1, 20),#min number of samples in a leaf; may set to 1 anyway
@@ -254,7 +252,8 @@ class DecisionTreeRandSearchTrans(object):
                                                 feature_names=attr,
                                                 x_tick_rotation=90,
                                                 max_num_features=len(attr),
-                                                figsize=(25, 25))
+                                                figsize=(25, 25),
+                                                text_fontsize=14)
       plt.tight_layout()
       plt.savefig(os.path.join(directory,
                    'feature_importances_bar_plot_rand_tree_'+datestring+'.png'))
@@ -470,6 +469,7 @@ class DecisionTreeRandSearchTrans(object):
         ax.set_yticklabels(labels)
         plt.xlabel('Predicted')
         plt.ylabel('True')
+        plt.tight_layout()
         plt.savefig(os.path.join(directory,
                                'confusion_matrix_tree_rand_'+datestring+'.png'))
         plt.close()

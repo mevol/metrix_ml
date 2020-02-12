@@ -101,16 +101,16 @@ class FeaturePairPlot(object):
     print('*    Preparing input dataframe')
     print('*' *80)
 
-    #database plus manually added data
-    attr_newdata_initial = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
-                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
-                      'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
-                      'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
-                      'MW_chain', 'sites_ASU', 'EP_success']
+#    #database plus manually added data
+#    attr_newdata_initial = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
+#                      'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
+#                      'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
+#                      'MW_chain', 'sites_ASU', 'EP_success']
 
 #    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
 #                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
@@ -125,66 +125,71 @@ class FeaturePairPlot(object):
 #                      'MW_ASU_sites_ASU', 'MW_chain_No_atom_chain', 'wilson', 'bragg',
 #                      'volume_wilsonB_highres', 'IoverSigma_MW_ASU', 'EP_success']
                       
-    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
-                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f',
-                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
-                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
-                      'Vcell_Vm<Ma>', 'Matth_coeff', 'MW_ASU_sites_ASU_solvent_content',
-                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
-                      'MW_ASU_sites_ASU', 'MW_chain_No_atom_chain', 'bragg',
-                      'volume_wilsonB_highres', 'IoverSigma_MW_ASU', 'EP_success']
+#    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell_Vm<Ma>', 'Matth_coeff', 'MW_ASU_sites_ASU_solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU_sites_ASU', 'MW_chain_No_atom_chain', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma_MW_ASU', 'EP_success']
 
-    data_initial = self.data[attr_newdata_initial]
-    self.X_data_initial = data_initial
+#    data_initial = self.data[attr_newdata_initial]
+#    self.X_data_initial = data_initial
 
-    data_transform = data_initial.copy()
+#    data_transform = data_initial.copy()
 
-    with open(os.path.join(self.feature_pair_plot, 'feature_pair_plot.txt'), 'a') as text_file:
-      text_file.write('Preparing input data as data_initial with following attributes %s \n' %(attr_newdata_initial))
+#    with open(os.path.join(self.feature_pair_plot, 'feature_pair_plot.txt'), 'a') as text_file:
+#      text_file.write('Preparing input data as data_initial with following attributes %s \n' %(attr_newdata_initial))
 
-    #column transformation
-    #MW_ASU
-    data_transform['MW_ASU'] = data_transform['MW_chain'] * data_transform['No_mol_ASU']
-
-    #MW_ASU/sites_ASU
-    data_transform['MW_ASU_sites_ASU'] = data_transform['MW_ASU'] / data_transform['sites_ASU']
-    
-    #IoverSigma/MW_ASU
-    data_transform['IoverSigma_MW_ASU'] = data_transform['IoverSigma'] / data_transform['MW_ASU']
-
-    #MW_chain/No_atom_chain
-    data_transform['MW_chain_No_atom_chain'] = data_transform['MW_chain'] / data_transform['No_atom_chain']
-
-    #MW_ASU/sites_ASU/solvent_content
-    data_transform['MW_ASU_sites_ASU_solvent_content'] = data_transform['MW_ASU_sites_ASU'] / data_transform['solvent_content']
-
+#    #column transformation
+#    #MW_ASU
+#    data_transform['MW_ASU'] = data_transform['MW_chain'] * data_transform['No_mol_ASU']
+#
+#    #MW_ASU/sites_ASU
+#    data_transform['MW_ASU_sites_ASU'] = data_transform['MW_ASU'] / data_transform['sites_ASU']
+#    
+#    #IoverSigma/MW_ASU
+#    data_transform['IoverSigma_MW_ASU'] = data_transform['IoverSigma'] / data_transform['MW_ASU']
+#
+#    #MW_chain/No_atom_chain
+#    data_transform['MW_chain_No_atom_chain'] = data_transform['MW_chain'] / data_transform['No_atom_chain']
+#
+#    #MW_ASU/sites_ASU/solvent_content
+#    data_transform['MW_ASU_sites_ASU_solvent_content'] = data_transform['MW_ASU_sites_ASU'] / data_transform['solvent_content']
+#
 #    #wavelength**3
 #    data_transform['wavelength**3'] = data_transform['wavelength'] ** 3
-
+#
 #    #wavelenght**3/Vcell
 #    data_transform['wavelength**3_Vcell'] = data_transform['wavelength**3'] / data_transform['Vcell']
-
-    #Vcell/Vm<Ma>
-    data_transform['Vcell_Vm<Ma>'] = data_transform['Vcell'] / (data_transform['Matth_coeff'] * data_transform['MW_chain_No_atom_chain'])
-
-    #wilson
-    data_transform['wilson'] = -2 * data_transform['wilsonbfactor']
-
-    #bragg
-    data_transform['bragg'] = (1 / data_transform['highreslimit'])**2
-
-    #use np.exp to work with series object
-    data_transform['volume_wilsonB_highres'] = data_transform['Vcell_Vm<Ma>'] * np.exp(data_transform['wilson'] * data_transform['bragg'])
+#
+#    #Vcell/Vm<Ma>
+#    data_transform['Vcell_Vm<Ma>'] = data_transform['Vcell'] / (data_transform['Matth_coeff'] * data_transform['MW_chain_No_atom_chain'])
+#
+#    #wilson
+#    data_transform['wilson'] = -2 * data_transform['wilsonbfactor']
+#
+#    #bragg
+#    data_transform['bragg'] = (1 / data_transform['highreslimit'])**2
+#
+#    #use np.exp to work with series object
+#    data_transform['volume_wilsonB_highres'] = data_transform['Vcell_Vm<Ma>'] * np.exp(data_transform['wilson'] * data_transform['bragg'])
     
-    self.X_data_transform = data_transform
+#    self.X_data_transform = data_transform
     
+#    self.X_data_transform = self.X_data_transform.fillna(0)
+    
+#    self.best_features = self.X_data_transform[['lowreslimit', 'anomalousslope', 'anomalousCC', 'diffI', 'diffF', 'f', 'EP_success']]
+
+    self.X_data_transform = self.data[["no_res", "no_frag", "longest_frag", "res_frag_ratio", "mapCC", "EP_success"]]
+
     self.X_data_transform = self.X_data_transform.fillna(0)
-    
-    self.best_features = self.X_data_transform[['lowreslimit', 'anomalousslope', 'anomalousCC', 'diffI', 'diffF', 'f', 'EP_success']]
+
     
     with open(os.path.join(self.feature_pair_plot, 'feature_pair_plot.txt'), 'a') as text_file:
       text_file.write('Created the following dataframe: data_transform \n')
@@ -214,7 +219,7 @@ class FeaturePairPlot(object):
 #    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
 
 #stratified split of samples
-    X_data_transform_train, X_data_transform_test, y_train, y_test = train_test_split(self.X_data_transform, y, test_size=0.2, random_state=42, stratify=y)
+    X_data_transform_train, X_data_transform_test, y_train, y_test = train_test_split(self.X_data_transform, y, test_size=0.2, random_state=42)#stratify=y
     
     assert self.X_data_transform.columns.all() == X_data_transform_train.columns.all()
 

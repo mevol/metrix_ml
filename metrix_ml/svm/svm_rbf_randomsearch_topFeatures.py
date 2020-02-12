@@ -142,7 +142,8 @@ class SVMRBFGridSearch(object):
                       'MW_chain', 'sites_ASU']
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
-    self.X_newdata_transform = metrix_newdata_initial[['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF', 'f']]
+#    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF']]
+    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC']]
 
     self.X_newdata_transform = self.X_newdata_transform.fillna(0)
 

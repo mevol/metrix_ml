@@ -141,19 +141,31 @@ class SVMRBFGridSearch(object):
                       'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
                       'MW_chain', 'sites_ASU']
 
+#    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
+                      
     attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
                       'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                      'diffF', 'f', 'wavelength',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
                       'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
-                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'bragg',
                       'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
-                      
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
     self.X_newdata_initial = metrix_newdata_initial
@@ -179,11 +191,11 @@ class SVMRBFGridSearch(object):
     #MW_ASU/sites_ASU/solvent_content
     metrix_newdata_transform['MW_ASU/sites_ASU/solvent_content'] = metrix_newdata_transform['MW_ASU/sites_ASU'] / metrix_newdata_transform['solvent_content']
 
-    #wavelength**3
-    metrix_newdata_transform['wavelength**3'] = metrix_newdata_transform['wavelength'] ** 3
+#    #wavelength**3
+#    metrix_newdata_transform['wavelength**3'] = metrix_newdata_transform['wavelength'] ** 3
 
-    #wavelenght**3/Vcell
-    metrix_newdata_transform['wavelength**3/Vcell'] = metrix_newdata_transform['wavelength**3'] / metrix_newdata_transform['Vcell']
+#    #wavelenght**3/Vcell
+#    metrix_newdata_transform['wavelength**3/Vcell'] = metrix_newdata_transform['wavelength**3'] / metrix_newdata_transform['Vcell']
 
     #Vcell/Vm<Ma>
     metrix_newdata_transform['Vcell/Vm<Ma>'] = metrix_newdata_transform['Vcell'] / (metrix_newdata_transform['Matth_coeff'] * metrix_newdata_transform['MW_chain/No_atom_chain'])
@@ -205,6 +217,20 @@ class SVMRBFGridSearch(object):
     #print(np.where(np.isnan(self.X_newdata_transform)))
     #self.X_newdata_transform = np.nan_to_num(self.X_newdata_transform)
     self.X_newdata_transform = self.X_newdata_transform.fillna(0)
+
+    self.X_newdata_transform = self.X_newdata_transform[['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+                      'diffF', 'f', 'wavelength',
+                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'bragg',
+                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']]
+
 
     with open(os.path.join(self.newdata_minusEP, 'svm_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created the following dataframes: metrix_transform \n')

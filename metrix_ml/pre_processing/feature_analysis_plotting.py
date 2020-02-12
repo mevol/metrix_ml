@@ -6,13 +6,18 @@
 
 import argparse
 import os
+
+import matplotlib
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
 import csv
 import pathlib
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
+from sklearn.model_selection import train_test_split
 
 ###############################################################################
 #
@@ -78,6 +83,7 @@ class FeatureAnalysisPlotting(object):
     self.data = data
     self.feature_analysis_plotting = feature_analysis_plotting
     self.prepare_metrix_data()
+    self.split_data()
     self.create_itter()
     self.plot_hist()
     self.plot_ecdf()
@@ -105,79 +111,131 @@ class FeatureAnalysisPlotting(object):
     print('*' *80)
 
     #database plus manually added data
-    attr_newdata_initial = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
-                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
-                      'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
-                      'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
-                      'MW_chain', 'sites_ASU']
+#    attr_newdata_initial = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
+#                      'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
+#                      'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
+#                      'MW_chain', 'sites_ASU']
 
-    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
-                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f', 'wavelength', 'wavelength**3', 'wavelength**3_Vcell',
-                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
-                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
-                      'Vcell_Vm<Ma>', 'Matth_coeff', 'MW_ASU_sites_ASU_solvent_content',
-                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
-                      'MW_ASU_sites_ASU', 'MW_chain_No_atom_chain', 'wilson', 'bragg',
-                      'volume_wilsonB_highres', 'IoverSigma_MW_ASU']
+#    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f', 'wavelength', 'wavelength**3', 'wavelength**3_Vcell',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell_Vm<Ma>', 'Matth_coeff', 'MW_ASU_sites_ASU_solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU_sites_ASU', 'MW_chain_No_atom_chain', 'wilson', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma_MW_ASU']
                       
+#    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f', 'wavelength',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell_Vm<Ma>', 'Matth_coeff', 'MW_ASU_sites_ASU_solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU_sites_ASU', 'MW_chain_No_atom_chain', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma_MW_ASU']
 
-    data_initial = self.data[attr_newdata_initial]
-    self.X_data_initial = data_initial
+#    data_initial = self.data[attr_newdata_initial]
+#    self.X_data_initial = data_initial
 
-    data_transform = data_initial.copy()
+#    data_transform = data_initial.copy()
 
-    with open(os.path.join(self.feature_analysis_plotting, 'feature_analysis_plotting.txt'), 'a') as text_file:
-      text_file.write('Preparing input data as data_initial with following attributes %s \n' %(attr_newdata_initial))
+#    with open(os.path.join(self.feature_analysis_plotting, 'feature_analysis_plotting.txt'), 'a') #as text_file:
+#      text_file.write('Preparing input data as data_initial with following attributes %s \n' %(attr_newdata_initial))
 
     #column transformation
-    #MW_ASU
-    data_transform['MW_ASU'] = data_transform['MW_chain'] * data_transform['No_mol_ASU']
-
-    #MW_ASU/sites_ASU
-    data_transform['MW_ASU_sites_ASU'] = data_transform['MW_ASU'] / data_transform['sites_ASU']
+#    #MW_ASU
+#    data_transform['MW_ASU'] = data_transform['MW_chain'] * data_transform['No_mol_ASU']
+#
+#    #MW_ASU/sites_ASU
+#    data_transform['MW_ASU_sites_ASU'] = data_transform['MW_ASU'] / data_transform['sites_ASU']
+#    
+#    #IoverSigma/MW_ASU
+#    data_transform['IoverSigma_MW_ASU'] = data_transform['IoverSigma'] / data_transform['MW_ASU']
+#
+#    #MW_chain/No_atom_chain
+#    data_transform['MW_chain_No_atom_chain'] = data_transform['MW_chain'] / data_transform['No_atom_chain']
+#
+#    #MW_ASU/sites_ASU/solvent_content
+#    data_transform['MW_ASU_sites_ASU_solvent_content'] = data_transform['MW_ASU_sites_ASU'] / data_transform['solvent_content']
+#
+#    #wavelength**3
+#    data_transform['wavelength**3'] = data_transform['wavelength'] ** 3
+#
+#    #wavelenght**3/Vcell
+#    data_transform['wavelength**3_Vcell'] = data_transform['wavelength**3'] / data_transform['Vcell']
+#
+#    #Vcell/Vm<Ma>
+#    data_transform['Vcell_Vm<Ma>'] = data_transform['Vcell'] / (data_transform['Matth_coeff'] * data_transform['MW_chain_No_atom_chain'])
+#
+#    #wilson
+#    data_transform['wilson'] = -2 * data_transform['wilsonbfactor']
+#
+#    #bragg
+#    data_transform['bragg'] = (1 / data_transform['highreslimit'])**2
+#
+#    #use np.exp to work with series object
+#    data_transform['volume_wilsonB_highres'] = data_transform['Vcell_Vm<Ma>'] * np.exp(data_transform['wilson'] * data_transform['bragg'])
     
-    #IoverSigma/MW_ASU
-    data_transform['IoverSigma_MW_ASU'] = data_transform['IoverSigma'] / data_transform['MW_ASU']
-
-    #MW_chain/No_atom_chain
-    data_transform['MW_chain_No_atom_chain'] = data_transform['MW_chain'] / data_transform['No_atom_chain']
-
-    #MW_ASU/sites_ASU/solvent_content
-    data_transform['MW_ASU_sites_ASU_solvent_content'] = data_transform['MW_ASU_sites_ASU'] / data_transform['solvent_content']
-
-    #wavelength**3
-    data_transform['wavelength**3'] = data_transform['wavelength'] ** 3
-
-    #wavelenght**3/Vcell
-    data_transform['wavelength**3_Vcell'] = data_transform['wavelength**3'] / data_transform['Vcell']
-
-    #Vcell/Vm<Ma>
-    data_transform['Vcell_Vm<Ma>'] = data_transform['Vcell'] / (data_transform['Matth_coeff'] * data_transform['MW_chain_No_atom_chain'])
-
-    #wilson
-    data_transform['wilson'] = -2 * data_transform['wilsonbfactor']
-
-    #bragg
-    data_transform['bragg'] = (1 / data_transform['highreslimit'])**2
-
-    #use np.exp to work with series object
-    data_transform['volume_wilsonB_highres'] = data_transform['Vcell_Vm<Ma>'] * np.exp(data_transform['wilson'] * data_transform['bragg'])
+#    self.X_data_transform = data_transform
     
-    self.X_data_transform = data_transform
-    
+#    self.X_data_transform = self.X_data_transform.fillna(0)
+
+    self.X_data_transform = self.data[["no_res", "no_frag", "longest_frag", "res_frag_ratio", "mapCC"]]
+
     self.X_data_transform = self.X_data_transform.fillna(0)
     
     with open(os.path.join(self.feature_analysis_plotting, 'feature_analysis_plotting.txt'), 'a') as text_file:
       text_file.write('Created the following dataframe: data_transform \n')
       text_file.write(str(self.X_data_transform.columns)+'\n')    
+
+
+    ###############################################################################
+    #
+    #  creating training and test set for each of the 3 dataframes
+    #
+    ###############################################################################
+
+  def split_data(self):
+    '''Function which splits the input data into training set and test set.
+    ******
+    Input: a dataframe that contains the features and labels in columns and the samples
+          in rows
+    Output: sets of training and test data with an 80/20 split; X_train, X_test, y_train,
+            y_test
+    '''
+    print('*' *80)
+    print('*    Splitting data into test and training set with test=20%')
+    print('*' *80)
+
+    y = self.data['EP_success']
+    print(y.shape)
+    print(y)
+    
+#normal split of samples    
+#    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
+
+#stratified split of samples
+    X_data_transform_train, X_data_transform_test, y_train, y_test = train_test_split(self.X_data_transform, y, test_size=0.2, random_state=42)#test_size=0.2,stratify=y
+    
+    assert self.X_data_transform.columns.all() == X_data_transform_train.columns.all()
+
+    self.X_data_transform_train = X_data_transform_train
+    self.X_data_transform_test = X_data_transform_test
+    self.y_train = y_train
+    self.y_test = y_test
 
 ################################################################################
 #
@@ -186,8 +244,9 @@ class FeatureAnalysisPlotting(object):
 ################################################################################
 
   def create_itter(self):
-    itter = self.X_data_transform.columns
+    itter = self.X_data_transform_train.columns
     self.itter = itter
+    print(self.itter)
 
 ################################################################################
 #
@@ -203,7 +262,8 @@ class FeatureAnalysisPlotting(object):
     
     datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
     for name in self.itter:
-      hist = plt.hist(self.X_data_transform[name], bins=20)
+      print(name)
+      hist = plt.hist(self.X_data_transform_train[name], bins=365)#20
       hist = plt.xlabel(name)
       hist = plt.ylabel('number of counts')
       plt.savefig(os.path.join(self.feature_analysis_plotting, 'histogram_feature_'+name+'_'+datestring+'.png'), dpi=600)
@@ -226,6 +286,7 @@ class FeatureAnalysisPlotting(object):
     datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
     
     for name in self.itter:
+      print(name)
       '''Compute ECDF for a one-dimensional array of measurements'''
       with open(os.path.join(self.feature_analysis_plotting, 'feature_analysis_plotting.txt'), 'a') as text_file:
         text_file.write('Drawing ECDF for feature %s \n' %name)

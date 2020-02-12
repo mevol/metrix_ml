@@ -60,8 +60,8 @@ def load_data(csv_path):
   return pd.read_csv(csv_path, na_filter=False, skipinitialspace=True, thousands=',')
 
 def make_output_folder(outdir):
-  name = os.path.join(outdir, 'feature_analysis_plotting')
-  output_dir = os.makedirs(name, exist_ok=True)
+  output_dir = os.path.join(outdir, 'feature_analysis_plotting')
+  os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
 ###############################################################################
@@ -106,16 +106,16 @@ class FeatureAnalysisPlotting(object):
     print('*' *80)
 
     #database plus manually added data
-    self.X_metrix = self.metrix[['IoverSigma', 'cchalf', 'RmergeI',
-                                 'RmergediffI', 'RmeasI', 'RmeasdiffI', 'RpimI',
-                                 'RpimdiffI', 'totalobservations', 'totalunique',
-                                 'multiplicity', 'completeness', 'lowreslimit',
-                                 'highreslimit', 'wilsonbfactor', 'sg_number',
-                                 'Vcell', 'solvent_content', 'Matth_coeff',
-                                 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                                 'MW_ASU', 'TFZ', 'LLG', 'PAK',
-                                 'mr_reso', 'mr_sg', 'mr_sg_no', 'RMSD', 'VRMS',
-                                 'eLLG', 'tncs', 'seq_ident', 'model_res']]
+    self.X_metrix = self.metrix[['anomalousCC', 'IoverSigma', 'completeness',
+                    'diffI', 'RmergeI', 'lowreslimit', 'RpimI', 'multiplicity',
+                    'RmeasdiffI', 'anomalousslope', 'diffF', 'wilsonbfactor',
+                    'RmeasI', 'highreslimit', 'RpimdiffI', 'anomalousmulti',
+                    'RmergediffI', 'totalobservations', 'anomalouscompl',
+                    'cchalf', 'totalunique', 'LLG', 'TFZ', 'PAK', 'mr_reso',
+                    'RMSD', 'VRMS', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
     self.X_metrix = self.X_metrix.fillna(0)
 
@@ -215,16 +215,16 @@ class FeatureAnalysisPlotting(object):
                 'feature_analysis_plotting.txt'), 'a') as text_file:
         text_file.write('Drawing ECDF for feature %s \n' %name)
       #Number of data points:n
-      n = len(self.X_metrix[name])
+      n = len(self.X_metrix_train[name])
       #x-data for the ECDF:x
-      x = np.sort(self.X_metrix[name])
+      x = np.sort(self.X_metrix_train[name])
       #y-data for the ECDF;y
       y = np.arange(1, n+1)/n
-      mean = np.mean(self.X_metrix[name])
-      median = np.median(self.X_metrix[name])
-      std = np.std(self.X_data_transform[name])
-      percentile = np.percentile(self.X_metrix[name], [25, 50, 75])
-      info = self.X_metrix[name].describe()
+      mean = np.mean(self.X_metrix_train[name])
+      median = np.median(self.X_metrix_train[name])
+      std = np.std(self.X_metrix_train[name])
+      percentile = np.percentile(self.X_metrix_train[name], [25, 50, 75])
+      info = self.X_metrix_train[name].describe()
       samples = np.random.normal(mean, std, size=10000)
       n_theor = len(samples)
       x_theor = np.sort(samples)
@@ -276,9 +276,9 @@ class FeatureAnalysisPlotting(object):
       with open(os.path.join(self.output_dir,
                 'feature_analysis_plotting.txt'), 'a') as text_file:
         text_file.write('Drawing ECDF for feature %s and its calculated theoretical curve\n' %name)
-      mean = np.mean(self.X_metrix[name])
-      median = np.median(self.X_metrix[name])      
-      sns.distplot(self.X_metrix[name], hist = False, kde = True,
+      mean = np.mean(self.X_metrix_train[name])
+      median = np.median(self.X_metrix_train[name])      
+      sns.distplot(self.X_metrix_train[name], hist = False, kde = True,
                  kde_kws = {'linewidth': 3})  
       plt.axvline(mean, label='Mean', color='r', linestyle='--')  
       plt.axvline(median, label='Median', color='g', linestyle='--')        

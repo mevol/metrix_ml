@@ -129,19 +129,31 @@ class FeatureDecomposition(object):
                       'MW_chain', 'sites_ASU'
                       ]
 
+#    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
+                      
     attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
                       'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                      'diffF', 'f', 'wavelength',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
                       'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
-                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'bragg',
                       'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
-                      
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
     self.X_newdata_initial = metrix_newdata_initial
@@ -167,11 +179,11 @@ class FeatureDecomposition(object):
     #MW_ASU/sites_ASU/solvent_content
     metrix_newdata_transform['MW_ASU/sites_ASU/solvent_content'] = metrix_newdata_transform['MW_ASU/sites_ASU'] / metrix_newdata_transform['solvent_content']
 
-    #wavelength**3
-    metrix_newdata_transform['wavelength**3'] = metrix_newdata_transform['wavelength'] ** 3
+#    #wavelength**3
+#    metrix_newdata_transform['wavelength**3'] = metrix_newdata_transform['wavelength'] ** 3
 
-    #wavelenght**3/Vcell
-    metrix_newdata_transform['wavelength**3/Vcell'] = metrix_newdata_transform['wavelength**3'] / metrix_newdata_transform['Vcell']
+#    #wavelenght**3/Vcell
+#    metrix_newdata_transform['wavelength**3/Vcell'] = metrix_newdata_transform['wavelength**3'] / metrix_newdata_transform['Vcell']
 
     #Vcell/Vm<Ma>
     metrix_newdata_transform['Vcell/Vm<Ma>'] = metrix_newdata_transform['Vcell'] / (metrix_newdata_transform['Matth_coeff'] * metrix_newdata_transform['MW_chain/No_atom_chain'])
@@ -194,9 +206,22 @@ class FeatureDecomposition(object):
     #self.X_newdata_transform = np.nan_to_num(self.X_newdata_transform)
     self.X_newdata_transform = self.X_newdata_transform.fillna(0)
     
+    self.X_data_transform_small = self.X_newdata_transform[['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+                      'diffF', 'f', 'wavelength',
+                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'bragg',
+                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']]
+    
     with open(os.path.join(self.newdata_minusEP, 'pca.txt'), 'a') as text_file:
       text_file.write('Created the following dataframes: metrix_newdata_transform \n')
-      text_file.write(str(self.X_newdata_transform.columns)+'\n')    
+      text_file.write(str(self.X_data_transform_small.columns)+'\n')    
       
     ###############################################################################
     #
@@ -222,9 +247,9 @@ class FeatureDecomposition(object):
 #    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
 
 #stratified split of samples
-    X_newdata_transform_train, X_newdata_transform_test, y_train, y_test = train_test_split(self.X_newdata_transform, y, test_size=0.2, random_state=42, stratify=y)
+    X_newdata_transform_train, X_newdata_transform_test, y_train, y_test = train_test_split(self.X_data_transform_small, y, test_size=0.2, random_state=42, stratify=y)
     
-    assert self.X_newdata_transform.columns.all() == X_newdata_transform_train.columns.all()
+    assert self.X_data_transform_small.columns.all() == X_newdata_transform_train.columns.all()
 
     self.X_newdata_transform_train = X_newdata_transform_train
     self.X_newdata_transform_test = X_newdata_transform_test
@@ -300,7 +325,7 @@ class FeatureDecomposition(object):
              'PC-23', 'PC-24', 'PC-25', 'PC-26', 'PC-27', 'PC-28', 'PC-29',
              'PC-30', 'PC-31', 'PC-32', 'PC-33', 'PC-34', 'PC-35', 'PC-36',
              'PC-37', 'PC-38', 'PC-39', 'PC-40', 'PC-41', 'PC-42', 'PC-43',
-             'PC-44', 'PC-45', 'PC-46', 'PC-47', 'PC-48']   
+             'PC-44', 'PC-45']   
       
       plt.rcdefaults()
       fig, ax = plt.subplots(dpi=600)
@@ -515,10 +540,7 @@ class FeatureDecomposition(object):
       p42_i = plt.bar(ind_i, df_i.iloc[41], width, color='lavender', hatch="*")
       p43_i = plt.bar(ind_i, df_i.iloc[42], width, color='wheat', hatch="*")
       p44_i = plt.bar(ind_i, df_i.iloc[43], width, color='mediumpurple', hatch="*")
-      p45_i = plt.bar(ind_i, df_i.iloc[44], width, color='sandybrown', hatch="*")      
-      p46_i = plt.bar(ind_i, df_i.iloc[45], width, color='lawngreen', hatch="*")
-      p47_i = plt.bar(ind_i, df_i.iloc[46], width, color='plum', hatch="*")
-      p48_i = plt.bar(ind_i, df_i.iloc[47], width, color='red', hatch="+")
+      p45_i = plt.bar(ind_i, df_i.iloc[29], width, color='sandybrown', hatch="*")
            
       plt.title('Feature dominance in each PC', fontsize=20)
       plt.xlabel('Number of PCs', fontsize=20)

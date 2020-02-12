@@ -130,80 +130,108 @@ class RandomForestAdaRandSearch(object):
     print('*' *80)
 
     #database plus manually added data
-    attr_newdata_initial = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
-                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
-                      'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
-                      'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
-                      'MW_chain', 'sites_ASU']
+#    attr_newdata_initial = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
+#                      'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
+#                      'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
+#                      'MW_chain', 'sites_ASU']
 
-    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
-                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
-                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
-                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
-                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
-                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
-                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
-                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
+#    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
                       
+#    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f', 'wavelength',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
 
-    metrix_newdata_initial = self.metrix[attr_newdata_initial]
-    self.X_newdata_initial = metrix_newdata_initial
+#    metrix_newdata_initial = self.metrix[attr_newdata_initial]
+#    self.X_newdata_initial = metrix_newdata_initial
 
-    metrix_newdata_transform = metrix_newdata_initial.copy()
+#    metrix_newdata_transform = metrix_newdata_initial.copy()
 
-    with open(os.path.join(self.newdata_minusEP, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
-      text_file.write('Preparing input data as metrix_transform with following attributes %s \n' %(attr_newdata_initial))
+#    with open(os.path.join(self.newdata_minusEP, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
+#      text_file.write('Preparing input data as metrix_transform with following attributes %s \n' %(attr_newdata_initial))
 
-    #column transformation
-    #MW_ASU
-    metrix_newdata_transform['MW_ASU'] = metrix_newdata_transform['MW_chain'] * metrix_newdata_transform['No_mol_ASU']
-
-    #MW_ASU/sites_ASU
-    metrix_newdata_transform['MW_ASU/sites_ASU'] = metrix_newdata_transform['MW_ASU'] / metrix_newdata_transform['sites_ASU']
+#    #column transformation
+#    #MW_ASU
+#    metrix_newdata_transform['MW_ASU'] = metrix_newdata_transform['MW_chain'] * metrix_newdata_transform['No_mol_ASU']
+#
+#    #MW_ASU/sites_ASU
+#    metrix_newdata_transform['MW_ASU/sites_ASU'] = metrix_newdata_transform['MW_ASU'] / metrix_newdata_transform['sites_ASU']
+#    
+#    #IoverSigma/MW_ASU
+#    metrix_newdata_transform['IoverSigma/MW_ASU'] = metrix_newdata_transform['IoverSigma'] / metrix_newdata_transform['MW_ASU']
+#
+#    #MW_chain/No_atom_chain
+#    metrix_newdata_transform['MW_chain/No_atom_chain'] = metrix_newdata_transform['MW_chain'] / metrix_newdata_transform['No_atom_chain']
+#
+#    #MW_ASU/sites_ASU/solvent_content
+#    metrix_newdata_transform['MW_ASU/sites_ASU/solvent_content'] = metrix_newdata_transform['MW_ASU/sites_ASU'] / metrix_newdata_transform['solvent_content']
+#
+#    #wavelength**3
+#    metrix_newdata_transform['wavelength**3'] = metrix_newdata_transform['wavelength'] ** 3
+#
+#    #wavelenght**3/Vcell
+#    metrix_newdata_transform['wavelength**3/Vcell'] = metrix_newdata_transform['wavelength**3'] / metrix_newdata_transform['Vcell']
+#
+#    #Vcell/Vm<Ma>
+#    metrix_newdata_transform['Vcell/Vm<Ma>'] = metrix_newdata_transform['Vcell'] / (metrix_newdata_transform['Matth_coeff'] * metrix_newdata_transform['MW_chain/No_atom_chain'])
+#
+#    #wilson
+#    metrix_newdata_transform['wilson'] = -2 * metrix_newdata_transform['wilsonbfactor']
+#
+#    #bragg
+#    metrix_newdata_transform['bragg'] = (1 / metrix_newdata_transform['highreslimit'])**2
+#
+#    #use np.exp to work with series object
+#    metrix_newdata_transform['volume_wilsonB_highres'] = metrix_newdata_transform['Vcell/Vm<Ma>'] * np.exp(metrix_newdata_transform['wilson'] * metrix_newdata_transform['bragg'])
     
-    #IoverSigma/MW_ASU
-    metrix_newdata_transform['IoverSigma/MW_ASU'] = metrix_newdata_transform['IoverSigma'] / metrix_newdata_transform['MW_ASU']
-
-    #MW_chain/No_atom_chain
-    metrix_newdata_transform['MW_chain/No_atom_chain'] = metrix_newdata_transform['MW_chain'] / metrix_newdata_transform['No_atom_chain']
-
-    #MW_ASU/sites_ASU/solvent_content
-    metrix_newdata_transform['MW_ASU/sites_ASU/solvent_content'] = metrix_newdata_transform['MW_ASU/sites_ASU'] / metrix_newdata_transform['solvent_content']
-
-    #wavelength**3
-    metrix_newdata_transform['wavelength**3'] = metrix_newdata_transform['wavelength'] ** 3
-
-    #wavelenght**3/Vcell
-    metrix_newdata_transform['wavelength**3/Vcell'] = metrix_newdata_transform['wavelength**3'] / metrix_newdata_transform['Vcell']
-
-    #Vcell/Vm<Ma>
-    metrix_newdata_transform['Vcell/Vm<Ma>'] = metrix_newdata_transform['Vcell'] / (metrix_newdata_transform['Matth_coeff'] * metrix_newdata_transform['MW_chain/No_atom_chain'])
-
-    #wilson
-    metrix_newdata_transform['wilson'] = -2 * metrix_newdata_transform['wilsonbfactor']
-
-    #bragg
-    metrix_newdata_transform['bragg'] = (1 / metrix_newdata_transform['highreslimit'])**2
-
-    #use np.exp to work with series object
-    metrix_newdata_transform['volume_wilsonB_highres'] = metrix_newdata_transform['Vcell/Vm<Ma>'] * np.exp(metrix_newdata_transform['wilson'] * metrix_newdata_transform['bragg'])
-    
-    self.X_newdata_transform = metrix_newdata_transform
+#    self.X_newdata_transform = metrix_newdata_transform
     
     #self.X_newdata_transform.to_csv(os.path.join(self.newdata, 'transformed_dataframe.csv'))
     
     #np.isnan(self.X_newdata_transform)
     #print(np.where(np.isnan(self.X_newdata_transform)))
     #self.X_newdata_transform = np.nan_to_num(self.X_newdata_transform)
-    self.X_newdata_transform = self.X_newdata_transform.fillna(0)
+#    self.X_newdata_transform = self.X_newdata_transform.fillna(0)
+    
+#    self.X_newdata_transform = self.X_newdata_transform[['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']]
+    
+    self.X_newdata_transform = self.metrix[['lowreslimit',
+                      'anomalousslope', 'anomalousCC', 'diffI', 'diffF', 'f']]
 
     with open(os.path.join(self.newdata_minusEP, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Created the following dataframes: metrix_transform \n')
@@ -275,7 +303,7 @@ class RandomForestAdaRandSearch(object):
     #set up randomized search
     param_rand = {"base_estimator__criterion": ["gini", "entropy"],
                   'base_estimator__class_weight': ['balanced', None],
-                  'base_estimator__max_features': randint(2, 7),
+                  'base_estimator__max_features': randint(2, 6),
                   'n_estimators': randint(100, 10000),#number of base estimators to use
                   #'learning_rate': random.uniform(0.0001, 1.0),
                   'learning_rate': uniform(0.0001, 1.0),
@@ -347,22 +375,25 @@ class RandomForestAdaRandSearch(object):
    # print(self.tree_clf_rand_ada_new_transform.estimators_)
     #print(self.tree_clf_rand_ada_new_transform.feature_importances_)
     
-    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
-                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f', 'wavelength', 'wavelength**3', 'wavelength**3/Vcell',
-                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
-                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
-                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
-                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
-                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
-                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
+#    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
+    attr_newdata_transform = ['lowreslimit',
+                      'anomalousslope', 'anomalousCC', 'diffI', 'diffF', 'f']
 
     
     feature_importances_transform = self.tree_clf_rand_ada_new_transform.feature_importances_
-    feature_importances_transform_ls = sorted(zip(feature_importances_transform, attr_newdata_transform), reverse=True)
+    feature_importances_transform_ls = sorted(zip(feature_importances_transform, 
+    attr_newdata_transform), reverse=True)
     #print(feature_importances_transform_ls)
     feature_importances_ls = np.mean([tree.feature_importances_ for tree in self.tree_clf_rand_ada_new_transform.estimators_], axis=0)
     with open(os.path.join(self.newdata_minusEP, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:

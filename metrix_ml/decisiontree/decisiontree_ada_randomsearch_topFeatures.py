@@ -130,19 +130,24 @@ class RandomForestAdaRandSearch(object):
     print('*' *80)
 
     #database plus manually added data
-    attr_newdata_initial = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
-                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
-                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
-                      'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
-                      'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
-                      'MW_chain', 'sites_ASU']
+#    attr_newdata_initial = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f', 'wavelength', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
+#                      'cell_alpha', 'cell_beta', 'cell_gamma', 'Vcell', 'solvent_content',
+#                      'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
+#                      'MW_chain', 'sites_ASU']
+
+#    attr_newdata_initial = ['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF', 'diffI']
+    attr_newdata_initial = ['anomalousCC']
+
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
     
-    self.X_newdata_transform = metrix_newdata_initial[['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF', 'f']]
+#    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF', 'diffI']]
+    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC']]
 
     self.X_newdata_transform = self.X_newdata_transform.fillna(0)
 
@@ -216,7 +221,7 @@ class RandomForestAdaRandSearch(object):
     #set up randomized search
     param_rand = {"base_estimator__criterion": ["gini", "entropy"],
                   'base_estimator__class_weight': ['balanced', None],
-                  'base_estimator__max_features': randint(2, 6),
+                  #'base_estimator__max_features': randint(2, 6),
                   'n_estimators': randint(100, 10000),#number of base estimators to use
                   #'learning_rate': random.uniform(0.0001, 1.0),
                   'learning_rate': uniform(0.0001, 1.0),
@@ -246,7 +251,7 @@ class RandomForestAdaRandSearch(object):
       
     base_estimator_dict["criterion"] = base_estimator_dict.pop('base_estimator__criterion')
     base_estimator_dict['class_weight'] = base_estimator_dict.pop('base_estimator__class_weight')
-    base_estimator_dict['max_features'] = base_estimator_dict.pop('base_estimator__max_features')
+    #base_estimator_dict['max_features'] = base_estimator_dict.pop('base_estimator__max_features')
     base_estimator_dict["min_samples_split"] = base_estimator_dict.pop('base_estimator__min_samples_split')
     base_estimator_dict["max_depth"] = base_estimator_dict.pop('base_estimator__max_depth')
     base_estimator_dict["min_samples_leaf"] = base_estimator_dict.pop('base_estimator__min_samples_leaf')
@@ -255,7 +260,7 @@ class RandomForestAdaRandSearch(object):
     ada_dict = rand_search_transform.best_params_.copy()
     keysToRemove2 = ("base_estimator__criterion",
                     'base_estimator__class_weight',
-                    'base_estimator__max_features',
+                    #'base_estimator__max_features',
                     "base_estimator__min_samples_split",
                     "base_estimator__max_depth",
                     "base_estimator__min_samples_leaf",
@@ -288,7 +293,8 @@ class RandomForestAdaRandSearch(object):
    # print(self.tree_clf_rand_ada_new_transform.estimators_)
     #print(self.tree_clf_rand_ada_new_transform.feature_importances_)
     
-    attr_newdata_transform = ['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF', 'f']
+#    attr_newdata_transform = ['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF']
+    attr_newdata_transform = ['anomalousCC', 'IoverSigma']
     
     feature_importances_transform = self.tree_clf_rand_ada_new_transform.feature_importances_
     feature_importances_transform_ls = sorted(zip(feature_importances_transform, attr_newdata_transform), reverse=True)

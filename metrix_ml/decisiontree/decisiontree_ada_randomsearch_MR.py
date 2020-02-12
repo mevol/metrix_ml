@@ -75,8 +75,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
   
 def make_output_folder(outdir):
-  name = os.path.join(outdir, 'decisiontree_ada_randomsearch')
-  output_dir = os.makedirs(name, exist_ok=True)
+  output_dir = os.path.join(outdir, 'decisiontree_ada_randomsearch')
+  os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
 ###############################################################################
@@ -120,16 +120,14 @@ class DecisionTreeAdaRandSearch(object):
     print('*    Preparing input dataframe X_metrix')
     print('*' *80)
 
-    self.X_metrix = self.metrix[['IoverSigma', 'cchalf', 'RmergeI',
-                                 'RmergediffI', 'RmeasI', 'RmeasdiffI', 'RpimI',
-                                 'RpimdiffI', 'totalobservations', 'totalunique',
-                                 'multiplicity', 'completeness', 'lowreslimit',
-                                 'highreslimit', 'wilsonbfactor', 'sg_number',
-                                 'Vcell', 'solvent_content', 'Matth_coeff',
-                                 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                                 'MW_ASU', 'TFZ', 'LLG', 'PAK',
-                                 'mr_reso', 'mr_sg_no', 'RMSD', 'VRMS',
-                                 'eLLG', 'tncs', 'seq_ident', 'model_res']]
+    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
     self.X_metrix = self.X_metrix.fillna(0)
 
@@ -203,7 +201,7 @@ class DecisionTreeAdaRandSearch(object):
     #set up randomized search
     param_rand = {"base_estimator__criterion": ["gini", "entropy"],#metric to judge reduction of impurity
                   'base_estimator__class_weight': ['balanced', None],
-                  'base_estimator__max_features': randint(2, 30),#max number of features when splitting
+                  'base_estimator__max_features': randint(2, 31),#max number of features when splitting
                   'n_estimators': randint(100, 10000),#number of base estimators to use
                   'learning_rate': uniform(0.0001, 1.0),
                   "base_estimator__min_samples_split": randint(2, 20),#min samples per node to induce split
@@ -296,7 +294,7 @@ class DecisionTreeAdaRandSearch(object):
 
     
     feature_importances = self.tree_clf_rand_ada_new.feature_importances_
-    feature_importances_ls = sorted(zip(feature_importances_transform, 
+    feature_importances_ls = sorted(zip(feature_importances, 
                                         self.X_metrix.columns), reverse=True)
     #print(feature_importances_transform_ls)
 #    feature_importances_ls = np.mean([tree.feature_importances_ for tree in self.tree_clf_rand_ada_new_transform.estimators_], axis=0)
@@ -346,7 +344,7 @@ class DecisionTreeAdaRandSearch(object):
 
     def write_pickle(clf, directory):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-      joblib.dump(forest, os.path.join(directory,
+      joblib.dump(clf, os.path.join(directory,
                                  'best_forest_rand_ada_new_'+datestring+'.pkl'))
       with open(os.path.join(directory,
                 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
@@ -392,7 +390,7 @@ class DecisionTreeAdaRandSearch(object):
     print('*    Getting basic stats for new decision tree with AdaBoost')
     print('*' *80)
 
-    def basic_stats(forest, X_train, directory):
+    def basic_stats(tree, X_train, directory):
       #distribution --> accuracy
       accuracy_each_cv = cross_val_score(tree,
                                          X_train,
@@ -448,12 +446,12 @@ class DecisionTreeAdaRandSearch(object):
 
 ###############################################################################
 #
-#  Predicting with test set and cross-validation set using the bets forest
+#  Predicting with test set and cross-validation set using the best tree with AdaBoost
 #
 ###############################################################################
 
   def predict(self):
-    '''do predictions using the best random forest an the test set as well as
+    '''do predictions using the best tree with AdaBoost an the test set as well as
     training set with 3 cross-validation folds and doing some initial analysis
     on the output'''
     print('*' *80)
@@ -757,17 +755,15 @@ class DecisionTreeAdaRandSearch(object):
                             'ROC_curve_skplt_tree_rand_ada_'+datestring+'.png'))
         plt.close()
         
-      plot_roc_curve(self.y_train,
-                     y_train_CV_pred_proba,
-                     'train_CV_',
-                     directory)  
+      #plot_roc_curve(self.y_train,
+      #               y_train_CV_pred_proba,
+      #               directory)  
       plot_roc_curve(self.y_test,
                      y_pred_proba,
-                     'test_',
                      directory)  
     
       #plot ROC curves
-      def plot_roc_curve(fpr, tpr, name, classes, directory):
+      def plot_roc_curve(fpr, tpr, classes, directory):
         plt.plot(fpr, tpr, linewidth=2)
         plt.plot([0, 1], [0, 1], 'k--')
         plt.axis([0, 1, 0, 1])

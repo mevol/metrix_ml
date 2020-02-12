@@ -124,19 +124,32 @@ class FeatureCorrelations(object):
                       'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
                       'MW_chain', 'sites_ASU']
                       
-    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                      'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+#    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergeI', 'RmergediffI', 'RmeasI',
+#                      'RmeasdiffI', 'RpimI', 'RpimdiffI', 'totalobservations',
+#                      'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                      'highreslimit', 'wilsonbfactor', 'anomalousslope',
+#                      'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+#                      'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
+#                      'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
+#                      'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+#                      'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
+#                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+#                      'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
+                      
+    attr_newdata_transform = ['IoverSigma', 'cchalf', 'RmergeI', 'RmergediffI', 'RmeasI',
+                      'RmeasdiffI', 'RpimI', 'RpimdiffI', 'totalobservations',
                       'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
                       'highreslimit', 'wilsonbfactor', 'anomalousslope',
                       'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                      'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                      'diffF', 'f', 'wavelength',
                       'sg_number', 'cell_a', 'cell_b', 'cell_c', 'cell_alpha',
                       'cell_beta', 'cell_gamma','Vcell', 'solvent_content',
                       'Vcell/Vm<Ma>', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
                       'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU', 'sites_ASU',
-                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'wilson', 'bragg',
+                      'MW_ASU/sites_ASU', 'MW_chain/No_atom_chain', 'bragg',
                       'volume_wilsonB_highres', 'IoverSigma/MW_ASU']
-                      
+
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
 
@@ -161,11 +174,11 @@ class FeatureCorrelations(object):
     #MW_ASU/sites_ASU/solvent_content
     metrix_newdata_transform['MW_ASU/sites_ASU/solvent_content'] = metrix_newdata_transform['MW_ASU/sites_ASU'] / metrix_newdata_transform['solvent_content']
 
-    #wavelength**3
-    metrix_newdata_transform['wavelength**3'] = metrix_newdata_transform['wavelength'] ** 3
+#    #wavelength**3
+#    metrix_newdata_transform['wavelength**3'] = metrix_newdata_transform['wavelength'] ** 3
 
-    #wavelenght**3/Vcell
-    metrix_newdata_transform['wavelength**3/Vcell'] = metrix_newdata_transform['wavelength**3'] / metrix_newdata_transform['Vcell']
+#    #wavelenght**3/Vcell
+#    metrix_newdata_transform['wavelength**3/Vcell'] = metrix_newdata_transform['wavelength**3'] / metrix_newdata_transform['Vcell']
 
     #Vcell/Vm<Ma>
     metrix_newdata_transform['Vcell/Vm<Ma>'] = metrix_newdata_transform['Vcell'] / (metrix_newdata_transform['Matth_coeff'] * metrix_newdata_transform['MW_chain/No_atom_chain'])
@@ -227,13 +240,28 @@ class FeatureCorrelations(object):
     print('*    Ordering columns')
     print('*' *80)
 
+#    self.X_newdata_transform_train_ordered = self.X_newdata_transform_train[
+#                         ['IoverSigma', 'cchalf', 'RmergeI', 'RmergediffI', 'RmeasI',
+#                          'RmeasdiffI', 'RpimI', 'RpimdiffI', 'totalobservations',
+#                          'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
+#                          'highreslimit', 'wilsonbfactor', 'wilson', 'bragg', 'anomalousslope',
+#                          'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
+#                          'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+#                          'Vcell', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
+#                          'cell_alpha', 'cell_beta', 'cell_gamma','solvent_content',
+#                          'Vcell/Vm<Ma>', 'volume_wilsonB_highres', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
+#                          'MW_chain', 'No_atom_chain', 'No_mol_ASU', 'MW_ASU',
+#                          'sites_ASU', 'MW_ASU/sites_ASU', 'IoverSigma/MW_ASU',
+#                          'MW_chain/No_atom_chain'
+#                          ]]                              
+
     self.X_newdata_transform_train_ordered = self.X_newdata_transform_train[
-                         ['IoverSigma', 'cchalf', 'RmergediffI', 'RmergeI', 'RmeasI',
-                          'RmeasdiffI', 'RpimdiffI', 'RpimI', 'totalobservations',
+                         ['IoverSigma', 'cchalf', 'RmergeI', 'RmergediffI', 'RmeasI',
+                          'RmeasdiffI', 'RpimI', 'RpimdiffI', 'totalobservations',
                           'totalunique', 'multiplicity', 'completeness', 'lowreslimit',
-                          'highreslimit', 'wilsonbfactor', 'wilson', 'bragg', 'anomalousslope',
+                          'highreslimit', 'wilsonbfactor', 'bragg', 'anomalousslope',
                           'anomalousCC', 'anomalousmulti', 'anomalouscompl', 'diffI',
-                          'diffF', 'f','wavelength', 'wavelength**3', 'wavelength**3/Vcell',
+                          'diffF', 'f', 'wavelength',
                           'Vcell', 'sg_number', 'cell_a', 'cell_b', 'cell_c',
                           'cell_alpha', 'cell_beta', 'cell_gamma','solvent_content',
                           'Vcell/Vm<Ma>', 'volume_wilsonB_highres', 'Matth_coeff', 'MW_ASU/sites_ASU/solvent_content',
@@ -342,13 +370,13 @@ class FeatureCorrelations(object):
         'IoverSigma' : '$I/\sigma$', 
         'cchalf' : "$CC_{1/2}$", 
         'RmergeI' : '$R_{merge}I$',
-        'RmergediffI' : '$R_{merge}\Delta I$', 
+        'RmergediffI' : '$R_{merge}(I+/I-)$', 
         'RmeasI' : '$R_{meas}I$',
-        'RmeasdiffI' : '$R_{meas}\Delta I$',
+        'RmeasdiffI' : '$R_{meas}(I+/I-)$',
         'RpimI' : '$R_{p.i.m.}I$',
-        'RpimdiffI' : '$R_{p.i.m.}\Delta I$',
-        'totalobservations' : '$N_{obs_total}$',
-        'totalunique' : '$N_{obs_unique}$',
+        'RpimdiffI' : '$R_{p.i.m.}(I+/I-)$',
+        'totalobservations' : '$N_{obs total}$',
+        'totalunique' : '$N_{obs unique}$',
         'multiplicity' : 'M',
         'completeness' : 'T',
         'lowreslimit' : '$d_{max}$',
@@ -362,8 +390,8 @@ class FeatureCorrelations(object):
         'diffF' : '$\Delta F/F$',
         'f' : "$f''_{theor}$",
         'wavelength' : '$\lambda$',
-        'wavelength**3' : '$\lambda ^{3}$',
-        'wavelength**3/Vcell' : '$\lambda _{V}$',
+#        'wavelength**3' : '$\lambda ^{3}$',
+#        'wavelength**3/Vcell' : '$\lambda _{V}$',
         'Vcell' : '$V_{cell}$',
         'sg_number' : '$N_{sg}$',
         'cell_a' : 'a',
@@ -375,16 +403,16 @@ class FeatureCorrelations(object):
         'solvent_content' : '$V_{S}$',
         'Vcell/Vm<Ma>' : '$N_{cell}$',
         'Matth_coeff' : '$V_{m}$',
-        'MW_ASU/sites_ASU/solvent_content' : '$MWS_{ASU_Vs}$',
+        'MW_ASU/sites_ASU/solvent_content' : '$MWS_{ASU Vs}$',
         'MW_chain' : '$MW_{chain}$',
         'No_atom_chain' : '$N_{atomchain}$',
         'No_mol_ASU' : '$N_{molASU}$',
         'MW_ASU' : '$MW_{ASU}$',
-        'sites_ASU' : '$N_{sites_ASU}$',
+        'sites_ASU' : '$N_{sitesASU}$',
         'MW_ASU/sites_ASU' : '$MWS_{ASU}$',
-        'IoverSigma/MW_ASU' : '$(I_{ASU}$',
+        'IoverSigma/MW_ASU' : '$I_{ASU}$',
         'MW_chain/No_atom_chain' : '$AV_{Z}$',
-        'wilson' : '-2B',
+#        'wilson' : '-2B',
         'bragg' : '$d_{inv}$',
         'volume_wilsonB_highres' : 'L'}
 
@@ -398,11 +426,12 @@ class FeatureCorrelations(object):
       from mpl_toolkits.axes_grid1 import make_axes_locatable
       divider = make_axes_locatable(ax)
       cax = divider.append_axes('right', size='5%', pad=0.2)
-      plt.colorbar(im, cax=cax).set_label("Pearson's Correlation Coefficient", fontsize=12)
+      cax.tick_params(labelsize=14)
+      plt.colorbar(im, cax=cax).set_label("Pearson's Correlation Coefficient", fontsize=14)
       ax.set_xticks(np.arange(len(xticklabels)))
-      ax.set_xticklabels(xticklabels, rotation=90, fontsize=12)
+      ax.set_xticklabels(xticklabels, rotation=90, fontsize=14)
       ax.set_yticks(np.arange(len(yticklabels)))
-      ax.set_yticklabels(yticklabels, fontsize=12)
+      ax.set_yticklabels(yticklabels, fontsize=14)
       #fig.suptitle("Linear Pearson's Correlation Coefficient", fontsize=16)
       #ax.set_title('Feature1 using Data2', fontsize=12)
       plt.tight_layout()

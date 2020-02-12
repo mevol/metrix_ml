@@ -139,7 +139,8 @@ class ExtremeRandomForestRandomSearch(object):
                       'MW_chain', 'sites_ASU']
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
-    self.X_newdata_transform = metrix_newdata_initial[['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF', 'f']]
+#    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF']]
+    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC']]
 
     self.X_newdata_transform = self.X_newdata_transform.fillna(0)
 
@@ -207,7 +208,7 @@ class ExtremeRandomForestRandomSearch(object):
     param_rand = {"criterion": ["gini", "entropy"],#metric to judge reduction of impurity
                   'class_weight': ['balanced', None],
                   'n_estimators': randint(100, 10000),#number of trees in forest
-                  'max_features': randint(2, 6),#max number of features when splitting
+                  #'max_features': randint(2, 5),#max number of features when splitting
                   "min_samples_split": randint(2, 20),#min samples per node to induce split
                   #"max_depth": randint(1, 10),#max number of splits to do
                   "min_samples_leaf": randint(1, 20),#min number of samples in a leaf

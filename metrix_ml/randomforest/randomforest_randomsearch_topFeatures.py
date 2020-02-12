@@ -140,7 +140,8 @@ class RandomForestRandSearch(object):
                       'MW_chain', 'sites_ASU']
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
-    self.X_newdata_transform = metrix_newdata_initial[['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF', 'f']]
+#    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF']]
+    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC']]
 
     self.X_newdata_transform = self.X_newdata_transform.fillna(0)
 
@@ -209,7 +210,7 @@ class RandomForestRandSearch(object):
     param_rand = {"criterion": ["gini", "entropy"],#metric to judge reduction of impurity
                   'class_weight': ['balanced', None],
                   'n_estimators': randint(100, 10000),#number of trees in forest
-                  'max_features': randint(2, 6),#max number of features when splitting
+                  #'max_features': randint(2, 5),#max number of features when splitting
                   "min_samples_split": randint(2, 20),#min samples per node to induce split
                   "max_depth": randint(5, 10),#max number of splits to do
                   "min_samples_leaf": randint(1, 20),#min number of samples in a leaf
@@ -642,7 +643,7 @@ class RandomForestRandSearch(object):
       def evaluate_threshold(tpr, fpr, thresholds, threshold, name, directory):
         sensitivity = tpr[thresholds > threshold][-1]
         specificity = 1 - fpr[thresholds > threshold][-1]
-        with open(os.path.join(directory, 'decisiontree_randomsearch.txt'), 'a') as text_file:
+        with open(os.path.join(directory, 'randomforest_randomsearch.txt'), 'a') as text_file:
           text_file.write('Sensitivity for %s at threshold %.2f: %s \n' %(name, threshold, sensitivity))
           text_file.write('Specificity for %s at threshold %.2f: %s \n' %(name, threshold, specificity))
 

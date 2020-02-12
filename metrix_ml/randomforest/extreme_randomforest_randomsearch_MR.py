@@ -72,8 +72,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
 
 def make_output_folder(outdir):
-  name = os.path.join(outdir, 'extreme_randomforest_randomsearch')
-  output_dir = os.makedirs(name, exist_ok=True)
+  output_dir = os.path.join(outdir, 'extreme_randomforest_randomsearch')
+  os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
 ###############################################################################
@@ -84,7 +84,7 @@ def make_output_folder(outdir):
 
 class ExtremeForestRandSearch(object):
   '''This class is the doing the actual work in the following steps:
-     * define smaller data frames: database, man_add, transform
+     * define smaller data frame
      * split the data into training and test set
      * setup and run a randomized search for best paramaters to define a random forest
      * create a new random forest with best parameters
@@ -118,16 +118,14 @@ class ExtremeForestRandSearch(object):
     print('*' *80)
 
     #database plus manually added data
-    self.X_metrix = self.metrix[['IoverSigma', 'cchalf', 'RmergeI',
-                                 'RmergediffI', 'RmeasI', 'RmeasdiffI', 'RpimI',
-                                 'RpimdiffI', 'totalobservations', 'totalunique',
-                                 'multiplicity', 'completeness', 'lowreslimit',
-                                 'highreslimit', 'wilsonbfactor', 'sg_number',
-                                 'Vcell', 'solvent_content', 'Matth_coeff',
-                                 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                                 'MW_ASU', 'TFZ', 'LLG', 'PAK',
-                                 'mr_reso', 'mr_sg', 'mr_sg_no', 'RMSD', 'VRMS',
-                                 'eLLG', 'tncs', 'seq_ident', 'model_res']]
+    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
     self.X_metrix = self.X_metrix.fillna(0)
 
@@ -199,7 +197,7 @@ class ExtremeForestRandSearch(object):
     param_rand = {"criterion": ["gini", "entropy"],#metric to judge reduction of impurity
                   'class_weight': ['balanced', None],
                   'n_estimators': randint(100, 10000),#number of trees in forest
-                  'max_features': randint(2, 30),#max number of features when splitting
+                  'max_features': randint(2, 31),#max number of features when splitting
                   "min_samples_split": randint(2, 20),#min samples per node to induce split
                   #"max_depth": randint(1, 10),#max number of splits to do
                   "min_samples_leaf": randint(1, 20),#min number of samples in a leaf
@@ -315,7 +313,7 @@ class ExtremeForestRandSearch(object):
       i_tree = 0
       for tree in trees:
         with open(os.path.join(directory,
-                 'tree_clf_rand_new_'+datestring+str(i_tree)+'.dot'), 'w') as f:
+                 'extreme_clf_rand_new_'+datestring+str(i_tree)+'.dot'), 'w') as f:
           export_graphviz(tree,
                           out_file=f,
                           feature_names=columns,
@@ -396,7 +394,7 @@ class ExtremeForestRandSearch(object):
         text_file.write('F1 score mean for 3-fold CV: %s \n' %train_f1)
     
     basic_stats(self.extra_clf_rand_new,
-                self.X_metrixtrain,
+                self.X_metrix_train,
                 self.output_dir)
 
 ###############################################################################
@@ -523,10 +521,10 @@ class ExtremeForestRandSearch(object):
       FP = conf_mat_test[0, 1]
       FN = conf_mat_test[1, 0]
       
-      TP_CV = conf_mat_10CV[1, 1]
-      TN_CV = conf_mat_10CV[0, 0]
-      FP_CV = conf_mat_10CV[0, 1]
-      FN_CV = conf_mat_10CV[1, 0]
+      TP_CV = conf_mat_3CV[1, 1]
+      TN_CV = conf_mat_3CV[0, 0]
+      FP_CV = conf_mat_3CV[0, 1]
+      FN_CV = conf_mat_3CV[1, 0]
 
       with open(os.path.join(directory,
                 'extreme_randomforest_randomsearch.txt'), 'a') as text_file:
@@ -623,7 +621,7 @@ class ExtremeForestRandSearch(object):
              self.output_dir)
     
     def prediction_probas(tree, X_train, y_train, X_test, y_test, y_pred_proba,
-                                        y_train_CV_pred_proba, directory, kind): 
+                                        y_train_CV_pred_proba, directory): 
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')      
       with open(os.path.join(directory,
                 'extreme_randomforest_randomsearch.txt'), 'a') as text_file:

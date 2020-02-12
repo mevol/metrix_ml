@@ -62,8 +62,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
 
 def make_output_folder(outdir):
-  name = os.path.join(outdir, 'recursive_feature_elimination')
-  output_dir = os.makedirs(name, exist_ok=True)
+  output_dir = os.path.join(outdir, 'recursive_feature_elimination')
+  os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
 ###############################################################################
@@ -106,16 +106,14 @@ class RecursiveFeatureElimination(object):
     print('*' *80)
 
     #database plus manually added data
-    self.X_metrix = self.metrix[['IoverSigma', 'cchalf', 'RmergeI',
-                                 'RmergediffI', 'RmeasI', 'RmeasdiffI', 'RpimI',
-                                 'RpimdiffI', 'totalobservations', 'totalunique',
-                                 'multiplicity', 'completeness', 'lowreslimit',
-                                 'highreslimit', 'wilsonbfactor', 'sg_number',
-                                 'Vcell', 'solvent_content', 'Matth_coeff',
-                                 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                                 'MW_ASU', 'TFZ', 'LLG', 'PAK',
-                                 'mr_reso', 'mr_sg', 'mr_sg_no', 'RMSD', 'VRMS',
-                                 'eLLG', 'tncs', 'seq_ident', 'model_res']]
+    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
     self.X_metrix = self.X_metrix.fillna(0)
     
@@ -187,15 +185,14 @@ class RecursiveFeatureElimination(object):
                     scoring='accuracy')
       rfecv.fit(X_train, y)
       
-      feature_names = ['IoverSigma', 'cchalf', 'RmergeI', 'RmergediffI',
-                       'RmeasI', 'RmeasdiffI', 'RpimI', 'RpimdiffI',
-                       'totalobservations', 'totalunique', 'multiplicity',
-                       'completeness', 'lowreslimit', 'highreslimit',
-                       'wilsonbfactor', 'sg_number', 'Vcell', 'solvent_content',
-                       'Matth_coeff', 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                       'MW_ASU', 'TFZ', 'LLG', 'PAK', 'mr_reso', 'mr_sg',
-                       'mr_sg_no', 'RMSD', 'VRMS', 'eLLG', 'tncs', 'seq_ident',
-                       'model_res']
+      feature_names = ['IoverSigma', 'completeness', 'RmergeI',
+                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+                    'No_mol_asu', 'MW_asu', 'No_atom_asu']
       
       feature_selection = rfecv.support_
       with open(os.path.join(self.output_dir,

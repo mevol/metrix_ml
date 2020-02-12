@@ -62,8 +62,8 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
 
 def make_output_folder(outdir):
-  name = os.path.join(outdir, 'feature_correlations')
-  output_dir = os.makedirs(name, exist_ok=True)
+  output_dir = os.path.join(outdir, 'feature_correlations')
+  os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
 ###############################################################################
@@ -105,17 +105,18 @@ class FeatureCorrelations(object):
     print('*' *80)
 
     #database plus manually added data
-    self.X_metrix = self.metrix[['IoverSigma', 'cchalf', 'RmergeI',
-                                 'RmergediffI', 'RmeasI', 'RmeasdiffI', 'RpimI',
-                                 'RpimdiffI', 'totalobservations', 'totalunique',
-                                 'multiplicity', 'completeness', 'lowreslimit',
-                                 'highreslimit', 'wilsonbfactor', 'sg_number',
-                                 'Vcell', 'solvent_content', 'Matth_coeff',
-                                 'No_atom_chain', 'No_mol_ASU', 'MW_chain',
-                                 'MW_ASU', 'TFZ', 'LLG', 'PAK',
-                                 'mr_reso', 'mr_sg', 'mr_sg_no', 'RMSD', 'VRMS',
-                                 'eLLG', 'tncs', 'seq_ident', 'model_res']]
+#    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+#                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+#                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
+#                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+#                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+#                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+#                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+#                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
+    self.X_metrix = self.metrix[["no_res", "no_frag", "longest_frag", "res_frag_ratio", "mapCC", "EP_success"]]
+
+                    
     self.X_metrix = self.X_metrix.fillna(0)
 
     with open(os.path.join(self.output_dir,
@@ -130,6 +131,38 @@ class FeatureCorrelations(object):
 #
 ###############################################################################
 
+#  def split_data(self):
+#    '''Function which splits the input data into training set and test set.
+#    ******
+#    Input: a dataframe that contains the features and labels in columns and the samples
+#          in rows
+#    Output: sets of training and test data with an 80/20 split; X_train, X_test, y_train,
+#            y_test
+#    '''
+#    print('*' *80)
+#    print('*    Splitting data into test and training set with test=20%')
+#    print('*' *80)
+
+#    y = self.metrix['MR_success']
+#    y = self.metrix['EP_success']
+
+#stratified split of samples
+#    X_metrix_train, X_metrix_test, y_train, y_test = train_test_split(self.X_metrix, y, test_size=0.2, random_state=42, stratify=y)
+    
+#    assert self.X_metrix.columns.all() == X_metrix_train.columns.all()
+
+#    self.X_metrix_train = X_metrix_train
+#    self.X_metrix_test = X_metrix_test
+#    self.y_train = y_train
+#    self.y_test = y_test
+
+#    with open(os.path.join(self.output_dir,
+#              'feature_correlations.txt'), 'a') as text_file:
+#      text_file.write('Spliting into training and test set 80-20 \n')
+#      text_file.write('X_metrix: X_metrix_train, X_metrix_test \n')
+#      text_file.write('y(MR_success): y_train, y_test \n')
+#      text_file.write('y(EP_success): y_train, y_test \n')
+
   def split_data(self):
     '''Function which splits the input data into training set and test set.
     ******
@@ -142,7 +175,10 @@ class FeatureCorrelations(object):
     print('*    Splitting data into test and training set with test=20%')
     print('*' *80)
 
-    y = self.metrix['MR_success']
+    y = self.X_metrix['EP_success']
+    
+#normal split of samples    
+#    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
 
 #stratified split of samples
     X_metrix_train, X_metrix_test, y_train, y_test = train_test_split(self.X_metrix, y, test_size=0.2, random_state=42, stratify=y)
@@ -154,11 +190,7 @@ class FeatureCorrelations(object):
     self.y_train = y_train
     self.y_test = y_test
 
-    with open(os.path.join(self.output_dir,
-              'feature_correlations.txt'), 'a') as text_file:
-      text_file.write('Spliting into training and test set 80-20 \n')
-      text_file.write('X_metrix: X_metrix_train, X_metrix_test \n')
-      text_file.write('y(MR_success): y_train, y_test \n')
+
 
 ###############################################################################
 #
@@ -175,13 +207,14 @@ class FeatureCorrelations(object):
       print('*    Calculating Pearson Correlation Coefficient')
       print('*' *80)      
       
-      attr = list(X_train)
+      attr = list(X_train.columns)
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
       for a in attr:
-        corr_X_train = X_train.corr()        
+        corr_X_train = X_train.corr()
         with open(os.path.join(directory,
                'linear_PearsonCC_values_'+datestring+'.txt'), 'a') as text_file:
-          corr_X_train[a].sort_values(ascending=False).to_csv(text_file)
+               #corr_X_train[a].to_csv(text_file, header=True)
+          corr_X_train[a].sort_values(ascending=False).to_csv(text_file, header=True)
         text_file.close()
         
     calculate_pearson_cc(self.X_metrix_train,
@@ -194,7 +227,7 @@ class FeatureCorrelations(object):
       print('*' *80)      
                    
       def corrcoef_loop(X_train):
-        attr = list(X_train)
+        attr = list(X_train.columns)
         rows = len(attr)
         r = np.ones(shape=(rows, rows))
         p = np.ones(shape=(rows, rows))
@@ -205,9 +238,7 @@ class FeatureCorrelations(object):
             r_, p_ = pearsonr(c1, c2)
             r[i, j] = r[j, i] = r_
             p[i, j] = p[j, i] = p_
-        print(r)
         r_squared = r**2
-        print(r_squared)
         self.r_squared = r_squared
         self.r = r
         self.p = p
@@ -265,48 +296,56 @@ class FeatureCorrelations(object):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
       corr = X_train.corr()
       
-      label_map = {
-        'IoverSigma' : '$I/\sigma$', 
-        'cchalf' : "$CC_{1/2}$", 
-        'RmergeI' : '$R_{merge}I$',
-        'RmergediffI' : '$R_{merge}(I+/I-)$', 
-        'RmeasI' : '$R_{meas}I$',
-        'RmeasdiffI' : '$R_{meas}(I+/I-)$',
-        'RpimI' : '$R_{p.i.m.}I$',
-        'RpimdiffI' : '$R_{p.i.m.}(I+/I-)$',
-        'totalobservations' : '$N_{obs total}$',
-        'totalunique' : '$N_{obs unique}$',
-        'multiplicity' : 'M',
-        'completeness' : 'T',
-        'lowreslimit' : '$d_{max}$',
-        'highreslimit' : '$d_{min}$',
-        'wilsonbfactor' : 'B',
-        'Vcell' : '$V_{cell}$',
-        'sg_number' : '$N_{sg}$',
-        'solvent_content' : '$V_{S}$',
-        'Matth_coeff' : '$V_{M}$',
-        'MW_chain' : '$MW_{chain}$',
-        'No_atom_chain' : '$N_{atomchain}$',
-        'No_mol_ASU' : '$N_{molASU}$',
-        'MW_ASU' : '$MW_{ASU}$',
-        'sites_ASU' : '$N_{sitesASU}$',
-        'TFZ' : '$TFZ$',
-        'LLG' : '$LLG$',
-        'PAK' : '$PAK$',
-        'RMSD' : '$RMSD$',
-        'VRMS' : '$VRMS$',
-        'eLLG' : '$eLLG$',
-        'tncs' : '$TNCS$',
-        'mr_reso' : '$d_{min_MR}$',
-        'mr_sg_no' : '$N_{sg_MR}$',
-        'seq_ident' : '$i$',
-        'model_res' : '$d_{min_model}$'
-        }
+#      label_map = {
+#        'IoverSigma' : '$I/\sigma$', 
+#        'cchalf' : "$CC_{1/2}$", 
+#        'RmergeI' : '$R_{merge}I$',
+#        'RmergediffI' : '$R_{merge}(I+/I-)$', 
+#        'RmeasI' : '$R_{meas}I$',
+#        'RmeasdiffI' : '$R_{meas}(I+/I-)$',
+#        'RpimI' : '$R_{p.i.m.}I$',
+#        'RpimdiffI' : '$R_{p.i.m.}(I+/I-)$',
+#        'totalobservations' : '$N_{obs total}$',
+#        'totalunique' : '$N_{obs unique}$',
+#        'multiplicity' : 'M',
+#        'completeness' : 'T',
+#        'lowreslimit' : '$d_{max}$',
+#        'highreslimit' : '$d_{min}$',
+#        'wilsonbfactor' : 'B',
+#        'anomalousCC' : "$CC_{anom}$",
+#        'diffI' : '$\Delta I/\sigma I$',
+#        'diffF' : '$\Delta F/F$',
+#        'anomalousslope' : '$m_{anom}$',
+#        'anomalousmulti' : '$M_{anom}$',
+#        'anomalouscompl' : '$T_{anom}$',
+#        'xia2_cell_volume' : '$V_{cell}$',
+#        'likely_sg_no' : '$N_{sg}$',
+#        'Vs' : '$V_{S}$',
+#        'Vm' : '$V_{M}$',
+#        'MW_chain' : '$MW_{chain}$',
+#        'No_atom_chain' : '$N_{atomchain}$',
+#        'No_mol_asu' : '$N_{molASU}$',
+#        'MW_asu' : '$MW_{ASU}$',
+#        'No_res_chain' : '$N_{reschain}$',
+#        'No_res_asu' : '$N_{resasu}$',
+#        'No_atom_asu' : '$N_{atomasu}$',
+#        'TFZ' : '$TFZ$',
+#        'LLG' : '$LLG$',
+#        'PAK' : '$PAK$',
+#        'RMSD' : '$RMSD$',
+#        'VRMS' : '$VRMS$',
+#        'eLLG' : '$eLLG$',
+#        'tncs' : '$TNCS$',
+#        'mr_reso' : '$d_{minMR}$',
+        #'mr_sg_no' : '$N_{sg_MR}$',
+#        'seq_ident' : '$i$',
+#        'model_res' : '$d_{minmodel}$'
+#        }
 
-      yticklabels = [label_map[key] for key in corr.columns]
-      xticklabels = [label_map[key] for key in corr.columns]
+#      yticklabels = [label_map[key] for key in corr.columns]
+#      xticklabels = [label_map[key] for key in corr.columns]
       
-      fig = plt.figure(figsize=(15, 15))
+      fig = plt.figure(figsize=(20, 20))
 
       ax = plt.gca()
       im = ax.imshow(corr, cmap=sns.diverging_palette(0, 255, sep=32, n=256,
@@ -317,10 +356,14 @@ class FeatureCorrelations(object):
       cax.tick_params(labelsize=14)
       plt.colorbar(im, cax=cax).set_label("Pearson's Correlation Coefficient",
                                           fontsize=14)
-      ax.set_xticks(np.arange(len(xticklabels)))
-      ax.set_xticklabels(xticklabels, rotation=90, fontsize=14)
-      ax.set_yticks(np.arange(len(yticklabels)))
-      ax.set_yticklabels(yticklabels, fontsize=14)
+      #ax.set_xticks(np.arange(len(xticklabels)))
+      ax.set_xticks(np.arange(len(X_train.columns)))
+      #ax.set_xticklabels(xticklabels, rotation=90, fontsize=14)
+      ax.set_xticklabels(X_train.columns, rotation=90, fontsize=14)      
+      #ax.set_yticks(np.arange(len(yticklabels)))
+      ax.set_yticks(np.arange(len(X_train.columns)))
+      #ax.set_yticklabels(yticklabels, fontsize=14)
+      ax.set_yticklabels(X_train.columns, fontsize=14)
       #fig.suptitle("Linear Pearson's Correlation Coefficient", fontsize=16)
       #ax.set_title('Feature1 using Data2', fontsize=12)
       plt.tight_layout()

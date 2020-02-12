@@ -74,7 +74,7 @@ def make_output_folder(outdir):
   names = ['newdata_minusEP', 'bbbb']
   result = []
   for name in names:
-    name = os.path.join(outdir, 'decisiontree_ada_randomsearch', name)
+    name = os.path.join(outdir, 'decisiontree_ada_retrain', name)
     os.makedirs(name, exist_ok=True)
     result.append(name)
   return result
@@ -122,7 +122,7 @@ class RandomForestAdaRandSearch(object):
     print('*    Splitting data into test and training set with test=20%')
     print('*' *80)
     
-    self.X_metrix = self.metrix[['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF']]
+    self.X_metrix = self.metrix[['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF', 'f']]
 
     y = self.metrix['EP_success']
     
@@ -155,16 +155,16 @@ class RandomForestAdaRandSearch(object):
     print('*' *80)
     
     clf2 = DecisionTreeClassifier(criterion='entropy',
-                                  max_depth=9,
-                                  max_features=3,
-                                  max_leaf_nodes=14,
-                                  min_samples_leaf=1,
-                                  min_samples_split=9,
+                                  max_depth=3,
+                                  max_features=2,
+                                  max_leaf_nodes=17,
+                                  min_samples_leaf=8,
+                                  min_samples_split=18,
                                   random_state= 0)
     self.tree_clf_rand_ada_new_transform = AdaBoostClassifier(
                                            clf2,
-                                           learning_rate=0.8404169268999371,
-                                           n_estimators=2832,
+                                           learning_rate=0.6355,
+                                           n_estimators=5694,
                                            algorithm ="SAMME.R",
                                            random_state=5)
                                 
@@ -173,7 +173,7 @@ class RandomForestAdaRandSearch(object):
    # print(self.tree_clf_rand_ada_new_transform.estimators_)
     #print(self.tree_clf_rand_ada_new_transform.feature_importances_)
     
-    attr = ['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF']
+    attr = ['diffI', 'anomalousCC', 'lowreslimit', 'anomalousslope', 'diffF', 'f']
 
     
     feature_importances_transform = self.tree_clf_rand_ada_new_transform.feature_importances_
