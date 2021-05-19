@@ -83,7 +83,10 @@ setup(
       'scikit-plot',
       'scipy',
       'mlxtend',
-      'joblib'
+      'joblib',
+      'seaborn',
+      'imblearn',
+      'xgboost'
      ],
     classifiers=[
         "Development Status :: 3 - Alpha",

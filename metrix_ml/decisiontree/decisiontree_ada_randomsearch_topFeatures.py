@@ -16,12 +16,20 @@ import numpy as np
 import subprocess
 import seaborn as sns
 import scikitplot as skplt
+import imblearn
+import joblib
 #import random
+from imblearn.over_sampling import RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import SMOTE
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import mean_squared_error
-from sklearn.externals import joblib
+from sklearn.metrics import accuracy_score
+from sklearn.utils import resample
+from sklearn.model_selection import RepeatedStratifiedKFold
+#from sklearn.externals import joblib
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
@@ -29,7 +37,7 @@ from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_
 from sklearn.metrics import precision_recall_curve, roc_curve
 from sklearn.tree import export_graphviz
 from datetime import datetime
-from sklearn.externals import joblib
+#from sklearn.externals import joblib
 from scipy.stats import randint
 from scipy.stats import uniform
 from sklearn.ensemble import AdaBoostClassifier
@@ -140,14 +148,14 @@ class RandomForestAdaRandSearch(object):
 #                      'Matth_coeff', 'No_atom_chain', 'No_mol_ASU',
 #                      'MW_chain', 'sites_ASU']
 
-#    attr_newdata_initial = ['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF', 'diffI']
-    attr_newdata_initial = ['anomalousCC']
+    attr_newdata_initial = ['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF', 'diffI']
+#    attr_newdata_initial = ['anomalousCC']
 
 
     metrix_newdata_initial = self.metrix[attr_newdata_initial]
     
-#    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF', 'diffI']]
-    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC']]
+    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF', 'diffI']]
+#    self.X_newdata_transform = metrix_newdata_initial[['anomalousCC']]
 
     self.X_newdata_transform = self.X_newdata_transform.fillna(0)
 
@@ -206,6 +214,23 @@ class RandomForestAdaRandSearch(object):
     print('*    Running RandomizedSearch for best parameter combination for RandomForest')
     print('*' *80)
 
+   #the weight distribution for the classes used by "class_weight" weights = {0:0.1, 1:0.9}
+    
+    #print('*' *80)
+    #print('*    Applying Over/Undersampling and SMOTE')
+    #print('*' *80)
+
+    #oversample = RandomOverSampler(sampling_strategy = 'minority')
+    #oversample = RandomOverSampler(sampling_strategy = 0.1)
+    #oversample = SMOTE(sampling_strategy = 0.3, random_state=28)
+    # fit and apply the transform
+    #X_over, y_over = oversample.fit_resample(self.X_newdata_transform_train, self.y_train)
+
+    #undersample = RandomUnderSampler(sampling_strategy=0.7)
+    #X_over, y_over = undersample.fit_resample(X_over, y_over)
+    #self.X_over = X_over
+    #self.y_over = y_over
+
     #create the decision forest
     clf1 = DecisionTreeClassifier(random_state=0, class_weight='balanced')
     #tree_clf_rand_ada = DecisionTreeClassifier(random_state=42)
@@ -239,6 +264,9 @@ class RandomForestAdaRandSearch(object):
                               cv=3, n_iter=500, scoring='accuracy', n_jobs=-1)
 
     rand_search_transform = rand_search.fit(self.X_newdata_transform_train, self.y_train)
+    
+    #rand_search_transform = rand_search.fit(self.X_over, self.y_over)
+
     with open(os.path.join(self.newdata_minusEP, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Best parameters: ' +str(rand_search_transform.best_params_)+'\n')
       text_file.write('Best score: ' +str(rand_search_transform.best_score_)+'\n')
@@ -288,13 +316,57 @@ class RandomForestAdaRandSearch(object):
     self.tree_clf_rand_ada_new_transform = AdaBoostClassifier(clf2, **self.best_params_ada, 
                                 algorithm ="SAMME.R", random_state=5)
                                 
+
+    # Trying some bootstrap to assess confidence interval for classification
+    print('*' *80)
+    print('*    Calculating confidence interval for best decisiontree with AdaBoost')
+    print('*' *80)
+
+    # configure bootstrap
+    n_iterations = 1000
+    #n_size = int(len(self.X_over))
+    n_size = int(len(self.X_newdata_transform_train))
+
+    # run bootstrap
+    stats = list()
+    for i in range(n_iterations):
+      # prepare train and test sets
+      #train_boot = resample(self.X_over, n_samples = n_size)
+      train_boot = resample(self.X_newdata_transform_train, n_samples = n_size)
+      #test_boot = self.y_over
+      test_boot = self.y_train
+      # fit model
+      model = self.tree_clf_rand_ada_new_transform
+      model.fit(train_boot, test_boot)
+      # evaluate model
+      predictions = model.predict(self.X_newdata_transform_test)
+      score = accuracy_score(self.y_test, predictions)
+      print(score)
+      stats.append(score)
+
+    # plot scores
+    plt.hist(stats)
+    plt.savefig(os.path.join(self.newdata_minusEP, 'bootstrap_hist_ada.png'))
+    # confidence interval
+    alpha = 0.95
+    p = ((1.0 - alpha) / 2.0) * 100
+    lower = max(0.0, np.percentile(stats, p))
+    p = (alpha + ((1.0 - alpha) / 2.0)) * 100
+    upper = min(1.0, np.percentile(stats, p))
+    print('%.1f confidence interval %.1f%% and %.1f%%' %(alpha * 100, lower * 100, upper * 100))
+    with open(os.path.join(self.newdata_minusEP, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
+      text_file.write('%.1f confidence interval %.1f%% and %.1f%% \n' %(alpha * 100, lower * 100, upper * 100))
+
     self.tree_clf_rand_ada_new_transform.fit(self.X_newdata_transform_train, self.y_train)
+
+    #self.tree_clf_rand_ada_new_transform.fit(self.X_over, self.y_over)
+
 
    # print(self.tree_clf_rand_ada_new_transform.estimators_)
     #print(self.tree_clf_rand_ada_new_transform.feature_importances_)
     
-#    attr_newdata_transform = ['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF']
-    attr_newdata_transform = ['anomalousCC', 'IoverSigma']
+    attr_newdata_transform = ['anomalousCC', 'anomalousslope', 'lowreslimit', 'f', 'diffF', 'diffI']
+    #attr_newdata_transform = ['anomalousCC', 'IoverSigma']
     
     feature_importances_transform = self.tree_clf_rand_ada_new_transform.feature_importances_
     feature_importances_transform_ls = sorted(zip(feature_importances_transform, attr_newdata_transform), reverse=True)
@@ -338,6 +410,7 @@ class RandomForestAdaRandSearch(object):
       plt.close()
       
     feature_importances_pandas(self.tree_clf_rand_ada_new_transform, self.X_newdata_transform_train, 'newdata_minusEP', self.newdata_minusEP)
+    #feature_importances_pandas(self.tree_clf_rand_ada_new_transform, self.X_over, 'newdata_minusEP', self.newdata_minusEP)
 
     def write_pickle(forest, directory, name):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
@@ -368,7 +441,7 @@ class RandomForestAdaRandSearch(object):
         text_file.write('PNG filename: tree_clf_rand_ada_new_%s.png \n' %name)
 
     
-    visualise_tree(self.tree_clf_rand_ada_new_transform, self.newdata_minusEP, self.X_newdata_transform_train.columns, 'newdata_minusEP')
+   # visualise_tree(self.tree_clf_rand_ada_new_transform, self.newdata_minusEP, self.X_newdata_transform_train.columns, 'newdata_minusEP')
 
     print('*' *80)
     print('*    Getting basic stats for new forest')
@@ -378,12 +451,22 @@ class RandomForestAdaRandSearch(object):
       #distribution --> accuracy
       accuracy_each_cv = cross_val_score(forest, X_train, self.y_train, cv=3, scoring='accuracy')
       accuracy_mean_cv = cross_val_score(forest, X_train, self.y_train, cv=3, scoring='accuracy').mean()
-      # calculate cross_val_scoring with different scoring functions for CV train set
+      ## calculate cross_val_scoring with different scoring functions for CV train set
       train_roc_auc = cross_val_score(forest, X_train, self.y_train, cv=3, scoring='roc_auc').mean()
       train_accuracy = cross_val_score(forest, X_train, self.y_train, cv=3, scoring='accuracy').mean()
       train_recall = cross_val_score(forest, X_train, self.y_train, cv=3, scoring='recall').mean()
       train_precision = cross_val_score(forest, X_train, self.y_train, cv=3, scoring='precision').mean()
       train_f1 = cross_val_score(forest, X_train, self.y_train, cv=3, scoring='f1').mean()
+
+      #accuracy_each_cv = cross_val_score(forest, X_train, self.y_over, cv=3, scoring='accuracy')
+      #accuracy_mean_cv = cross_val_score(forest, X_train, self.y_over, cv=3, scoring='accuracy').mean()
+      # calculate cross_val_scoring with different scoring functions for CV train set
+      #train_roc_auc = cross_val_score(forest, X_train, self.y_over, cv=3, scoring='roc_auc').mean()
+      #train_accuracy = cross_val_score(forest, X_train, self.y_over, cv=3, scoring='accuracy').mean()
+      #train_recall = cross_val_score(forest, X_train, self.y_over, cv=3, scoring='recall').mean()
+      #train_precision = cross_val_score(forest, X_train, self.y_over, cv=3, scoring='precision').mean()
+      #train_f1 = cross_val_score(forest, X_train, self.y_over, cv=3, scoring='f1').mean()
+
 
       with open(os.path.join(directory, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
         text_file.write('Get various cross_val_scores to evaluate clf performance for best parameters \n')     
@@ -396,6 +479,8 @@ class RandomForestAdaRandSearch(object):
         text_file.write('F1 score mean for 3-fold CV: %s \n' %train_f1)
     
     basic_stats(self.tree_clf_rand_ada_new_transform, self.X_newdata_transform_train, self.newdata_minusEP)
+    #basic_stats(self.tree_clf_rand_ada_new_transform, self.X_over, self.newdata_minusEP)
+
 
     ###############################################################################
     #
@@ -420,6 +505,10 @@ class RandomForestAdaRandSearch(object):
     #alternative way to not have to use the test set
     self.y_train_CV_pred_transform = cross_val_predict(self.tree_clf_rand_ada_new_transform, self.X_newdata_transform_train, self.y_train, cv=3)
     self.y_train_CV_pred_proba_transform = cross_val_predict(self.tree_clf_rand_ada_new_transform, self.X_newdata_transform_train, self.y_train, cv=3, method='predict_proba')
+    
+    #self.y_train_CV_pred_transform = cross_val_predict(self.tree_clf_rand_ada_new_transform, self.X_over, self.y_over, cv=3)
+    #self.y_train_CV_pred_proba_transform = cross_val_predict(self.tree_clf_rand_ada_new_transform, self.X_over, self.y_over, cv=3, method='predict_proba')
+    
     with open(os.path.join(self.newdata_minusEP, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
       text_file.write('Saving predictions and probabilities for X_transform_train with 3-fold CV in y_train_pred_transform \n')
 
@@ -594,6 +683,7 @@ class RandomForestAdaRandSearch(object):
         text_file.write('F1 score sklearn CV: %s \n' %f1_score_sklearn_CV)
         
     conf_mat(self.y_test, self.y_train, self.y_pred_transform, self.y_train_CV_pred_transform, self.newdata_minusEP)
+    #conf_mat(self.y_test, self.y_over, self.y_pred_transform, self.y_train_CV_pred_transform, self.newdata_minusEP)
 
     def prediction_probas(tree, X_train, y_train, X_test, y_test, y_pred_proba, y_train_CV_pred_proba, directory, kind): 
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')      
@@ -641,6 +731,7 @@ class RandomForestAdaRandSearch(object):
       plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, 'test_', '1', directory)
       #plot Precision Recall Threshold curve for CV train set       
       precisions, recalls, thresholds_tree = precision_recall_curve(self.y_train, self.y_scores_CV_ones)
+      #precisions, recalls, thresholds_tree = precision_recall_curve(self.y_over, self.y_scores_CV_ones)
       plot_precision_recall_vs_threshold(precisions, recalls, thresholds_tree, 'train_CV_', '1', directory)
 
       with open(os.path.join(directory, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
@@ -661,6 +752,7 @@ class RandomForestAdaRandSearch(object):
         plt.close()
         
       plot_roc_curve(self.y_train, y_train_CV_pred_proba, 'train_CV_', directory)  
+      #plot_roc_curve(self.y_over, y_train_CV_pred_proba, 'train_CV_', directory)
       plot_roc_curve(self.y_test, y_pred_proba, 'test_', directory)  
     
       #plot ROC curves
@@ -680,13 +772,14 @@ class RandomForestAdaRandSearch(object):
       plot_roc_curve(fpr_1, tpr_1, 'test_', '1', directory)
       #ROC curve for 10-fold CV train set      
       fpr_CV_1, tpr_CV_1, thresholds_CV_1 = roc_curve(self.y_train, self.y_scores_CV_ones)
+      #fpr_CV_1, tpr_CV_1, thresholds_CV_1 = roc_curve(self.y_over, self.y_scores_CV_ones)
       plot_roc_curve(fpr_CV_1, tpr_CV_1, 'train_CV_', '1', directory)
       
       #calculate the area under the curve to get the performance for a classifier
       # IMPORTANT: first argument is true values, second argument is predicted probabilities
       AUC_test_class1 = metrics.roc_auc_score(self.y_test, self.y_scores_ones)
       AUC_train_class1 = metrics.roc_auc_score(self.y_train, self.y_scores_CV_ones)
-
+      #AUC_train_class1 = metrics.roc_auc_score(self.y_over, self.y_scores_CV_ones)
       with open(os.path.join(directory, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
         text_file.write('AUC for test set class 1: %s \n' %AUC_test_class1)
         text_file.write('AUC for CV train set class 1: %s \n' %AUC_train_class1)
@@ -713,6 +806,7 @@ class RandomForestAdaRandSearch(object):
       evaluate_threshold(tpr_CV_1, fpr_CV_1, thresholds_CV_1, 0.2, 'train_CV', directory)
 
     prediction_probas(self.tree_clf_rand_ada_new_transform, self.X_newdata_transform_train, self.y_train, self.X_newdata_transform_test, self.y_test, self.y_pred_proba_transform, self.y_train_CV_pred_proba_transform, self.newdata_minusEP, 'newdata_minusEP')    
+    #prediction_probas(self.tree_clf_rand_ada_new_transform, self.X_over, self.y_over, self.X_newdata_transform_test, self.y_test, self.y_pred_proba_transform, self.y_train_CV_pred_proba_transform, self.newdata_minusEP, 'newdata_minusEP')
 
 def run():
   args = parse_command_line()

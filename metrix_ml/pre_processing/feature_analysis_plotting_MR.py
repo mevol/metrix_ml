@@ -282,6 +282,8 @@ class FeatureAnalysisPlotting(object):
                  kde_kws = {'linewidth': 3})  
       plt.axvline(mean, label='Mean', color='r', linestyle='--')  
       plt.axvline(median, label='Median', color='g', linestyle='--')        
+      plt.text(mean, 0.9, 'Mean: %.2f' %mean)
+      plt.text(median, 0.8, 'Median: %.2f' %median)
       plt.legend(loc='best')
       plt.xlabel(name)
       plt.ylabel('Density')

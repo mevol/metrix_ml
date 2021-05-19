@@ -21,7 +21,11 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import mean_squared_error
-from sklearn.externals import joblib
+#from sklearn.externals import joblib
+import joblib
+from sklearn.utils import resample
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
@@ -29,7 +33,7 @@ from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_
 from sklearn.metrics import precision_recall_curve, roc_curve
 from sklearn.tree import export_graphviz
 from datetime import datetime
-from sklearn.externals import joblib
+#from sklearn.externals import joblib
 from scipy.stats import randint
 from scipy.stats import uniform
 from sklearn.ensemble import AdaBoostClassifier
@@ -120,14 +124,19 @@ class DecisionTreeAdaRandSearch(object):
     print('*    Preparing input dataframe X_metrix')
     print('*' *80)
 
-    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
-                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
-                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
-                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
-                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
-                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
-                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
-                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
+    self.X_metrix = self.metrix[['feature01', 'feature02', 'feature03', 'feature04',
+                    'feature05', 'feature06', 'feature07', 'feature08']]
+
+#original column labels
+#    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+#                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+#                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI',
+#                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+#                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+#                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+#                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+#                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
+
 
     self.X_metrix = self.X_metrix.fillna(0)
 
@@ -201,7 +210,7 @@ class DecisionTreeAdaRandSearch(object):
     #set up randomized search
     param_rand = {"base_estimator__criterion": ["gini", "entropy"],#metric to judge reduction of impurity
                   'base_estimator__class_weight': ['balanced', None],
-                  'base_estimator__max_features': randint(2, 31),#max number of features when splitting
+                  'base_estimator__max_features': randint(2, 8),#max number of features when splitting
                   'n_estimators': randint(100, 10000),#number of base estimators to use
                   'learning_rate': uniform(0.0001, 1.0),
                   "base_estimator__min_samples_split": randint(2, 20),#min samples per node to induce split
@@ -277,6 +286,45 @@ class DecisionTreeAdaRandSearch(object):
                                                     **self.best_params_ada, 
                                                     algorithm ="SAMME.R",
                                                     random_state=5)
+
+    # Trying some bootstrap to assess confidence interval for classification
+    print('*' *80)
+    print('*    Calculating confidence interval for best decisiontree with AdaBoost')
+    print('*' *80)
+
+    # configure bootstrap
+    n_iterations = 1000
+    n_size = int(len(self.X_metrix_train))
+
+    # run bootstrap
+    stats = list()
+    for i in range(n_iterations):
+      # prepare train and test sets
+      train_boot = resample(self.X_metrix_train, n_samples = n_size)
+      test_boot = self.y_train
+      # fit model
+      model = self.tree_clf_rand_ada_new
+      model.fit(train_boot, test_boot)
+      # evaluate model
+      predictions = model.predict(self.X_metrix_test)
+      score = accuracy_score(self.y_test, predictions)
+      #print(score)
+      stats.append(score)
+
+    # plot scores
+    plt.hist(stats)
+    plt.savefig(os.path.join(self.output_dir, 'bootstrap_hist_ada.png'), dpi=600)
+    plt.close()
+    # confidence interval
+    alpha = 0.95
+    p = ((1.0 - alpha) / 2.0) * 100
+    lower = max(0.0, np.percentile(stats, p))
+    p = (alpha + ((1.0 - alpha) / 2.0)) * 100
+    upper = min(1.0, np.percentile(stats, p))
+    print('%.1f confidence interval %.1f%% and %.1f%%' %(alpha * 100, lower * 100, upper * 100))
+    with open(os.path.join(self.output_dir, 'decisiontree_ada_randomsearch.txt'), 'a') as text_file:
+      text_file.write('%.1f confidence interval %.1f%% and %.1f%% \n' %(alpha * 100, lower * 100, upper * 100))
+
                                 
     self.tree_clf_rand_ada_new.fit(self.X_metrix_train,
                                    self.y_train)
@@ -330,12 +378,12 @@ class DecisionTreeAdaRandSearch(object):
       df_mean = df[X_train.columns].mean(axis=0)
       df_std = df[X_train.columns].std(axis=0)
       df_mean.plot(kind='bar', color='b', yerr=[df_std], align="center",
-                   figsize=(20,10), rot=90)
-      plt.title('Histogram of Feature Importances DecisionTree AdaBoostClassifier')
-      plt.xlabel('Features')
+                   figsize=(20,10), rot=90, fontsize=24)
+      #plt.title('Histogram of Feature Importances DecisionTree AdaBoostClassifier')
+      #plt.xlabel('Features')
       plt.tight_layout()
       plt.savefig(os.path.join(directory,
-            'feature_importances_overall_bar_plot_rand_ada_'+datestring+'.png'))
+            'feature_importances_overall_bar_plot_rand_ada_'+datestring+'.png'), dpi=600)
       plt.close()
       
     feature_importances_pandas(self.tree_clf_rand_ada_new,
@@ -382,9 +430,9 @@ class DecisionTreeAdaRandSearch(object):
         text_file.write('PNG filename: tree_clf_rand_ada_new.png \n')
 
     
-    visualise_tree(self.tree_clf_rand_ada_new,
-                   self.output_dir,
-                   self.X_metrix_train.columns)
+   # visualise_tree(self.tree_clf_rand_ada_new,
+   #                self.output_dir,
+   #                self.X_metrix_train.columns)
 
     print('*' *80)
     print('*    Getting basic stats for new decision tree with AdaBoost')
@@ -549,14 +597,16 @@ class DecisionTreeAdaRandSearch(object):
         datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
         labels = ['0', '1']      
         ax = plt.subplot()
-        sns.heatmap(matrix, annot=True, ax=ax)
-        plt.title('Confusion matrix of the classifier')
-        ax.set_xticklabels(labels)
-        ax.set_yticklabels(labels)
+        sns.set(font_scale=1.5)
+        sns.heatmap(matrix, annot=True, ax=ax, annot_kws={'size': 18}, vmin=0, vmax=12)
+       # plt.title('Confusion matrix of the classifier')
+        ax.set_xticklabels(labels, fontdict={'fontsize': 18})
+        ax.set_yticklabels(labels, fontdict={'fontsize': 18})
         plt.xlabel('Predicted')
         plt.ylabel('True')
+        plt.tight_layout()
         plt.savefig(os.path.join(directory,
-                    'confusion_matrix_tree_rand_ada_'+datestring+'.png'))
+                    'confusion_matrix_tree_rand_ada_'+datestring+'.png'), dpi=600)
         plt.close()
 
       draw_conf_mat(conf_mat_test, directory)
@@ -678,11 +728,11 @@ class DecisionTreeAdaRandSearch(object):
       def plot_hist_pred_proba(y_pred_proba, directory):
         plt.hist(y_pred_proba, bins=20)
         plt.xlim(0,1)
-        plt.title('Histogram of predicted probabilities for y_pred_proba to be class 1' )
-        plt.xlabel('Predicted probability of MR_success')
+       # plt.title('Histogram of predicted probabilities for y_pred_proba to be class 1' )
+       # plt.xlabel('Predicted probability of MR_success')
         plt.ylabel('Frequency')
         plt.savefig(os.path.join(directory,
-                            'hist_pred_proba_tree_rand_ada_'+datestring+'.png'))
+                            'hist_pred_proba_tree_rand_ada_'+datestring+'.png'), dpi=600)
         plt.close()
 
 #      plot_hist_pred_proba(y_train_CV_pred_proba[:, 1], 'train_CV_', directory)
@@ -709,12 +759,12 @@ class DecisionTreeAdaRandSearch(object):
                                              directory):
         plt.plot(thresholds_forest, precisions[:-1], "b--", label="Precision")
         plt.plot(thresholds_forest, recalls[:-1], "g--", label="Recall")
-        plt.title('Precsion-Recall plot for for MR_success classifier for class %s' %(classes))
+       # plt.title('Precsion-Recall plot for for MR_success classifier for class %s' %(classes))
         plt.xlabel("Threshold")
         plt.legend(loc="upper left")
         plt.ylim([0,1])
         plt.savefig(os.path.join(directory,
-                   'Precision_Recall_tree_rand_ada_'+datestring+classes+'.png'))
+                   'Precision_Recall_tree_rand_ada_'+datestring+classes+'.png'), dpi=600)
         plt.close()
 
      #plot Precision Recall Threshold curve for test set        
@@ -752,7 +802,7 @@ class DecisionTreeAdaRandSearch(object):
       def plot_roc_curve(y_test, y_proba, directory):
         skplt.metrics.plot_roc(y_test, y_proba, title='ROC curve')
         plt.savefig(os.path.join(directory,
-                            'ROC_curve_skplt_tree_rand_ada_'+datestring+'.png'))
+                            'ROC_curve_skplt_tree_rand_ada_'+datestring+'.png'), dpi=600)
         plt.close()
         
       #plot_roc_curve(self.y_train,
@@ -767,12 +817,12 @@ class DecisionTreeAdaRandSearch(object):
         plt.plot(fpr, tpr, linewidth=2)
         plt.plot([0, 1], [0, 1], 'k--')
         plt.axis([0, 1, 0, 1])
-        plt.title('ROC curve for MR_success classifier for class %s' %(classes)) 
-        plt.xlabel('False Positive Rate (1 - Specificity)')
-        plt.ylabel('True Positive Rate (Sensitivity)')
-        plt.grid(True)
+        #plt.title('ROC curve for MR_success classifier for class %s' %(classes)) 
+        #plt.xlabel('False Positive Rate (1 - Specificity)')
+        #plt.ylabel('True Positive Rate (Sensitivity)')
+        #plt.grid(True)
         plt.savefig(os.path.join(directory,
-                          'ROC_curve_tree_rand_ada_'+datestring+classes+'.png'))
+                          'ROC_curve_tree_rand_ada_'+datestring+classes+'.png'), dpi=600)
         plt.close()
         
       #ROC curve for test set      

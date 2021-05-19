@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
-from sklearn.externals import joblib
+import joblib
 from sklearn.preprocessing import StandardScaler
 from sklearn.calibration import CalibratedClassifierCV
 
@@ -140,7 +140,6 @@ class Calibrate(object):
     print('*' *80)
 
     clf_cccv = CalibratedClassifierCV(self.model, cv='prefit')
-    
     self.calibrated_clf_cccv = clf_cccv.fit(self.X_data_initial, self.y)
 
     def write_pickle(forest, directory):
@@ -158,7 +157,6 @@ class Calibrate(object):
     with open(os.path.join(self.calibrate, 'calibrate.txt'), 'a') as text_file:
       text_file.write(str(cal_acc))
       text_file.write('\n')
-
   
 def run():
   args = parse_command_line()

@@ -100,14 +100,19 @@ class FeaturePairPlot(object):
     print('*' *80)
 
     #database plus manually added data
-    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
-                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
-                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
-                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
-                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
-                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
-                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
-                    'No_mol_asu', 'MW_asu', 'No_atom_asu', 'MR_success']]
+    self.X_metrix = self.metrix[['feature01', 'feature02', 'feature03', 'feature04',
+                    'feature05', 'feature06', 'feature07', 'feature08', 'MR_success']]
+
+#original column lables
+#    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
+#                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
+#                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI',
+#                    'RmergediffI', 'totalobservations', 'cchalf', 'totalunique',
+#                    'mr_reso', 'eLLG', 'tncs', 'seq_ident', 'model_res',
+#                    'No_atom_chain', 'MW_chain', 'No_res_chain', 'No_res_asu',
+#                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
+#                    'No_mol_asu', 'MW_asu', 'No_atom_asu', 'MR_success']]
+
 
     self.X_metrix = self.X_metrix.fillna(0)
 
@@ -166,12 +171,19 @@ class FeaturePairPlot(object):
     #graph = sns.pairplot(self.best_features, hue='MR_success')
     graph = sns.pairplot(self.X_metrix_train, hue='MR_success')
     graph.map(corrfunc)
-    handles = graph._legend_data.values()
-    labels = graph._legend_data.keys()
-    graph.fig.legend(handles=handles, labels=labels, loc='upper center', ncol=1)
+    #handles = graph._legend_data.values()
+    #labels = graph._legend_data.keys()
+    #graph.fig.legend(handles=handles, labels=labels, loc='upper center', ncol=1)
     graph.fig.subplots_adjust(top=0.92)
+    for ax in graph.axes.flatten():
+      # rotate x axis labels
+      ax.set_xlabel(ax.get_xlabel(), rotation = 90, fontsize=24)
+      # rotate y axis labels
+      ax.set_ylabel(ax.get_ylabel(), rotation = 0, fontsize=24)
+      # set y labels alignment
+      ax.yaxis.get_label().set_horizontalalignment('right')
     plt.tight_layout()
-    plt.savefig(os.path.join(self.output_dir, 'pairplot_'+datestring+'.png'))
+    plt.savefig(os.path.join(self.output_dir, 'pairplot_'+datestring+'.png'), dpi=300)
     plt.close()
     
 def run():

@@ -105,6 +105,9 @@ class FeatureCorrelations(object):
     print('*' *80)
 
     #database plus manually added data
+    self.X_metrix = self.metrix[['feature01', 'feature02', 'feature03', 'feature04',
+                    'feature05', 'feature06', 'feature07', 'feature08']]
+#below the original column labels that have been replaced by dummies to anonymise
 #    self.X_metrix = self.metrix[['IoverSigma', 'completeness', 'RmergeI',
 #                    'lowreslimit', 'RpimI', 'multiplicity', 'RmeasdiffI',
 #                    'wilsonbfactor', 'RmeasI', 'highreslimit', 'RpimdiffI', 
@@ -114,7 +117,8 @@ class FeatureCorrelations(object):
 #                    'likely_sg_no', 'xia2_cell_volume', 'Vs', 'Vm',
 #                    'No_mol_asu', 'MW_asu', 'No_atom_asu']]
 
-    self.X_metrix = self.metrix[["no_res", "no_frag", "longest_frag", "res_frag_ratio", "mapCC", "EP_success"]]
+
+#    self.X_metrix = self.metrix[["no_res", "no_frag", "longest_frag", "res_frag_ratio", "mapCC", "EP_success"]]
 
                     
     self.X_metrix = self.X_metrix.fillna(0)
@@ -131,38 +135,6 @@ class FeatureCorrelations(object):
 #
 ###############################################################################
 
-#  def split_data(self):
-#    '''Function which splits the input data into training set and test set.
-#    ******
-#    Input: a dataframe that contains the features and labels in columns and the samples
-#          in rows
-#    Output: sets of training and test data with an 80/20 split; X_train, X_test, y_train,
-#            y_test
-#    '''
-#    print('*' *80)
-#    print('*    Splitting data into test and training set with test=20%')
-#    print('*' *80)
-
-#    y = self.metrix['MR_success']
-#    y = self.metrix['EP_success']
-
-#stratified split of samples
-#    X_metrix_train, X_metrix_test, y_train, y_test = train_test_split(self.X_metrix, y, test_size=0.2, random_state=42, stratify=y)
-    
-#    assert self.X_metrix.columns.all() == X_metrix_train.columns.all()
-
-#    self.X_metrix_train = X_metrix_train
-#    self.X_metrix_test = X_metrix_test
-#    self.y_train = y_train
-#    self.y_test = y_test
-
-#    with open(os.path.join(self.output_dir,
-#              'feature_correlations.txt'), 'a') as text_file:
-#      text_file.write('Spliting into training and test set 80-20 \n')
-#      text_file.write('X_metrix: X_metrix_train, X_metrix_test \n')
-#      text_file.write('y(MR_success): y_train, y_test \n')
-#      text_file.write('y(EP_success): y_train, y_test \n')
-
   def split_data(self):
     '''Function which splits the input data into training set and test set.
     ******
@@ -175,20 +147,51 @@ class FeatureCorrelations(object):
     print('*    Splitting data into test and training set with test=20%')
     print('*' *80)
 
-    y = self.X_metrix['EP_success']
-    
-#normal split of samples    
-#    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
+    y = self.metrix['MR_success']
+#    y = self.metrix['EP_success']
 
 #stratified split of samples
     X_metrix_train, X_metrix_test, y_train, y_test = train_test_split(self.X_metrix, y, test_size=0.2, random_state=42, stratify=y)
     
     assert self.X_metrix.columns.all() == X_metrix_train.columns.all()
-
     self.X_metrix_train = X_metrix_train
     self.X_metrix_test = X_metrix_test
     self.y_train = y_train
     self.y_test = y_test
+
+    with open(os.path.join(self.output_dir,
+              'feature_correlations.txt'), 'a') as text_file:
+      text_file.write('Spliting into training and test set 80-20 \n')
+      text_file.write('X_metrix: X_metrix_train, X_metrix_test \n')
+      text_file.write('y(MR_success): y_train, y_test \n')
+      text_file.write('y(EP_success): y_train, y_test \n')
+
+#  def split_data(self):
+#    '''Function which splits the input data into training set and test set.
+#    ******
+#    Input: a dataframe that contains the features and labels in columns and the samples
+#          in rows
+#    Output: sets of training and test data with an 80/20 split; X_train, X_test, y_train,
+#            y_test
+#    '''
+#    print('*' *80)
+#    print('*    Splitting data into test and training set with test=20%')
+#    print('*' *80)
+#
+#    y = self.X_metrix['EP_success']
+#    
+#normal split of samples    
+#    X_transform_train, X_transform_test, y_train, y_test = train_test_split(self.X_transform, y, test_size=0.2, random_state=42)
+#
+#stratified split of samples
+#    X_metrix_train, X_metrix_test, y_train, y_test = train_test_split(self.X_metrix, y, test_size=0.2, random_state=42, stratify=y)
+#    
+#    assert self.X_metrix.columns.all() == X_metrix_train.columns.all()
+#
+#    self.X_metrix_train = X_metrix_train
+#    self.X_metrix_test = X_metrix_test
+#    self.y_train = y_train
+#    self.y_test = y_test
 
 
 
@@ -345,25 +348,27 @@ class FeatureCorrelations(object):
 #      yticklabels = [label_map[key] for key in corr.columns]
 #      xticklabels = [label_map[key] for key in corr.columns]
       
-      fig = plt.figure(figsize=(20, 20))
+      fig = plt.figure(figsize=(24, 24))
 
       ax = plt.gca()
+      #im = ax.imshow(corr, cmap=sns.diverging_palette(0, 255, sep=32, n=256,
+      #                                            center='light', as_cmap=True))
       im = ax.imshow(corr, cmap=sns.diverging_palette(0, 255, sep=32, n=256,
-                                                  center='light', as_cmap=True))
+                                                  center='light', as_cmap=True), vmin=-1, vmax=1)
       from mpl_toolkits.axes_grid1 import make_axes_locatable
       divider = make_axes_locatable(ax)
       cax = divider.append_axes('right', size='5%', pad=0.2)
-      cax.tick_params(labelsize=14)
+      cax.tick_params(labelsize=24)
       plt.colorbar(im, cax=cax).set_label("Pearson's Correlation Coefficient",
-                                          fontsize=14)
+                                          fontsize=24)
       #ax.set_xticks(np.arange(len(xticklabels)))
       ax.set_xticks(np.arange(len(X_train.columns)))
       #ax.set_xticklabels(xticklabels, rotation=90, fontsize=14)
-      ax.set_xticklabels(X_train.columns, rotation=90, fontsize=14)      
+      ax.set_xticklabels(X_train.columns, rotation=90, fontsize=24)      
       #ax.set_yticks(np.arange(len(yticklabels)))
       ax.set_yticks(np.arange(len(X_train.columns)))
       #ax.set_yticklabels(yticklabels, fontsize=14)
-      ax.set_yticklabels(X_train.columns, fontsize=14)
+      ax.set_yticklabels(X_train.columns, fontsize=24)
       #fig.suptitle("Linear Pearson's Correlation Coefficient", fontsize=16)
       #ax.set_title('Feature1 using Data2', fontsize=12)
       plt.tight_layout()

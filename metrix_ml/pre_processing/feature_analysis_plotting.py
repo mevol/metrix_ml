@@ -193,7 +193,11 @@ class FeatureAnalysisPlotting(object):
     
 #    self.X_data_transform = self.X_data_transform.fillna(0)
 
-    self.X_data_transform = self.data[["no_res", "no_frag", "longest_frag", "res_frag_ratio", "mapCC"]]
+#    self.X_data_transform = self.data[["no_res", "no_frag", "longest_frag", "res_frag_ratio", "mapCC"]]
+
+    self.X_data_transform = self.data[['feature01', 'feature02', 'feature03',
+                                       'feature04', 'feature05', 'feature06',
+                                       'feature07', 'feature08']]
 
     self.X_data_transform = self.X_data_transform.fillna(0)
     
@@ -220,7 +224,8 @@ class FeatureAnalysisPlotting(object):
     print('*    Splitting data into test and training set with test=20%')
     print('*' *80)
 
-    y = self.data['EP_success']
+    #y = self.data['EP_success']
+    y = self.data['MR_success']
     print(y.shape)
     print(y)
     
@@ -263,8 +268,8 @@ class FeatureAnalysisPlotting(object):
     datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
     for name in self.itter:
       print(name)
-      hist = plt.hist(self.X_data_transform_train[name], bins=365)#20
-      hist = plt.xlabel(name)
+      hist = plt.hist(self.X_data_transform_train[name], bins=50)#20, 365
+      #hist = plt.xlabel(name)
       hist = plt.ylabel('number of counts')
       plt.savefig(os.path.join(self.feature_analysis_plotting, 'histogram_feature_'+name+'_'+datestring+'.png'), dpi=600)
       plt.close()
@@ -323,7 +328,7 @@ class FeatureAnalysisPlotting(object):
       plt.axvline(median, label='Median', color='g', linestyle='--')
       plt.text(mean, 0.9, 'Mean: %.2f' %mean)
       plt.text(median, 0.8, 'Median: %.2f' %median)
-      plt.xlabel(name)
+      #plt.xlabel(name)
       plt.ylabel('(E)CDF')
       plt.margins(0.02)
       plt.legend(loc='best')
@@ -351,12 +356,16 @@ class FeatureAnalysisPlotting(object):
         text_file.write('Drawing ECDF for feature %s and its calculated theoretical curve\n' %name)
       mean = np.mean(self.X_data_transform[name])
       median = np.median(self.X_data_transform[name])      
+      print(mean)
+      print(median)
       sns.distplot(self.X_data_transform[name], hist = False, kde = True,
-                 kde_kws = {'linewidth': 3})  
+                 kde_kws = {'linewidth': 3}, axlabel=False)  
       plt.axvline(mean, label='Mean', color='r', linestyle='--')  
       plt.axvline(median, label='Median', color='g', linestyle='--')        
+      plt.text(mean, 0.03, 'Mean: %.2f' %mean)
+      plt.text(median, 0.035, 'Median: %.2f' %median)
       plt.legend(loc='best')
-      plt.xlabel(name)
+      #plt.xlabel(name)
       plt.ylabel('Density')
       plt.savefig(os.path.join(self.feature_analysis_plotting, 'Density_feature_'+name+'_'+datestring+'.png'), dpi=600)
       plt.close()

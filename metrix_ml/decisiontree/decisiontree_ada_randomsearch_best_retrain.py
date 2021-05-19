@@ -154,20 +154,35 @@ class RandomForestAdaRandSearch(object):
     print('*    Building new forest based on best parameter combination and save as pickle')
     print('*' *80)
     
+#    clf2 = DecisionTreeClassifier(criterion='entropy',
+#                                  max_depth=3,
+#                                  max_features=2,
+#                                  max_leaf_nodes=17,
+#                                  min_samples_leaf=8,
+#                                  min_samples_split=18,
+#                                  random_state= 0)
+#    self.tree_clf_rand_ada_new_transform = AdaBoostClassifier(
+#                                           clf2,
+#                                           learning_rate=0.6355,
+#                                           n_estimators=5694,
+#                                           algorithm ="SAMME.R",
+#                                           random_state=5)
+    
     clf2 = DecisionTreeClassifier(criterion='entropy',
-                                  max_depth=3,
+                                  max_depth=5,
                                   max_features=2,
-                                  max_leaf_nodes=17,
-                                  min_samples_leaf=8,
-                                  min_samples_split=18,
+                                  max_leaf_nodes=15,
+                                  min_samples_leaf=5,
+                                  min_samples_split=3,
                                   random_state= 0)
     self.tree_clf_rand_ada_new_transform = AdaBoostClassifier(
                                            clf2,
-                                           learning_rate=0.6355,
-                                           n_estimators=5694,
+                                           learning_rate=0.6846,
+                                           n_estimators=4693,
                                            algorithm ="SAMME.R",
                                            random_state=5)
-                                
+
+                            
     self.tree_clf_rand_ada_new_transform.fit(self.X_newdata_transform_train, self.y_train)
 
    # print(self.tree_clf_rand_ada_new_transform.estimators_)
