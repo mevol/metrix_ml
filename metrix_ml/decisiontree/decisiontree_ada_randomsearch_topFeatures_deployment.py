@@ -539,7 +539,7 @@ class RandomForestAdaRandSearch(object):
 
     def prediction_stats(y_test, y_pred, directory):
       # calculate accuracy
-      y_accuracy = metrics.accuracy_score(self.y_test, y_pred)
+      y_accuracy = accuracy_score(self.y_test, y_pred)
 
       # examine the class distribution of the testing set (using a Pandas Series method)
       class_dist = self.y_test.value_counts()
