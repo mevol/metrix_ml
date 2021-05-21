@@ -871,9 +871,6 @@ def run():
 
   output_dir = make_output_folder(args.outdir)
   
-  # Log output directory
-  logging.info(f"Running with parameters: {parameters_dict}")
-
   ###############################################################################
 
   random_forest_ada_rand_search = RandomForestAdaRandSearch(metrix, output_dir)
