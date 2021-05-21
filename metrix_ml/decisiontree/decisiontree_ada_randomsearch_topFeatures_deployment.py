@@ -56,7 +56,7 @@ def parse_command_line():
 
   parser.add_argument(
     "--input", 
-    type =s tr, 
+    type =str, 
     dest = "input",
     default = "",
     help = "The input CSV file")
