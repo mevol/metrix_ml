@@ -488,11 +488,11 @@ class RandomForestAdaRandSearch(object):
       train_roc_auc = round(cross_val_score(forest, data_train,
                                       labels_train, cv=3, scoring="roc_auc").mean(), 4)
       train_recall = round(cross_val_score(forest, data_train,
-                                     labels_train, cv=3, scoring="recall"), 4).mean()
+                                     labels_train, cv=3, scoring="recall").mean(), 4)
       train_precision = round(cross_val_score(forest, data_train,
-                                        labels_train, cv=3, scoring="precision"), 4).mean()
+                                        labels_train, cv=3, scoring="precision").mean(), 4)
       train_f1 = round(cross_val_score(forest, data_train,
-                                 labels_train, cv=3, scoring="f1"), 4).mean()
+                                 labels_train, cv=3, scoring="f1").mean(), 4)
 
       logging.info(
         f"Get various cross_val_scores to evaluate clf performance for best parameters\n"
