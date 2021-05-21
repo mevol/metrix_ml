@@ -539,7 +539,7 @@ class RandomForestAdaRandSearch(object):
 
     def prediction_stats(y_test, y_pred, directory):
       # calculate accuracy
-      y_accuracy = accuracy_score(self.y_test, y_pred)
+      y_accuracy = accuracy_score(y_test, y_pred)
 
       # examine the class distribution of the testing set (using a Pandas Series method)
       class_dist = self.y_test.value_counts()
@@ -555,14 +555,14 @@ class RandomForestAdaRandSearch(object):
       # calculate the percentage of ones
       # because y_test only contains ones and zeros,
       # we can simply calculate the mean = percentage of ones
-      ones = round(self.y_test.mean(), 4)
+      ones = round(y_test.mean(), 4)
 
       # calculate the percentage of zeros
-      zeros = round(1 - self.y_test.mean(), 4)
+      zeros = round(1 - y_test.mean(), 4)
 
       # calculate null accuracy in a single line of code
       # only for binary classification problems coded as 0/1
-      null_acc = max(self.y_test.mean(), 1 - self.y_test.mean())
+      null_acc = round(max(y_test.mean(), 1 - y_test.mean()), 4)
 
       logging.info(
           f"Accuracy score or agreement between y_test and y_pred: {y_accuracy}\n"
