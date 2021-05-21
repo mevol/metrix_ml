@@ -774,8 +774,8 @@ class RandomForestAdaRandSearch(object):
 
     def plot_precision_recall_vs_threshold(precisions, recalls, thresholds, directory):
       datestring = datetime.strftime(datetime.now(), "%Y%m%d_%H%M")
-      plt.plot(thresholds_forest, precisions[:-1], "b--", label = "Precision")
-      plt.plot(thresholds_forest, recalls[:-1], "g--", label = "Recall")
+      plt.plot(thresholds, precisions[:-1], "b--", label = "Precision")
+      plt.plot(thresholds, recalls[:-1], "g--", label = "Recall")
       plt.title("Precsion-Recall plot for classifier, test set, class 1")
       plt.xlabel("Threshold")
       plt.legend(loc = "upper left")
