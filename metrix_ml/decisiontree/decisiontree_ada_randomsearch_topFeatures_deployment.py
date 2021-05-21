@@ -555,10 +555,10 @@ class RandomForestAdaRandSearch(object):
       # calculate the percentage of ones
       # because y_test only contains ones and zeros,
       # we can simply calculate the mean = percentage of ones
-      ones = self.y_test.mean()
+      ones = round(self.y_test.mean(), 4)
 
       # calculate the percentage of zeros
-      zeros = 1 - self.y_test.mean()
+      zeros = round(1 - self.y_test.mean(), 4)
 
       # calculate null accuracy in a single line of code
       # only for binary classification problems coded as 0/1
