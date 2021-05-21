@@ -483,10 +483,10 @@ class RandomForestAdaRandSearch(object):
       accuracy_each_cv = cross_val_score(forest, data_train,
                                          labels_train, cv=3, scoring="accuracy")
       accuracy_mean_cv = round(cross_val_score(forest, data_train,
-                        labels_train, cv=3, scoring="accuracy").astype(float), 4).mean()
+                        labels_train, cv=3, scoring="accuracy").mean(), 4)
       ## calculate cross_val_scoring with different scoring functions for CV train set
       train_roc_auc = round(cross_val_score(forest, data_train,
-                                      labels_train, cv=3, scoring="roc_auc"), 4).mean()
+                                      labels_train, cv=3, scoring="roc_auc").mean(), 4)
       train_recall = round(cross_val_score(forest, data_train,
                                      labels_train, cv=3, scoring="recall"), 4).mean()
       train_precision = round(cross_val_score(forest, data_train,
