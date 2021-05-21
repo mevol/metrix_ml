@@ -357,6 +357,7 @@ class RandomForestAdaRandSearch(object):
       # plot scores
       plt.hist(stats)
       plt.savefig(os.path.join(self.output_dir, "bootstrap_hist_ada.png"), dpi=600)
+      plt.close()
       # confidence interval
       alpha = 0.95
       p = ((1.0 - alpha) / 2.0) * 100
@@ -417,7 +418,7 @@ class RandomForestAdaRandSearch(object):
       score = list(zip(*feature_list))[0]
       x_pos = np.arange(len(feature))
       plt.bar(x_pos, score,align="center")
-      plt.xticks(x_pos, feature, rotation = 90, fontsize = 2)
+      plt.xticks(x_pos, feature, rotation = 90, fontsize = 18)
       plt.title("Histogram of Feature Importances for best tree in best classifier")
       plt.xlabel("Features")
       plt.tight_layout()
@@ -440,7 +441,7 @@ class RandomForestAdaRandSearch(object):
       df_mean = df[X_train.columns].mean(axis = 0)
       df_std = df[X_train.columns].std(axis = 0)
       df_mean.plot(kind = "bar", color = "b", yerr = [df_std],
-                   align = "center", figsize = (20,10), rot = 90)
+                   align = "center", figsize = (20,10), rot = 90, fontsize = 18)
       plt.title(
             "Histogram of Feature Importances over all trees in best classifier with std")
       plt.xlabel('Features')
@@ -729,7 +730,7 @@ class RandomForestAdaRandSearch(object):
       # ------- PART 2: Add plots
       #values = df.loc[0].values.flatten().tolist()
       values = df.values.flatten().tolist()
-      #values += values[:1]
+      values += values[:1]
       ax.plot(angles, values, linewidth = 2, linestyle = "solid", label = "Test set")
       ax.fill(angles, values, "b", alpha = 0.1)
       plt.savefig(os.path.join(directory,
@@ -856,12 +857,12 @@ class RandomForestAdaRandSearch(object):
     evaluate_threshold(tpr_1, fpr_1, thresholds_1, 0.2)
 
     # Try to copy log file if it was created in training.log
-  try:
-    shutil.copy("training.log", self.output_dir)
-  except FileExistsError:
-    logging.warning("Could not find training.log to copy")
-  except Exception:
-    logging.warning("Could not copy training.log to output directory")
+    try:
+      shutil.copy("training.log", self.output_dir)
+    except FileExistsError:
+      logging.warning("Could not find training.log to copy")
+    except Exception:
+      logging.warning("Could not copy training.log to output directory")
 
 def run():
   args = parse_command_line()
