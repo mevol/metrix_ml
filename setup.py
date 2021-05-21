@@ -36,6 +36,7 @@ setup(
       'bin/decisiontree/decisiontree_ada_randomsearch_best_retrain',
       'bin/decisiontree/decisiontree_ada_randomsearch_MR',
       'bin/decisiontree/decisiontree_ada_randomsearch_topfeatures_MR',
+      'bin/decisiontree/decisiontree_ada_randomsearch_topFeatures_deployment',
       'bin/pre_processing/feature_correlations_newdata_minusEP',
       'bin/pre_processing/pca_newdata_minusEP',
       'bin/pre_processing/recursive_feature_elimination_SVM_newdata_minusEP',
