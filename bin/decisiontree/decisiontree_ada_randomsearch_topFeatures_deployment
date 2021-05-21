@@ -1,6 +1,6 @@
 #!/bin/env python3
 
-from metrix_ml.decisiontree import decisiontree_randomsearch_topFeatures_deployment
+from metrix_ml.decisiontree import decisiontree_ada_randomsearch_topFeatures_deployment
 
 if __name__=='__main__':
-  decisiontree_randomsearch_topFeatures_deployment.run()
+  decisiontree_ada_randomsearch_topFeatures_deployment.run()
