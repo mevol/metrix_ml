@@ -480,10 +480,10 @@ class RandomForestAdaRandSearch(object):
 
     def basic_stats(forest, data_train, labels_train, directory):
       #distribution --> accuracy
-      accuracy_each_cv = round(float(cross_val_score(forest, data_train,
-                                         labels_train, cv=3, scoring="accuracy")), 4)
-      accuracy_mean_cv = round(cross_val_score(forest, data_train,
-                                         labels_train, cv=3, scoring="accuracy"), 4).mean()
+      accuracy_each_cv = cross_val_score(forest, data_train,
+                                         labels_train, cv=3, scoring="accuracy")
+      accuracy_mean_cv = round(float(cross_val_score(forest, data_train,
+                                         labels_train, cv=3, scoring="accuracy")), 4).mean()
       ## calculate cross_val_scoring with different scoring functions for CV train set
       train_roc_auc = round(cross_val_score(forest, data_train,
                                       labels_train, cv=3, scoring="roc_auc"), 4).mean()
