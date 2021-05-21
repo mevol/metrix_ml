@@ -401,11 +401,13 @@ class RandomForestAdaRandSearch(object):
     feature_importances_tree_mean = np.mean(
              [tree.feature_importances_ for tree in self.tree_clf2_new_rand.estimators_],
              axis = 0)
-             
+
+    feature_importances_tree_mean_ls = sorted(zip(feature_importances_tree_mean, attr),
+                                              reverse = True)
     logging.info(
           f"Feature importances, for best tree in classifier: {feature_importances_ls}\n"
           f"Plotting bar plot of feature importances for best tree in classifier\n"
-          f"Feature importances, mean over all trees: {feature_importances_tree_mean}\n"
+          f"Feature importances, mean over all trees: {feature_importances_tree_mean_ls}\n"
           f"Plotting bar plot of feature importances with mean and std for classifier")
 
     def feature_importances_best_estimator(feature_list, directory):
