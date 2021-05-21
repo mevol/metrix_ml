@@ -256,7 +256,7 @@ class RandomForestAdaRandSearch(object):
                                      param_dict,
                                      random_state=5,
                                      cv=3,
-                                     n_iter=500,
+                                     n_iter=1,#500
                                      scoring="accuracy",
                                      n_jobs=-1)
 
@@ -337,7 +337,7 @@ class RandomForestAdaRandSearch(object):
 
     def bootstrap_calc(data_train, data_test, train_labels, test_labels, found_model):
       # configure bootstrap
-      n_iterations = 1000
+      n_iterations =  10#1000
       n_size = int(len(data_train))
 
       # run bootstrap
