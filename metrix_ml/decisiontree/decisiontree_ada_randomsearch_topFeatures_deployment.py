@@ -395,7 +395,7 @@ class RandomForestAdaRandSearch(object):
             "diffI"]
     
     feature_importances = self.tree_clf2_new_rand.feature_importances_
-    feature_importances_ls = sorted(zip(round(feature_importances, 4), attr),
+    feature_importances_ls = sorted(zip(feature_importances, attr),
                                               reverse = True)
     #print(feature_importances_transform_ls)
     feature_importances_tree_mean = np.mean(
