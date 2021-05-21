@@ -364,8 +364,8 @@ class RandomForestAdaRandSearch(object):
       p = (alpha + ((1.0 - alpha) / 2.0)) * 100
       upper = min(1.0, np.percentile(stats, p))
       
-      lower_boundary = lower * 100
-      upper_boundary = upper * 100
+      lower_boundary = round((lower * 100), 2)
+      upper_boundary = round((upper * 100), 2)
       
       logging.info(f"Calculating 95% confidence interval from bootstrap exercise\n"
                    f"Lower boundary: {lower_boundary}\n"
