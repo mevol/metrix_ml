@@ -242,7 +242,7 @@ class RandomForestAdaRandSearch(object):
                   "base_estimator__min_samples_split": randint(2, 20),
                   "base_estimator__max_depth": randint(1, 10),
                   "base_estimator__min_samples_leaf": randint(1, 20),
-                  "base_estimator__max_leaf_nodes": randint(10, 20)}
+                  "base_estimator__max_leaf_nodes": randint(10, 20)},
                   "n_estimators": randint(100, 10000),#number of base estimators to use
                   "learning_rate": uniform(0.0001, 1.0),
 
