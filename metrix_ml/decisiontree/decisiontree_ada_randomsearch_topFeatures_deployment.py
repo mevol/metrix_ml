@@ -422,7 +422,7 @@ class RandomForestAdaRandSearch(object):
       plt.xlabel("Features")
       plt.tight_layout()
       plt.savefig(os.path.join(directory,
-              "feature_importances_besttree_bestclassifier_bar_plot_'+datestring+'.png"),
+              "feature_importances_besttree_bestclassifier_bar_plot_"+datestring+".png"),
               dpi = 600)
       plt.close()
     
