@@ -691,7 +691,7 @@ class RandomForestAdaRandSearch(object):
                  "Precision (%)" : precision_man_test,
                  "F1 score (%)" : f1_score_sklearn_test}
     
-    df = pd.DataFrame(data = data_dict)
+    df = pd.DataFrame(data = data_dict, index = [0])
     
     def plot_radar_chart(df, directory):
       datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
