@@ -82,12 +82,12 @@ def parse_command_line():
 
 def load_metrix_data(csv_path):
   '''load the raw data as stored in CSV file'''
-    # Load training files
-    training_dir_path = Path(csv_path)
-    assert (
-        training_dir_path.exists()
-    ), f"Could not find directory at {training_dir_path}"
-    logging.info(f"Opened dataframe containing training data")
+  # Load training files
+  training_dir_path = Path(csv_path)
+  assert (
+  training_dir_path.exists()
+  ), f"Could not find directory at {training_dir_path}"
+  logging.info(f"Opened dataframe containing training data")
   return pd.read_csv(csv_path)
   
 def make_output_folder(outdir):
