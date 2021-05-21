@@ -613,7 +613,7 @@ class RandomForestAdaRandSearch(object):
     # IMPORTANT: first argument is true values, second argument is predicted values
     # this produces a 2x2 numpy array (matrix)
 
-    conf_mat_test = metrics.confusion_matrix(self.y_test, self.y_pred)
+    conf_mat_test = confusion_matrix(self.y_test, self.y_pred)
     def draw_conf_mat(matrix, directory):
       datestring = datetime.strftime(datetime.now(), "%Y%m%d_%H%M")
       labels = ["0", "1"]      
@@ -646,20 +646,20 @@ class RandomForestAdaRandSearch(object):
 
     #calculate accuracy
     acc_score_man_test = round((TP + TN) / float(TP + TN + FP + FN), 4)
-    acc_score_sklearn_test = round(metrics.accuracy_score(y_test, y_pred), 4)
+    acc_score_sklearn_test = round(accuracy_score(y_test, y_pred), 4)
     #classification error
     class_err_man_test = round((FP + FN) / float(TP + TN + FP + FN), 4)
-    class_err_sklearn_test = round(1 - metrics.accuracy_score(y_test, y_pred), 4)
+    class_err_sklearn_test = round(1 - accuracy_score(y_test, y_pred), 4)
     #sensitivity/recall/true positive rate; correctly placed positive cases
     sensitivity_man_test = round(TP / float(FN + TP), 4)
-    sensitivity_sklearn_test = round(metrics.recall_score(y_test, y_pred), 4)
+    sensitivity_sklearn_test = round(recall_score(y_test, y_pred), 4)
     #specificity
     specificity_man_test = round(TN / (TN + FP), 4)
     #false positive rate
     false_positive_rate_man_test = round(FP / float(TN + FP), 4)
     #precision/confidence of placement
     precision_man_test = round(TP / float(TP + FP), 4)
-    precision_sklearn_test = round(metrics.precision_score(y_test, y_pred), 4)
+    precision_sklearn_test = round(precision_score(y_test, y_pred), 4)
     #F1 score; uses precision and recall
     f1_score_sklearn_test = round(f1_score(y_test, y_pred), 4)
 
