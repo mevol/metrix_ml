@@ -57,7 +57,7 @@ def parse_command_line():
 
   parser.add_argument(
     "--input", 
-    type =str, 
+    type = str, 
     dest = "input",
     default = "",
     help = "The input CSV file")
@@ -254,11 +254,11 @@ class RandomForestAdaRandSearch(object):
     #building and running the randomized search
     rand_search = RandomizedSearchCV(tree_clf_ada,
                                      param_dict,
-                                     random_state=5,
-                                     cv=3,
-                                     n_iter=1,#500
-                                     scoring="accuracy",
-                                     n_jobs=-1)
+                                     random_state = 5,
+                                     cv = 3,
+                                     n_iter = 500,
+                                     scoring = "accuracy",
+                                     n_jobs = -1)
 
     rand_search_fitted = rand_search.fit(self.X_train, self.y_train)
     
@@ -337,7 +337,7 @@ class RandomForestAdaRandSearch(object):
 
     def bootstrap_calc(data_train, data_test, train_labels, test_labels, found_model):
       # configure bootstrap
-      n_iterations =  10#1000
+      n_iterations =  1000
       n_size = int(len(data_train))
 
       # run bootstrap
