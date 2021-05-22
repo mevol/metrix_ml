@@ -730,7 +730,8 @@ class RandomForestAdaRandSearch(object):
       # ------- PART 2: Add plots
       #values = df.loc[0].values.flatten().tolist()
       values = df.values.flatten().tolist()
-      values += values[:1]
+      print(values)
+      #values += values[:1]
       ax.plot(angles, values, linewidth = 2, linestyle = "solid", label = "Test set")
       ax.fill(angles, values, "b", alpha = 0.1)
       plt.savefig(os.path.join(directory,
