@@ -701,6 +701,7 @@ class RandomForestAdaRandSearch(object):
 
       # number of variable
       categories=list(df)[1:]
+      print(categories)
       N = len(categories)
 
       # What will be the angle of each axis in the plot? (we divide the plot / number of variable)
