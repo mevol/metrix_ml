@@ -547,6 +547,8 @@ class RandomForestAdaRandSearch(object):
     # this produces a 2x2 numpy array (matrix)
 
     conf_mat_test = confusion_matrix(self.y_test, self.y_pred)
+    
+    logging.info(f"confusion matrix using test set: {conf_mat_test}")
     def draw_conf_mat(matrix, directory):
       datestring = datetime.strftime(datetime.now(), "%Y%m%d_%H%M")
       labels = ["0", "1"]      
