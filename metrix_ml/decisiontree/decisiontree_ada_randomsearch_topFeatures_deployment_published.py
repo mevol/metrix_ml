@@ -117,7 +117,6 @@ class RandomForestAdaRandSearch(object):
     self.output_dir = output_dir
     self.prepare_metrix_data()
     self.split_data()
-    self.rand_search()
     self.forest_best_params()
     self.predict()
     self.analysis()
