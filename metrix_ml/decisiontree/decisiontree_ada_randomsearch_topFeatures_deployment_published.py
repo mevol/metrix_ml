@@ -247,10 +247,14 @@ class RandomForestAdaRandSearch(object):
                                                  algorithm ="SAMME.R",
                                                  random_state=5)
 
+    classifier_params = self.tree_clf2_new_rand.get_params()
+    print(classifier_params)
+
     self.tree_clf2_new_rand.fit(self.X_train, self.y_train)
 
     logging.info(
-           f"Created classifier based on IUCrJ publication and fitted training data.")
+           f"Created classifier based on IUCrJ publication and fitted training data.\n
+           f"Classifier parameters: {classifier_params}")
 
 ###############################################################################
 #
