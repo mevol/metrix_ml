@@ -53,7 +53,8 @@ logging.basicConfig(level=logging.INFO, filename = "training.log", filemode = "w
 
 def parse_command_line():
   '''defining the command line input to make it runable'''
-  parser = argparse.ArgumentParser(description = "AdaBoost and DecisionTree randomized search")
+  parser = argparse.ArgumentParser(
+                      description = "AdaBoost and DecisionTree published hyperparameters")
 
   parser.add_argument(
     "--input", 
@@ -92,7 +93,7 @@ def load_metrix_data(csv_path):
   return pd.read_csv(csv_path)
   
 def make_output_folder(outdir):
-  output_dir = os.path.join(outdir, "decisiontree_ada_randomsearch")
+  output_dir = os.path.join(outdir, "decisiontree_ada_published")
   os.makedirs(output_dir, exist_ok=True)
   return output_dir
 
