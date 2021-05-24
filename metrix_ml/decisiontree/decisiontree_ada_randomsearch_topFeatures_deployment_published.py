@@ -618,7 +618,8 @@ class RandomForestAdaRandSearch(object):
                  f"F1 score:\n"
                  f"F1 score sklearn test: {f1_score_sklearn_test}")
     
-    data_dict = {"ACC (%)" : acc_score_man_test,
+    data_dict = {"group" : "prediction",
+                 "ACC (%)" : acc_score_man_test,
                  "Class Error (%)" : class_err_man_test,
                  "Sensitivity (%)" : sensitivity_man_test,
                  "Specificity (%)" : specificity_man_test,
@@ -634,7 +635,7 @@ class RandomForestAdaRandSearch(object):
       # ------- PART 1: Create background
 
       # number of variable
-      categories = list(df)
+      categories = list(df)[1:]
       print(categories)
       N = len(categories)
 
@@ -664,9 +665,9 @@ class RandomForestAdaRandSearch(object):
 
       # ------- PART 2: Add plots
       #values = df.loc[0].values.flatten().tolist()
-      values = df.values.flatten().tolist()
+      values = df.loc[0].drop('group').values.flatten().tolist()
       print(values)
-      #values += values[:1]
+      values += values[:1]
       ax.plot(angles, values, linewidth = 2, linestyle = "solid", label = "Test set")
       ax.fill(angles, values, "b", alpha = 0.1)
       plt.savefig(os.path.join(directory,
