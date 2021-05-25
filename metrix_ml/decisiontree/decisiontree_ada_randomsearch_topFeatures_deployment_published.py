@@ -253,7 +253,7 @@ class RandomForestAdaRandSearch(object):
     self.tree_clf2_new_rand.fit(self.X_train, self.y_train)
 
     logging.info(
-           f"Created classifier based on IUCrJ publication and fitted training data.\n
+           f"Created classifier based on IUCrJ publication and fitted training data.\n"
            f"Classifier parameters: {classifier_params}")
 
 ###############################################################################
