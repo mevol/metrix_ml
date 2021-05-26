@@ -578,6 +578,9 @@ class RandomForestAdaRandSearch(object):
     TN = conf_mat_test[0, 0]
     FP = conf_mat_test[0, 1]
     FN = conf_mat_test[1, 0]
+    
+    logging.info(f"False-positives in predicting the test set: {FP}")
+    logging.info(f"False-negatives in predicting the test set: {FN}")
 
     #calculate accuracy
     acc_score_man_test = round((TP + TN) / float(TP + TN + FP + FN), 4)
@@ -619,13 +622,13 @@ class RandomForestAdaRandSearch(object):
                  f"F1 score sklearn test: {f1_score_sklearn_test}")
     
     data_dict = {"group" : "prediction",
-                 "ACC (%)" : acc_score_man_test,
-                 "Class Error (%)" : class_err_man_test,
-                 "Sensitivity (%)" : sensitivity_man_test,
-                 "Specificity (%)" : specificity_man_test,
-                 "FPR (%)" : false_positive_rate_man_test,
-                 "Precision (%)" : precision_man_test,
-                 "F1 score (%)" : f1_score_sklearn_test}
+                 "ACC (%)" : (acc_score_man_test * 100),
+                 "Class Error (%)" : (class_err_man_test * 100),
+                 "Sensitivity (%)" : (sensitivity_man_test * 100),
+                 "Specificity (%)" : (specificity_man_test * 100),
+                 "FPR (%)" : (false_positive_rate_man_test * 100),
+                 "Precision (%)" : (precision_man_test * 100),
+                 "F1 score (%)" : (f1_score_sklearn_test * 100)}
     
     df = pd.DataFrame(data = data_dict, index = [0])
     
