@@ -685,12 +685,12 @@ class RandomForestAdaRandSearch(object):
                  f"F1 score sklearn test: {f1_score_sklearn_test}")
     
     data_dict = {"ACC (%)" : acc_score_man_test,
-                 "Class Error (%)" : class_err_man_test,
-                 "Sensitivity (%)" : sensitivity_man_test,
-                 "Specificity (%)" : specificity_man_test,
-                 "FPR (%)" : false_positive_rate_man_test,
-                 "Precision (%)" : precision_man_test,
-                 "F1 score (%)" : f1_score_sklearn_test}
+                 "Class Error (%)" : (class_err_man_test * 100),
+                 "Sensitivity (%)" : (sensitivity_man_test * 100),
+                 "Specificity (%)" : (specificity_man_test * 100),
+                 "FPR (%)" : (false_positive_rate_man_test * 100),
+                 "Precision (%)" : (precision_man_test * 100),
+                 "F1 score (%)" : (f1_score_sklearn_test * 100)}
     
     df = pd.DataFrame(data = data_dict, index = [0])
     
