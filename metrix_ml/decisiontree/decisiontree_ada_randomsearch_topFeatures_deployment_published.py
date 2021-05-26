@@ -792,7 +792,7 @@ class RandomForestAdaRandSearch(object):
                    self.output_dir)
 
     #plot ROC curves using scikit_plot method
-    def plot_roc_curve(y_test, y_proba, directory):
+    def plot_roc_curve_skplot(y_test, y_proba, directory):
       datestring = datetime.strftime(datetime.now(), "%Y%m%d_%H%M")
       skplt.metrics.plot_roc(y_test, y_proba, title = "ROC curve")
       plt.tight_layout()
@@ -800,7 +800,7 @@ class RandomForestAdaRandSearch(object):
                   dpi = 600)
       plt.close()
 
-      plot_roc_curve(self.y_test,
+    plot_roc_curve_skplot(self.y_test,
                      self.y_pred_proba,
                      self.output_dir)
 
