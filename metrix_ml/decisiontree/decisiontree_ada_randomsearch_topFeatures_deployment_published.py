@@ -226,6 +226,8 @@ class RandomForestAdaRandSearch(object):
     print("*    Building new forest based on best parameter combination and save as pickle")
     print("*" * 80)
 
+# a blank decision tree with Ada Boost that can be used for hyperparameter search when
+# when starting from scratch
 #    clf2 = DecisionTreeClassifier(**self.best_params_base_estimator,
 #                                  random_state= 0)
 #    self.tree_clf2_new_rand = AdaBoostClassifier(clf2,
@@ -233,6 +235,9 @@ class RandomForestAdaRandSearch(object):
 #                                                 algorithm ="SAMME.R",
 #                                                 random_state=100)
 
+# hyperparameters as were used for the classifier published in IUCrJ; this was first run
+# in deployment with really bad performance;
+# the saved model is named: 2019 calibrated_classifier_20190501_1115.pkl
     clf2 = DecisionTreeClassifier(criterion="entropy",
                                   max_depth=3,
                                   max_features=2,
@@ -246,6 +251,24 @@ class RandomForestAdaRandSearch(object):
                                                  n_estimators=5694,
                                                  algorithm ="SAMME.R",
                                                  random_state=5)
+
+# hyperparameters for a new classifier; this one was found after adding some user data
+# from run1 2020 to the training data; this one is now running in the automated data
+# analysis pipelines; the saved model is named: calibrated_classifier_20200408_1552.pkl
+#    clf2 = DecisionTreeClassifier(criterion="entropy",
+#                                  max_depth=5,
+#                                  max_features=2,
+#                                  max_leaf_nodes=15,
+#                                  min_samples_leaf=5,
+#                                  min_samples_split=3,
+#                                  random_state= 0,
+#                                  class_weight = "balanced")
+#    self.tree_clf2_new_rand = AdaBoostClassifier(
+#                                           clf2,
+#                                           learning_rate=0.6846,
+#                                           n_estimators=4693,
+#                                           algorithm ="SAMME.R",
+#                                           random_state=5)
 
     classifier_params = self.tree_clf2_new_rand.get_params()
     print(classifier_params)
