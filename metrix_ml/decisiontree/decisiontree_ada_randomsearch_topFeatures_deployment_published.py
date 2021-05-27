@@ -485,6 +485,16 @@ class RandomForestAdaRandSearch(object):
     self.y_pred_proba = self.tree_clf2_new_rand.predict_proba(self.X_test)
     self.y_pred_proba_ones = self.y_pred_proba[:, 1]#test data to be class 1
     self.y_pred_proba_zeros = self.y_pred_proba[:, 0]#test data to be class 0
+    
+    y_pred_csv = os.path.join(self.output_dir, "y_pred.csv")
+    y_pred_proba_csv = os.path.join(self.output_dir, "y_pred_proba.csv")
+    
+    np.savetext(y_pred_csv, self.y_pred, delimiter = ",")
+    np.savetext(y_pred_proba_csv, self.y_pred_proba, delimiter = ",")
+
+#    with open(y_pred_csv, "w", newline="") as pred_csv:
+#      pred_out = csv.writer(pred_csv)
+#      pred_out.writerows(self.y_pred)
 
     logging.info(f"Storing predictions for test set to y_pred.\n"
                  f"Storing probabilities for predictions for the test set to y_pred_proba")
