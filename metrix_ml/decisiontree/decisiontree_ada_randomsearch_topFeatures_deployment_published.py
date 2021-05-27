@@ -493,8 +493,8 @@ class RandomForestAdaRandSearch(object):
     y_pred_csv = os.path.join(self.output_dir, "y_pred.csv")
     y_pred_proba_csv = os.path.join(self.output_dir, "y_pred_proba.csv")
     
-    np.savetext(y_pred_csv, self.y_pred, delimiter = ",")
-    np.savetext(y_pred_proba_csv, self.y_pred_proba, delimiter = ",")
+    np.savetxt(y_pred_csv, self.y_pred, delimiter = ",")
+    np.savetxt(y_pred_proba_csv, self.y_pred_proba, delimiter = ",")
 
 #    with open(y_pred_csv, "w", newline="") as pred_csv:
 #      pred_out = csv.writer(pred_csv)
