@@ -131,17 +131,19 @@ class RandomForestAdaRandSearch(object):
     print("*    Preparing input dataframe")
     print("*" * 80)
 
-    autobuild_columns = ["anomalousCC",
+    columns = ["anomalousCC",
                          "anomalousslope",
                          "lowreslimit",
                          "f",
                          "diffF",
                          "diffI",
-                         "autobuild_success"]
+                         #"autobuild_success"]
+                         "crank2_success"]
+                         #"autosharp_success"]
 
-    self.data = self.metrix[autobuild_columns]
+    self.data = self.metrix[columns]
 
-    logging.info(f"Using dataframe with column labels {autobuild_columns}")
+    logging.info(f"Using dataframe with column labels {columns}")
 
 ###############################################################################
 #
@@ -161,7 +163,9 @@ class RandomForestAdaRandSearch(object):
     print("*    Splitting data into test and training set with test=20%")
     print("*" * 80)
 
-    y = self.metrix["autobuild_success"]
+    #y = self.metrix["autobuild_success"]
+    y = self.metrix["crank2_success"]
+    #y = self.metrix["autosharp_success"]
     X = self.data[["anomalousCC",
                    "anomalousslope",
                    "lowreslimit",
