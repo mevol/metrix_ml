@@ -183,6 +183,9 @@ class RandomForestAdaRandSearch(object):
     y_test_csv = os.path.join(self.output_dir, "y_test.csv")
     np.savetxt(y_test_csv, self.y_test, delimiter = ",")
 
+    X_test_csv = os.path.join(self.output_dir, "X_test.csv")
+    np.savetxt(X_test_csv, self.X_test, delimiter = ",")
+
     X_train_shape = X_train.shape
     X_test_shape = X_test.shape
     y_train_shape = y_train.shape
