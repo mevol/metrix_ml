@@ -16,6 +16,7 @@ from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.calibration import CalibratedClassifierCV
 from datetime import datetime
 from sklearn.utils import resample
+from math import pi
 
 
 def get_confidence_interval(X_train, y_train, X_test, y_test, clf,
@@ -239,16 +240,12 @@ def plot_roc_curve(y_test, y_pred_proba_ones, directory):
 # evaluate probability thresholds for sensitivity-specificity trade-off
 def evaluate_threshold(tpr, fpr, thresholds):
     explore = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    
     threshold_dict = {}
-    
     for i in explore:
         sensitivity = round((tpr[thresholds > i][-1]) * 100, 2)
         specificity = round((1 - fpr[thresholds > i][-1]) * 100, 2)
         threshold_dict.update({str(i) : {'sensitivity' : sensitivity,
                                         'specificity' : specificity}})
-
-#    threshold_dict = {str(i) : {'sensitivity' : sensitivity, 'specificity' : specificity}}
     return threshold_dict
 
 
@@ -260,5 +257,27 @@ def calibrate_classifier(clf, X_cal, y_cal):
     return calibrated_clf, clf_acc
 
 
+# radar plot for performance metrics
+def plot_radar_chart(dict, directory):
+    date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+    df = pd.DataFrame.from_dict(dict, orient='index')
+
+    # number of variable
+    categories = list(df.index)
+    categories = [*categories, categories[0]]
+
+    values = df.T.loc[0].values.flatten().tolist()
+    values = [*values, values[0]]
+    label_loc = np.linspace(start=0, stop=2 * np.pi, num=10)#len(values)
+    fig = plt.figure(figsize=(12, 12))
+    ax = fig.add_subplot(111, polar=True)
+    ax.plot(label_loc, values, label='Restaurant 1')
+    ax.fill(label_loc, values, "b", alpha = 0.1)
+    ax.set_thetagrids(np.degrees(label_loc), labels=categories)
+    ax.set_yticks([20, 40, 60, 80, 100])
+    ax.set_yticklabels(["20", "40", "60", "80", "100%"], fontsize = 20)
+    ax.set_xticklabels(categories, fontsize = 20, wrap = True)
+    plt.savefig(os.path.join(directory, "radar_plot_prediction_metrics"+date+".png"))
+    plt.close()
 
 

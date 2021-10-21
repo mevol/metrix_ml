@@ -23,7 +23,7 @@ from tbx import get_confidence_interval, feature_importances_best_estimator
 from tbx import feature_importances_error_bars, confusion_matrix_and_stats
 from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
 from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
-from tbx import calibrate_classifier
+from tbx import calibrate_classifier, plot_radar_chart
 
 def make_output_folder(outdir):
     '''A small function for making an output directory
@@ -317,6 +317,22 @@ class TreeAdaBoostRandSearch():
 
         logging.info(
           f'Calculating AUC for ROC curve for class 1 in test set probabilities: {AUC} \n')
+
+        print('*' *80)
+        print('*    Make a radar plot for performance metrics')
+        print('*' *80)
+        
+        radar_dict = {'Classification accuracy' : matrix_stats["acc"],
+                      'Classification error' : matrix_stats["err"],
+                      'Sensitivity' : matrix_stats["sensitivity"],
+                      'Specificity' : matrix_stats["specificity"],
+                      'False positive rate' : matrix_stats["FP-rate"],
+                      'False negative rate' : matrix_stats["FN-rate"],
+                      'Precision' : matrix_stats["precision"],
+                      'F1-score' : matrix_stats["F1-score"],
+                      'ROC AUC' : AUC}
+
+        plot_radar_chart(radar_dict, self.directory)
 
         print('*' *80)
         print('*    Exploring probability thresholds, sensitivity, specificity for class 1 ')
