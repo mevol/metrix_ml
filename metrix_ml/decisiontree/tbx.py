@@ -1,20 +1,25 @@
+import matplotlib
+matplotlib.use("Agg")
+
 import os
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
 from sklearn.utils import resample
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, matthews_corrcoef
 from sklearn.metrics import precision_recall_curve, roc_curve
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.model_selection import cross_val_score, cross_val_predict
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import seaborn as sns
+from sklearn.calibration import CalibratedClassifierCV
 from datetime import datetime
+from sklearn.utils import resample
 
 
 def get_confidence_interval(X_train, y_train, X_test, y_test, clf,
-                            directory, n_iterations):
+                            directory, n_iterations, kind):
     date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
     # configure bootstrap
     n_size = int(len(X_train))
@@ -35,7 +40,7 @@ def get_confidence_interval(X_train, y_train, X_test, y_test, clf,
 
     #plot scores
     plt.hist(stats)
-    plt.savefig(os.path.join(directory, 'bootstrap_hist'+date+'.png'))
+    plt.savefig(os.path.join(directory, 'bootstrap_hist_'+kind+date+'.png'))
     plt.close()
     # confidence interval
     alpha = 0.95
@@ -83,27 +88,27 @@ def feature_importances_error_bars(clf, features, directory):
                              'feature_importances_all_error_bars_'+date+'.png'))
     plt.close()
 
-def training_cv_stats(clf, X_train, y_train):
+def training_cv_stats(clf, X_train, y_train, cv):
     # accuracy for the training set
     # for each CV fold
     accuracy_each_cv = cross_val_score(clf,X_train, y_train,
-                                       cv=2, scoring='accuracy')
+                                       cv=cv, scoring='accuracy')
     # mean across all CV folds
     accuracy_mean_cv = round((cross_val_score(clf, X_train, y_train,
-                                              cv=2, scoring='accuracy').mean()) * 100 , 2)
+                                              cv=cv, scoring='accuracy').mean()) * 100 , 2)
     # calculate cross_val_scoring with different scoring functions for CV train set
     train_roc_auc = round((cross_val_score(clf, X_train, y_train,
-                                           cv=2, scoring='roc_auc').mean()) * 100, 2)
+                                           cv=cv, scoring='roc_auc').mean()) * 100, 2)
     train_recall = round((cross_val_score(clf, X_train, y_train,
-                                          cv=2, scoring='recall').mean()) * 100, 2)
+                                          cv=cv, scoring='recall').mean()) * 100, 2)
     train_precision = round((cross_val_score(clf, X_train, y_train,
-                                             cv=2, scoring='precision').mean()) * 100, 2)
+                                             cv=cv, scoring='precision').mean()) * 100, 2)
     train_f1 = round((cross_val_score(clf, X_train, y_train,
-                                      cv=2, scoring='f1').mean()) * 100, 2)
+                                      cv=cv, scoring='f1').mean()) * 100, 2)
     # predict class and probabilities on training data with cross-validation
-    y_train_CV_pred = cross_val_predict(clf, X_train, y_train, cv=2)
+    y_train_CV_pred = cross_val_predict(clf, X_train, y_train, cv=cv)
     y_train_CV_pred_proba = cross_val_predict(clf, X_train, y_train,
-                                              cv=2, method='predict_proba')
+                                              cv=cv, method='predict_proba')
 
     stats_dict = {'acc_cv' : accuracy_each_cv,
                   'acc' : accuracy_mean_cv,
@@ -228,10 +233,31 @@ def plot_roc_curve(y_test, y_pred_proba_ones, directory):
     plt.grid(True)
     plt.savefig(os.path.join(directory, 'ROC_curve_'+date+'.png'))
     plt.close()
-        
- 
-      
+    return fpr, tpr, thresholds
 
+
+# evaluate probability thresholds for sensitivity-specificity trade-off
+def evaluate_threshold(tpr, fpr, thresholds):
+    explore = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    
+    threshold_dict = {}
+    
+    for i in explore:
+        sensitivity = round((tpr[thresholds > i][-1]) * 100, 2)
+        specificity = round((1 - fpr[thresholds > i][-1]) * 100, 2)
+        threshold_dict.update({str(i) : {'sensitivity' : sensitivity,
+                                        'specificity' : specificity}})
+
+#    threshold_dict = {str(i) : {'sensitivity' : sensitivity, 'specificity' : specificity}}
+    return threshold_dict
+
+
+# calibrate classifier
+def calibrate_classifier(clf, X_cal, y_cal):
+    clf_cccv = CalibratedClassifierCV(clf, cv='prefit')
+    calibrated_clf = clf_cccv.fit(X_cal, y_cal)
+    clf_acc = clf_cccv.score(X_cal, y_cal)
+    return calibrated_clf, clf_acc
 
 
 

@@ -7,65 +7,84 @@
 import argparse
 import pandas as pd
 import os
-
-import matplotlib
-matplotlib.use("Agg")
-
-import matplotlib.pyplot as plt
 import numpy as np
-import subprocess
-import seaborn as sns
-#import scikitplot as skplt
-import imblearn
 import joblib
 import logging
-from imblearn.over_sampling import RandomOverSampler
-from imblearn.under_sampling import RandomUnderSampler
-from imblearn.over_sampling import SMOTE
-#from sklearn import metrics
+
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import accuracy_score, roc_auc_score
-from sklearn.metrics import matthews_corrcoef
-from sklearn.utils import resample
-from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import cross_val_predict
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
-from sklearn.metrics import precision_recall_curve, roc_curve
 from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
 from sklearn.ensemble import AdaBoostClassifier
-from tbx import get_confidence_interval
-from tbx import feature_importances_best_estimator
-from tbx import feature_importances_error_bars
-from tbx import confusion_matrix_and_stats
-from tbx import training_cv_stats
-from tbx import testing_predict_stats
-from tbx import plot_hist_pred_proba
-from tbx import plot_precision_recall_vs_threshold
-from tbx import plot_roc_curve
+from tbx import get_confidence_interval, feature_importances_best_estimator
+from tbx import feature_importances_error_bars, confusion_matrix_and_stats
+from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
+from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
+from tbx import calibrate_classifier
 
 def make_output_folder(outdir):
-  output_dir = os.path.join(outdir, 'decisiontree_ada_randomsearch')
-  os.makedirs(output_dir, exist_ok=True)
-  return output_dir
+    '''A small function for making an output directory
+    Args:
+        outdir (str): user provided directory where the output directory will be created
+        output_dir (str): the newly created output directory named
+                         "decisiontree_ada_randomsearch"
+    Yields:
+        directory
+    '''
+    output_dir = os.path.join(outdir, 'decisiontree_ada_randomsearch')
+    os.makedirs(output_dir, exist_ok=True)
+    return output_dir
 
 class TreeAdaBoostRandSearch():
-    '''This class is the doing the actual work in the following steps:
-       * define smaller data frames: database, man_add, transform
-       * split the data into training and test set
-       * setup and run a randomized search for best paramaters to define a random forest
-       * create a new random forest with best parameters
-       * predict on this new random forest with test data and cross-validated training data
-       * analyse the predisctions with graphs and stats
+    ''' A class to conduct a randomised search and training for best parameters for a
+        decision tree with AdaBoost; the following steps are executed:
+        * loading input data in CSV format
+        * creating output directory to write results files to
+        * set up a log file to keep note of stats and processes
+        * prepare the input data by splitting into a calibration (5%), testing (20%) and
+          training (80%) sets
+        * conduct randomised search to find best parameters for the best predictor
+        * save model to disk
+        * get 95% confidence interval
+        * get feature importances
+        * get statistics for training using 3-fold cross-validation and testing
+        * get more detailed statistics and plots for prediction performances on the testing
+          set; this includes a confusion matrix, histogram of prediction probabilities,
+          precision-recall curve and ROC curve
+        * explore sensitivity/specificity trade-off when using different probability
+          thresholds
+        * calibrate the predictor and write the calibrated version to disk
+
+        Args:
+
+           data (str): file path to the input CSV file
+           directory (str): target output directory where an output folder will be created
+                            and all results will be written to
+           numf (int): maximum number of features to use in training; default = 10
+           numc (int): number of search cycles for randomised search; default = 500
+           cv (int): number of cross-validation cycles to use during training; default = 3
+           bootiter (int): number of bootstrap cylces to use for getting confidence intervals
+
+        Yields:
+        trained predictor: "best_predictor_<date>.pkl"
+        trained and calibrated predictor: "best_predictor_calibrated_<date>.pkl"
+        logfile: "decisiontree_ada_randomsearch.log"
+        plots: "bootstrap_hist_uncalibrated_<date>.png"
+               "feature_importances_best_bar_plot_rand_ada_<date>.png"
+               "feature_importances_all_error_bars_<date>.png"
+               "confusion_matrix_for_test_set_<date>.png"
+               "hist_pred_proba_<date>.png"
+               "Precision_Recall_<date>.png"
+               "ROC_curve_<date>.png"
+               "bootstrap_hist_calibrated_<date>.png"
     '''
-    def __init__(self, data, directory, numf, numc, bootiter):
+    def __init__(self, data, directory, numf, numc, cv, bootiter):
         self.numf = numf
         self.numc = numc
+        self.cv = cv
         self.bootiter = bootiter
         self.data = pd.read_csv(data)
         self.directory = make_output_folder(directory)
@@ -74,6 +93,8 @@ class TreeAdaBoostRandSearch():
                     'decisiontree_ada_randomsearch.log'), filemode='w')
         logging.info(f'Loaded input data')
         logging.info(f'Created output directories at {self.directory}')
+
+        self.start = datetime.now()
 
         self.prepare_data()
         self.randomised_search()
@@ -135,7 +156,7 @@ class TreeAdaBoostRandSearch():
 
         #building and running the randomized search
         rand_search = RandomizedSearchCV(ada, param_dict, random_state=5,
-                                         cv=3, n_iter=self.numc,
+                                         cv=self.cv, n_iter=self.numc,
                                          scoring='accuracy', n_jobs=-1)
 
         rand_search_fitted = rand_search.fit(self.X_train,
@@ -153,7 +174,7 @@ class TreeAdaBoostRandSearch():
 
         datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
         joblib.dump(self.model, os.path.join(self.directory,
-                    'best_forest_rand_ada_'+datestring+'.pkl'))
+                    'best_predictor_'+datestring+'.pkl'))
 
         logging.info(f'Writing best classifier to disk in {self.directory} \n')
 
@@ -164,7 +185,7 @@ class TreeAdaBoostRandSearch():
         alpha, upper, lower = get_confidence_interval(self.X_train, self.y_train,
                                                       self.X_test, self.y_test,
                                                       self.model, self.directory,
-                                                      self.bootiter)
+                                                      self.bootiter, 'uncalibrated')
 
         logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n')
                                                       
@@ -201,10 +222,9 @@ class TreeAdaBoostRandSearch():
         print('*' *80)
 
         training_stats, y_train_pred, y_train_pred_proba = training_cv_stats(
-                                                self.model, self.X_train, self.y_train)
-        print(training_stats)
+                                                self.model, self.X_train,
+                                                self.y_train, self.cv)
 
-        print(training_stats['acc'])
         logging.info(f'Basic stats achieved for training set and 3-fold CV \n'
             f'Accuracy for each individual fold of 3 CV folds: {training_stats["acc_cv"]} \n'
             f'Accuracy across all 3 CV-folds: {training_stats["acc"]} \n'
@@ -289,18 +309,62 @@ class TreeAdaBoostRandSearch():
 
         logging.info(
           f'Plotting ROC curve for class 1 in test set probabilities. \n')
-        
-        plot_roc_curve(self.y_test, self.y_pred_proba_ones, self.directory)
+
+        self.fpr, self.tpr, self.thresholds = plot_roc_curve(self.y_test,
+                                                   self.y_pred_proba_ones, self.directory)
 
         AUC = round(roc_auc_score(self.y_test, self.y_pred_proba_ones) * 100, 2)
 
         logging.info(
           f'Calculating AUC for ROC curve for class 1 in test set probabilities: {AUC} \n')
 
+        print('*' *80)
+        print('*    Exploring probability thresholds, sensitivity, specificity for class 1 ')
+        print('*' *80)
 
-def run(input_csv, output_dir, features, cycles, boot_iter):
+        threshold_dict = evaluate_threshold(self.tpr, self.fpr, self.thresholds)
 
-    TreeAdaBoostRandSearch(input_csv, output_dir, features, cycles, boot_iter)
+        logging.info(
+          f'Exploring different probability thresholds and sensitivity-specificity trade-offs. \n'
+          f'Threshold 0.2: {threshold_dict["0.2"]} \n'
+          f'Threshold 0.3: {threshold_dict["0.3"]} \n'
+          f'Threshold 0.4: {threshold_dict["0.4"]} \n'
+          f'Threshold 0.5: {threshold_dict["0.5"]} \n'
+          f'Threshold 0.6: {threshold_dict["0.6"]} \n'
+          f'Threshold 0.7: {threshold_dict["0.7"]} \n'
+          f'Threshold 0.8: {threshold_dict["0.8"]} \n'
+          f'Threshold 0.9: {threshold_dict["0.9"]} \n')
+
+        print('*' *80)
+        print('*    Calibrating classifier and writing to disk; getting new accuracy')
+        print('*' *80)
+
+        self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal,
+                                                            self.y_cal)
+        
+        date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+        joblib.dump(self.calibrated_clf, os.path.join(self.directory,
+                    'best_calibrated_predictor_'+date+'.pkl'))
+
+        logging.info(
+          f'Calibrated the best classifier with X_cal and y_cal and new accuracy {clf_acc}\n'
+          f'Writing file to disk disk in {self.directory} \n')
+          
+        end = datetime.now()
+        duration = end - self.start
+
+        logging.info(f'Training lasted for {duration} minutes \n')
+
+        logging.info(f'Training completed \n')
+
+        print('*' *80)
+        print('*    Training completed')
+        print('*' *80)
+
+
+def run(input_csv, output_dir, features, cycles, boot_iter, cv):
+
+    TreeAdaBoostRandSearch(input_csv, output_dir, features, cycles, boot_iter, cv)
 
 
 
@@ -337,12 +401,18 @@ def main():
         help='Number of randomized search cycles')
       
     parser.add_argument(
+        '--cv',
+        type=int,
+        dest='cv',
+        default=3,
+        help='Number of cross-validation repeats to use during training')
+
+    parser.add_argument(
         '--boot_iter',
         type=int,
         dest='boot_iter',
         default=1000,
         help='Number of bootstrap cycles')
-
 
     args = parser.parse_args()
     
@@ -354,6 +424,7 @@ def main():
         args.outdir,
         args.num_features,
         args.num_cycles,
+        args.cv,
         args.boot_iter)
 
 
