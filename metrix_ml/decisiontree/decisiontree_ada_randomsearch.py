@@ -73,13 +73,14 @@ class TreeAdaBoostRandSearch():
         trained and calibrated predictor: "best_predictor_calibrated_<date>.pkl"
         logfile: "decisiontree_ada_randomsearch.log"
         plots: "bootstrap_hist_uncalibrated_<date>.png"
-               "feature_importances_best_bar_plot_rand_ada_<date>.png"
+               "feature_importances_best_bar_plot_<date>.png"
                "feature_importances_all_error_bars_<date>.png"
                "confusion_matrix_for_test_set_<date>.png"
                "hist_pred_proba_<date>.png"
                "Precision_Recall_<date>.png"
                "ROC_curve_<date>.png"
                "bootstrap_hist_calibrated_<date>.png"
+               "radar_plot_prediction_metrics<date>.png"
     '''
     def __init__(self, data, directory, numf, numc, cv, bootiter):
         self.numf = numf
