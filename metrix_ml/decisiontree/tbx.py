@@ -41,7 +41,7 @@ def get_confidence_interval(X_train, y_train, X_test, y_test, clf,
 
     #plot scores
     plt.hist(stats)
-    plt.savefig(os.path.join(directory, 'bootstrap_hist_'+kind+date+'.png'))
+    plt.savefig(os.path.join(directory, 'bootstrap_hist_'+kind+date+'.png'), dpi=600)
     plt.close()
     # confidence interval
     alpha = 0.95
@@ -66,7 +66,7 @@ def feature_importances_best_estimator(feature_list, directory):
       plt.xlabel('Features', fontsize=12)
       plt.tight_layout()
       plt.savefig(os.path.join(directory,
-                  'feature_importances_best_bar_plot_rand_ada_'+date+'.png'))
+                  'feature_importances_best_bar_plot_rand_ada_'+date+'.png'), dpi=600)
       plt.close()
 
 
@@ -86,7 +86,7 @@ def feature_importances_error_bars(clf, features, directory):
     plt.xlabel('Features')
     plt.tight_layout()
     plt.savefig(os.path.join(directory,
-                             'feature_importances_all_error_bars_'+date+'.png'))
+                             'feature_importances_all_error_bars_'+date+'.png'), dpi=600)
     plt.close()
 
 def training_cv_stats(clf, X_train, y_train, cv):
@@ -163,7 +163,7 @@ def confusion_matrix_and_stats(y_test, y_pred, directory):
     ax.set_yticklabels(labels)
     plt.xlabel('Predicted')
     plt.ylabel('True')
-    plt.savefig(os.path.join(directory, 'confusion_matrix_for_test_set_'+date+'.png'))
+    plt.savefig(os.path.join(directory, 'confusion_matrix_for_test_set_'+date+'.png'), dpi=600)
     plt.close()
 
     # separating prediction outcomes in TP, TN, FP, FN
@@ -203,7 +203,7 @@ def plot_hist_pred_proba(y_pred_proba, directory):
     plt.title('Histogram of predicted probabilities for y_pred_proba to be class 1')
     plt.xlabel('Predicted probability of success')
     plt.ylabel('Frequency')
-    plt.savefig(os.path.join(directory, 'hist_pred_proba_'+date+'.png'))
+    plt.savefig(os.path.join(directory, 'hist_pred_proba_'+date+'.png'), dpi=600)
     plt.close()
 
 
@@ -217,7 +217,7 @@ def plot_precision_recall_vs_threshold(y_test, y_pred_proba_ones, directory):
     plt.xlabel("Threshold")
     plt.legend(loc="upper left")
     plt.ylim([0,1])
-    plt.savefig(os.path.join(directory, 'Precision_Recall_'+date+'.png'))
+    plt.savefig(os.path.join(directory, 'Precision_Recall_'+date+'.png'), dpi=600)
     plt.close()
 
 
@@ -232,7 +232,7 @@ def plot_roc_curve(y_test, y_pred_proba_ones, directory):
     plt.xlabel('False Positive Rate (1 - Specificity)')
     plt.ylabel('True Positive Rate (Sensitivity)')
     plt.grid(True)
-    plt.savefig(os.path.join(directory, 'ROC_curve_'+date+'.png'))
+    plt.savefig(os.path.join(directory, 'ROC_curve_'+date+'.png'), dpi=600)
     plt.close()
     return fpr, tpr, thresholds
 
@@ -277,7 +277,7 @@ def plot_radar_chart(dict, directory):
     ax.set_yticks([20, 40, 60, 80, 100])
     ax.set_yticklabels(["20", "40", "60", "80", "100%"], fontsize = 20)
     ax.set_xticklabels(categories, fontsize = 20, wrap = True)
-    plt.savefig(os.path.join(directory, "radar_plot_prediction_metrics"+date+".png"))
+    plt.savefig(os.path.join(directory, "radar_plot_prediction_metrics"+date+".png"), dpi=600)
     plt.close()
 
 
