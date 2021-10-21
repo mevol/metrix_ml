@@ -66,7 +66,7 @@ def feature_importances_best_estimator(feature_list, directory):
       plt.xlabel('Features', fontsize=12)
       plt.tight_layout()
       plt.savefig(os.path.join(directory,
-                  'feature_importances_best_bar_plot_rand_ada_'+date+'.png'), dpi=600)
+                  'feature_importances_best_bar_plot_'+date+'.png'), dpi=600)
       plt.close()
 
 
@@ -281,3 +281,40 @@ def plot_radar_chart(dict, directory):
     plt.close()
 
 
+# putting some code for over/under sampling here in case I ever have to use it
+   #the weight distribution for the classes used by "class_weight" weights = {0:0.1, 1:0.9}
+    #from imblearn.over_sampling import RandomOverSampler
+    #from imblearn.under_sampling import RandomUnderSampler
+    #from imblearn.over_sampling import SMOTE
+
+    #print('*' *80)
+    #print('*    Applying Over/Undersampling and SMOTE')
+    #print('*' *80)
+
+    #oversample = RandomOverSampler(sampling_strategy = 'minority')
+    #oversample = RandomOverSampler(sampling_strategy = 0.1)
+    #oversample = SMOTE(sampling_strategy = 0.3, random_state=28)
+    # fit and apply the transform
+    #X_over, y_over = oversample.fit_resample(self.X_newdata_transform_train, self.y_train)
+
+    #undersample = RandomUnderSampler(sampling_strategy=0.7)
+    #X_over, y_over = undersample.fit_resample(X_over, y_over)
+    #self.X_over = X_over
+    #self.y_over = y_over
+
+
+# putting some code for visualising decision trees here in case I ever need them
+# from sklearn.tree import export_graphviz
+#    def visualise_tree(tree_bag, directory, columns, name):
+#      datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+#      trees = tree_bag.estimators_
+#      i_tree = 0
+#      for tree in trees:
+#        with open(os.path.join(directory,'tree_clf_rand_bag_new_'+name+datestring+str(i_tree)+'.dot'), 'w') as f:
+#          export_graphviz(tree, out_file=f, feature_names=columns, rounded=True, filled=True)
+#          f.close()
+#        dotfile = os.path.join(directory, 'tree_clf_rand_bag_new_'+name+datestring+str(i_tree)+'.dot')
+#        pngfile = os.path.join(directory, 'tree_clf_rand_bag_new_'+name+datestring+str(i_tree)+'.png')
+#        command = ["dot", "-Tpng", dotfile, "-o", pngfile]
+#        subprocess.check_call(command)
+#        i_tree = i_tree + 1
