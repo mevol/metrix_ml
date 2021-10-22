@@ -8,15 +8,19 @@ import pandas as pd
 import seaborn as sns
 
 from sklearn.utils import resample
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, matthews_corrcoef
 from sklearn.metrics import precision_recall_curve, roc_curve
-from sklearn.ensemble import AdaBoostClassifier
 from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.calibration import CalibratedClassifierCV
 from datetime import datetime
-from sklearn.utils import resample
 from math import pi
+
+
+# printing updates to console
+def print_to_consol(message):
+    print('*' *80)
+    print('*    {}'.format(message))
+    print('*' *80)
 
 
 def get_confidence_interval(X_train, y_train, X_test, y_test, clf,
@@ -88,6 +92,24 @@ def feature_importances_error_bars(clf, features, directory):
     plt.savefig(os.path.join(directory,
                              'feature_importances_all_error_bars_'+date+'.png'), dpi=600)
     plt.close()
+
+
+# feature importances by class from Gaussian Naive Bayes
+def gnb_feature_importances(importance_dict, classes, directory):
+    date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+    feature = importance_dict[0].keys()
+    scores = importance_dict[0].values()
+    x_pos = np.arange(len(feature))
+    plt.figure(figsize=(20,10))
+    plt.bar(x_pos, scores, align='center')
+    plt.xticks(x_pos, feature, rotation=90, fontsize=12)
+    plt.title('Histogram of Feature Importances for {0}'.format(classes))
+    plt.xlabel('Features')
+    plt.tight_layout()
+    plt.savefig(os.path.join(directory,
+                'feature_importances_overall_bar_plot_'+classes+'_'+date+'.png'), dpi=600)
+    plt.close()
+
 
 def training_cv_stats(clf, X_train, y_train, cv):
     # accuracy for the training set
@@ -278,6 +300,20 @@ def plot_radar_chart(dict, directory):
     ax.set_yticklabels(["20", "40", "60", "80", "100%"], fontsize = 20)
     ax.set_xticklabels(categories, fontsize = 20, wrap = True)
     plt.savefig(os.path.join(directory, "radar_plot_prediction_metrics"+date+".png"), dpi=600)
+    plt.close()
+
+
+# plot features and coefficients for support vector machines
+def plot_coefficients(coef, feature_names, directory):
+    '''Once a linear SVM is fit to data (e.g., svm.fit(features, labels)), the coefficients can be accessed with svm.coef_. Recall that a linear SVM creates a hyperplane that uses support vectors to maximise the distance between the two classes. The weights obtained from svm.coef_ represent the vector coordinates which are orthogonal to the hyperplane and their direction indicates the predicted class. The absolute size of the coefficients in relation to each other can then be used to determine feature importance for the data separation task.'''
+    date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+    imp = coef
+    imp,names = zip(*sorted(zip(imp, feature_names)))
+    plt.barh(range(len(feature_names)), imp, align='center')
+    plt.yticks(range(len(feature_names)), feature_names)
+    plt.tight_layout()
+    plt.savefig(os.path.join(directory,
+                'feature_importances_coefficient_'+date+'.png'), dpi=600)
     plt.close()
 
 

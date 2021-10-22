@@ -1,0 +1,444 @@
+###############################################################################
+#
+#  imports and set up environment
+#
+###############################################################################
+'''Defining the environment for this class'''
+import argparse
+import pandas as pd
+import os
+import numpy as np
+import joblib
+import logging
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import RandomizedSearchCV
+from datetime import datetime
+from scipy.stats import randint
+from scipy.stats import uniform
+from scipy.stats import expon
+from tbx import get_confidence_interval, feature_importances_best_estimator
+from tbx import feature_importances_error_bars, confusion_matrix_and_stats
+from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
+from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
+from tbx import calibrate_classifier, plot_radar_chart, plot_coefficients
+
+def make_output_folder(outdir):
+    '''A small function for making an output directory
+    Args:
+        outdir (str): user provided directory where the output directory will be created
+        output_dir (str): the newly created output directory named
+                         "rbf_svm_randomsearch"
+    Yields:
+        directory
+    '''
+    output_dir = os.path.join(outdir, 'rbf_svm_randomsearch')
+    os.makedirs(output_dir, exist_ok=True)
+    return output_dir
+
+class RbfSvmRandSearch():
+    ''' A class to conduct a randomised search and training for best parameters for a
+        SVM with RBF kernel; the following steps are executed:
+        * loading input data in CSV format
+        * creating output directory to write results files to
+        * set up a log file to keep note of stats and processes
+        * prepare the input data by splitting into a calibration (5%), testing (20%) and
+          training (80%) sets
+        * conduct randomised search to find best parameters for the best predictor
+        * save model to disk
+        * get 95% confidence interval
+        * get feature importances
+        * get statistics for training using 3-fold cross-validation and testing
+        * get more detailed statistics and plots for prediction performances on the testing
+          set; this includes a confusion matrix, histogram of prediction probabilities,
+          precision-recall curve and ROC curve
+        * explore sensitivity/specificity trade-off when using different probability
+          thresholds
+        * calibrate the predictor and write the calibrated version to disk
+
+        Args:
+
+           data (str): file path to the input CSV file
+           directory (str): target output directory where an output folder will be created
+                            and all results will be written to
+           numf (int): maximum number of features to use in training; default = 10
+           numc (int): number of search cycles for randomised search; default = 500
+           cv (int): number of cross-validation cycles to use during training; default = 3
+           bootiter (int): number of bootstrap cylces to use for getting confidence intervals
+
+        Yields:
+        trained predictor: "best_predictor_<date>.pkl"
+        trained and calibrated predictor: "best_predictor_calibrated_<date>.pkl"
+        logfile: "rbf_svm_randomsearch.log"
+        plots: "bootstrap_hist_uncalibrated_<date>.png"
+               "feature_importances_best_bar_plot_<date>.png"
+               "feature_importances_all_error_bars_<date>.png"
+               "confusion_matrix_for_test_set_<date>.png"
+               "hist_pred_proba_<date>.png"
+               "Precision_Recall_<date>.png"
+               "ROC_curve_<date>.png"
+               "bootstrap_hist_calibrated_<date>.png"
+               "radar_plot_prediction_metrics<date>.png"
+    '''
+    def __init__(self, data, directory, numf, numc, cv, bootiter):
+        self.numf = numf
+        self.numc = numc
+        self.cv = cv
+        self.bootiter = bootiter
+        self.data = pd.read_csv(data)
+        self.directory = make_output_folder(directory)
+
+        logging.basicConfig(level=logging.INFO, filename=os.path.join(self.directory,
+                    'rbf_svm_randomsearch.log'), filemode='w')
+        logging.info(f'Loaded input data')
+        logging.info(f'Created output directories at {self.directory}')
+
+        self.start = datetime.now()
+
+        self.prepare_data()
+        self.randomised_search()
+        self.get_training_testing_prediction_stats()
+        self.detailed_analysis()
+        
+    def prepare_data(self):
+        print('*' *80)
+        print('*    Preparing input data and split in train/test/calibration set')
+        print('*' *80)
+
+        for name in self.data.columns:
+            if 'success' in name:
+                y = self.data[name]
+                X = self.data.drop([name, 'Unnamed: 0'], axis=1).select_dtypes(
+                                                 exclude=['object'])
+
+        # create a 5% calibration set if needed
+        X_temp, X_cal, y_temp, self.y_cal = train_test_split(X, y, test_size=0.05,
+                                                        random_state=42)
+
+        # use the remaining data for 80/20 train-test split
+        X_train, X_test, self.y_train, self.y_test = train_test_split(X_temp,
+                                                                        y_temp,
+                                                                        test_size=0.2,
+                                                                        random_state=100)
+
+        scaler = StandardScaler()
+        scaler.fit(X_train)
+        X_train_scaled = scaler.transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+        X_cal_scaled = scaler.transform(X_cal)
+        
+        self.X_train_scaled = pd.DataFrame(data=X_train_scaled,
+                              index=X_train.index,
+                              columns=X_train.columns)
+        self.X_test_scaled = pd.DataFrame(data=X_test_scaled,
+                              index=X_test.index,
+                              columns=X_test.columns)
+                              
+        self.X_cal_scaled = pd.DataFrame(data=X_cal_scaled,
+                              index=X_cal.index,
+                              columns=X_cal.columns)
+
+        logging.info(f'Created test, train and validation set \n'
+                     f'Scaling the train set and applying to test set \n')
+
+    def randomised_search(self):
+
+        print('*' *80)
+        print('*    Running randomized search to find best classifier')
+        print('*' *80)
+
+        #create the decision forest
+        clf1 = SVC(kernel='rbf', probability=True, random_state=20, class_weight='balanced')
+
+        logging.info(f'Initialised SVM \n')
+
+        #set up randomized search
+        param_dict = {
+                      'C': expon(scale=100),
+                      'gamma': expon(scale=.1)}
+
+        logging.info(f'Following parameters will be explored in randomized search \n'
+                     f'{param_dict} \n')
+
+        #building and running the randomized search
+        rand_search = RandomizedSearchCV(clf1, param_dict, random_state=5,
+                                         cv=self.cv, n_iter=self.numc,
+                                         scoring='accuracy', n_jobs=-1)
+
+        rand_search_fitted = rand_search.fit(self.X_train_scaled,
+                                             self.y_train)
+                                             
+
+        self.model = rand_search_fitted.best_estimator_
+        
+        best_parameters = rand_search_fitted.best_params_
+        
+        sv = self.model.support_vectors_
+        intercept = self.model.intercept_
+
+        logging.info(f'Running randomised search for best patameters of a decision tree \n'
+                     f'with AdaBoost scoring is accuracy \n'
+                     f'Best parameters found: {best_parameters} \n'
+                     f'Best coefficient/score: {sv} \n'
+                     f'Best intercept/score: {intercept} \n')
+                     
+        
+
+        datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+        joblib.dump(self.model, os.path.join(self.directory,
+                    'best_predictor_'+datestring+'.pkl'))
+
+        logging.info(f'Writing best classifier to disk in {self.directory} \n')
+
+        print('*' *80)
+        print('*    Getting 95%% confidence interval for best classifier')
+        print('*' *80)
+
+        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
+                                                      self.X_test_scaled, self.y_test,
+                                                      self.model, self.directory,
+                                                      self.bootiter, 'uncalibrated')
+
+        logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n')
+
+
+    def get_training_testing_prediction_stats(self):
+        print('*' *80)
+        print('*    Getting basic stats for training set and cross-validation')
+        print('*' *80)
+
+        training_stats, y_train_pred, y_train_pred_proba = training_cv_stats(
+                                                self.model, self.X_train_scaled,
+                                                self.y_train, self.cv)
+
+        logging.info(f'Basic stats achieved for training set and 3-fold CV \n'
+            f'Accuracy for each individual fold of 3 CV folds: {training_stats["acc_cv"]} \n'
+            f'Accuracy across all 3 CV-folds: {training_stats["acc"]} \n'
+            f'ROC_AUC across all 3 CV-folds: {training_stats["roc_auc"]} \n'
+            f'Recall across all 3 CV-folds: {training_stats["recall"]} \n'
+            f'Precision across all 3 CV-folds: {training_stats["precision"]} \n'
+            f'F1 score across all 3 CV-folds: {training_stats["f1-score"]} \n'
+            f'Storing cross-validated y_train classes in y_train_pred \n'
+            f'Storing cross-validated y_train probabilities in y_train_pred_proba \n')
+
+        print('*' *80)
+        print('*    Getting class predictions and probabilities for test set')
+        print('*' *80)
+
+        test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats(
+                                                self.model, self.X_test_scaled, self.y_test)
+
+        confidence_train = self.model.decision_function(self.X_train_scaled)
+
+        confidence_test = self.model.decision_function(self.X_test_scaled)
+
+        logging.info(f'Predicting on the test set. \n'
+                     f'Storing classes in y_pred and probabilities in y_pred_proba \n'
+                     f'Prediction confidence for train set: {confidence_train} \n'
+                     f'Prediction confidence for test set: {confidence_test} \n')
+
+        print('*' *80)
+        print('*    Calculate prediction stats for y_pred and y_pred_proba of test set')
+        print('*' *80)
+
+        logging.info(f'Basic stats on the test set. \n'
+                     f'Prediction accuracy on the test set: {test_stats["predict_acc"]} \n'
+                     f'Class distributio in the test set: {test_stats["class_distribution"]} \n'
+                     f'Matthews Correlation Coefficient: {test_stats["mcc"]} \n'
+                     f'Average number of class 1 samples: {test_stats["class_one"]} \n'
+                     f'Average number of class 0 samples: {test_stats["class_zero"]} \n'
+                     f'Null accuracy: {test_stats["null_acc"]} \n')
+
+        print('*' *80)
+        print('*    Plotting histogram for class 1 prediction probabilities for test set')
+        print('*' *80)
+
+        #store the predicted probabilities for class 1 of test set
+        self.y_pred_proba_ones = self.y_pred_proba[:, 1]
+
+
+        plot_hist_pred_proba(self.y_pred_proba_ones, self.directory)
+
+        logging.info(
+          f'Plotting prediction probabilities for class 1 in test set in histogram. \n')
+
+    def detailed_analysis(self):
+        print('*' *80)
+        print('*    Making a confusion matrix for test set classification outcomes')
+        print('*' *80)
+
+
+        matrix_stats = confusion_matrix_and_stats(self.y_test, self.y_pred,
+                                                  self.directory)
+
+        logging.info(f'Detailed analysis of confusion matrix for test set. \n'
+                     f'True positives: {matrix_stats["TP"]} \n'
+                     f'True negatives: {matrix_stats["TN"]} \n'
+                     f'False positives: {matrix_stats["FP"]} \n'
+                     f'False negatives: {matrix_stats["FN"]} \n'
+                     f'Classification accuracy: {matrix_stats["acc"]} \n'
+                     f'Classification error: {matrix_stats["err"]} \n'
+                     f'Sensitivity: {matrix_stats["sensitivity"]} \n'
+                     f'Specificity: {matrix_stats["specificity"]} \n'
+                     f'False positive rate: {matrix_stats["FP-rate"]} \n'
+                     f'False negative rate: {matrix_stats["FN-rate"]} \n'
+                     f'Precision: {matrix_stats["precision"]} \n'
+                     f'F1-score: {matrix_stats["F1-score"]} \n')
+
+        print('*' *80)
+        print('*    Plotting precision recall curve for test set class 1 probabilities')
+        print('*' *80)
+
+        logging.info(
+          f'Plotting precision recall curve for class 1 in test set probabilities. \n')
+        
+        plot_precision_recall_vs_threshold(self.y_test, self.y_pred_proba_ones,
+                                           self.directory)
+
+        print('*' *80)
+        print('*    Plotting ROC curve ad calculating AUC for test set class 1 probabilities')
+        print('*' *80)
+
+        logging.info(
+          f'Plotting ROC curve for class 1 in test set probabilities. \n')
+
+        self.fpr, self.tpr, self.thresholds = plot_roc_curve(self.y_test,
+                                                   self.y_pred_proba_ones, self.directory)
+
+        AUC = round(roc_auc_score(self.y_test, self.y_pred_proba_ones) * 100, 2)
+
+        logging.info(
+          f'Calculating AUC for ROC curve for class 1 in test set probabilities: {AUC} \n')
+
+        print('*' *80)
+        print('*    Make a radar plot for performance metrics')
+        print('*' *80)
+        
+        radar_dict = {'Classification accuracy' : matrix_stats["acc"],
+                      'Classification error' : matrix_stats["err"],
+                      'Sensitivity' : matrix_stats["sensitivity"],
+                      'Specificity' : matrix_stats["specificity"],
+                      'False positive rate' : matrix_stats["FP-rate"],
+                      'False negative rate' : matrix_stats["FN-rate"],
+                      'Precision' : matrix_stats["precision"],
+                      'F1-score' : matrix_stats["F1-score"],
+                      'ROC AUC' : AUC}
+
+        plot_radar_chart(radar_dict, self.directory)
+
+        print('*' *80)
+        print('*    Exploring probability thresholds, sensitivity, specificity for class 1 ')
+        print('*' *80)
+
+        threshold_dict = evaluate_threshold(self.tpr, self.fpr, self.thresholds)
+
+        logging.info(
+          f'Exploring different probability thresholds and sensitivity-specificity trade-offs. \n'
+          f'Threshold 0.2: {threshold_dict["0.2"]} \n'
+          f'Threshold 0.3: {threshold_dict["0.3"]} \n'
+          f'Threshold 0.4: {threshold_dict["0.4"]} \n'
+          f'Threshold 0.5: {threshold_dict["0.5"]} \n'
+          f'Threshold 0.6: {threshold_dict["0.6"]} \n'
+          f'Threshold 0.7: {threshold_dict["0.7"]} \n'
+          f'Threshold 0.8: {threshold_dict["0.8"]} \n'
+          f'Threshold 0.9: {threshold_dict["0.9"]} \n')
+
+        print('*' *80)
+        print('*    Calibrating classifier and writing to disk; getting new accuracy')
+        print('*' *80)
+
+        self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal_scaled,
+                                                            self.y_cal)
+        
+        date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+        joblib.dump(self.calibrated_clf, os.path.join(self.directory,
+                    'best_calibrated_predictor_'+date+'.pkl'))
+
+        logging.info(
+          f'Calibrated the best classifier with X_cal and y_cal and new accuracy {clf_acc}\n'
+          f'Writing file to disk disk in {self.directory} \n')
+          
+        end = datetime.now()
+        duration = end - self.start
+
+        logging.info(f'Training lasted for {duration} minutes \n')
+
+        logging.info(f'Training completed \n')
+
+        print('*' *80)
+        print('*    Training completed')
+        print('*' *80)
+
+
+def run(input_csv, output_dir, features, cycles, boot_iter, cv):
+
+    RbfSvmRandSearch(input_csv, output_dir, features, cycles, boot_iter, cv)
+
+
+
+def main():
+    '''defining the command line input to make it runable'''
+    parser = argparse.ArgumentParser(description='AdaBoost and DecisionTree randomized search')
+
+    parser.add_argument(
+        '--input', 
+        type=str, 
+        dest='input',
+        default='',
+        help='The input CSV file')
+
+    parser.add_argument(
+        '--outdir',
+        type=str,
+        dest='outdir',
+        default='',
+        help='Specify output directory')
+      
+    parser.add_argument(
+        '--num_features',
+        type=int,
+        dest='num_features',
+        default=10,
+        help='Number of features to look for')
+      
+    parser.add_argument(
+        '--num_cycles',
+        type=int,
+        dest='num_cycles',
+        default=500,
+        help='Number of randomized search cycles')
+      
+    parser.add_argument(
+        '--cv',
+        type=int,
+        dest='cv',
+        default=3,
+        help='Number of cross-validation repeats to use during training')
+
+    parser.add_argument(
+        '--boot_iter',
+        type=int,
+        dest='boot_iter',
+        default=1000,
+        help='Number of bootstrap cycles')
+
+    args = parser.parse_args()
+    
+    if args.input == '':
+        parser.print_help()
+        exit(0)
+    
+    run(args.input,
+        args.outdir,
+        args.num_features,
+        args.num_cycles,
+        args.cv,
+        args.boot_iter)
+
+
+if __name__ == "__main__":
+    main()
