@@ -160,7 +160,7 @@ class LinearSvmRandSearch():
         clf1 = SVC(kernel='linear', probability=True,
                    random_state=20, class_weight='balanced')
 
-        logging.info(f'Initialised SVM \n')
+        logging.info(f'Initialised classifer \n')
 
         #set up randomized search
         param_dict = {'C': expon(scale=100)}
@@ -355,7 +355,7 @@ class LinearSvmRandSearch():
 
         self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal_scaled,
                                                             self.y_cal)
-        
+
         date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
         joblib.dump(self.calibrated_clf, os.path.join(self.directory,
                     'best_calibrated_predictor_'+date+'.pkl'))
@@ -407,21 +407,21 @@ def main():
         dest='outdir',
         default='',
         help='Specify output directory')
-      
+
     parser.add_argument(
         '--num_features',
         type=int,
         dest='num_features',
         default=10,
         help='Number of features to look for')
-      
+
     parser.add_argument(
         '--num_cycles',
         type=int,
         dest='num_cycles',
         default=500,
         help='Number of randomized search cycles')
-      
+
     parser.add_argument(
         '--cv',
         type=int,
@@ -437,11 +437,11 @@ def main():
         help='Number of bootstrap cycles')
 
     args = parser.parse_args()
-    
+
     if args.input == '':
         parser.print_help()
         exit(0)
-    
+
     run(args.input,
         args.outdir,
         args.num_features,

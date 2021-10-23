@@ -159,13 +159,13 @@ class NaiveBayesRandSearch():
         #create the decision forest
         clf1 = GaussianNB(priors=None)
 
-        logging.info(f'Initialised classifier using balanced class weights \n')
+        logging.info(f'Initialised classifier \n')
 
         #set up randomized search
         param_dict = {'var_smoothing': uniform(0.000000000001, 10.0)}
 
         logging.info(f'Following parameters will be explored in randomized search \n'
-                     f'{param_dict}')
+                     f'{param_dict} \n')
 
         #building and running the randomized search
         rand_search = RandomizedSearchCV(clf1, param_dict, random_state=5,
@@ -384,7 +384,7 @@ class NaiveBayesRandSearch():
         logging.info(
           f'Calibrated the best classifier with X_cal and y_cal and new accuracy {clf_acc}\n'
           f'Writing file to disk disk in {self.directory} \n')
-          
+
         end = datetime.now()
         duration = end - self.start
 
@@ -418,21 +418,21 @@ def main():
         dest='outdir',
         default='',
         help='Specify output directory')
-      
+
     parser.add_argument(
         '--num_features',
         type=int,
         dest='num_features',
         default=10,
         help='Number of features to look for')
-      
+
     parser.add_argument(
         '--num_cycles',
         type=int,
         dest='num_cycles',
         default=500,
         help='Number of randomized search cycles')
-      
+
     parser.add_argument(
         '--cv',
         type=int,
@@ -448,11 +448,11 @@ def main():
         help='Number of bootstrap cycles')
 
     args = parser.parse_args()
-    
+
     if args.input == '':
         parser.print_help()
         exit(0)
-    
+
     run(args.input,
         args.outdir,
         args.num_features,

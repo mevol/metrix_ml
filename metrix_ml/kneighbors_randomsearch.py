@@ -168,7 +168,7 @@ class KneighborsRandSearch():
                       'leaf_size': randint(2, 50)}
 
         logging.info(f'Following parameters will be explored in randomized search \n'
-                     f'{param_dict}')
+                     f'{param_dict} \n')
 
         #building and running the randomized search
         rand_search = RandomizedSearchCV(clf1, param_dict, random_state=5,
@@ -414,21 +414,21 @@ def main():
         dest='outdir',
         default='',
         help='Specify output directory')
-      
+
     parser.add_argument(
         '--num_features',
         type=int,
         dest='num_features',
         default=10,
         help='Number of features to look for')
-      
+
     parser.add_argument(
         '--num_cycles',
         type=int,
         dest='num_cycles',
         default=500,
         help='Number of randomized search cycles')
-      
+
     parser.add_argument(
         '--cv',
         type=int,
@@ -444,11 +444,11 @@ def main():
         help='Number of bootstrap cycles')
 
     args = parser.parse_args()
-    
+
     if args.input == '':
         parser.print_help()
         exit(0)
-    
+
     run(args.input,
         args.outdir,
         args.num_features,

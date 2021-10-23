@@ -21,8 +21,7 @@ from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
 from scipy.stats import expon
-from tbx import get_confidence_interval, feature_importances_best_estimator
-from tbx import feature_importances_error_bars, confusion_matrix_and_stats
+from tbx import get_confidence_interval, confusion_matrix_and_stats
 from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
 from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
 from tbx import calibrate_classifier, plot_radar_chart, plot_coefficients
@@ -42,16 +41,15 @@ def make_output_folder(outdir):
 
 class RbfSvmRandSearch():
     ''' A class to conduct a randomised search and training for best parameters for a
-        SVM with RBF kernel; the following steps are executed:
+        SVM classifier with RBF kernel; the following steps are executed:
         * loading input data in CSV format
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
         * prepare the input data by splitting into a calibration (5%), testing (20%) and
-          training (80%) sets
+          training (80%) sets and applying StandardScaler
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
         * get 95% confidence interval
-        * get feature importances
         * get statistics for training using 3-fold cross-validation and testing
         * get more detailed statistics and plots for prediction performances on the testing
           set; this includes a confusion matrix, histogram of prediction probabilities,
@@ -59,6 +57,7 @@ class RbfSvmRandSearch():
         * explore sensitivity/specificity trade-off when using different probability
           thresholds
         * calibrate the predictor and write the calibrated version to disk
+        * get 95% confidence interval for calibrated classifier
 
         Args:
 
@@ -75,8 +74,6 @@ class RbfSvmRandSearch():
         trained and calibrated predictor: "best_predictor_calibrated_<date>.pkl"
         logfile: "rbf_svm_randomsearch.log"
         plots: "bootstrap_hist_uncalibrated_<date>.png"
-               "feature_importances_best_bar_plot_<date>.png"
-               "feature_importances_all_error_bars_<date>.png"
                "confusion_matrix_for_test_set_<date>.png"
                "hist_pred_proba_<date>.png"
                "Precision_Recall_<date>.png"
@@ -94,8 +91,8 @@ class RbfSvmRandSearch():
 
         logging.basicConfig(level=logging.INFO, filename=os.path.join(self.directory,
                     'rbf_svm_randomsearch.log'), filemode='w')
-        logging.info(f'Loaded input data')
-        logging.info(f'Created output directories at {self.directory}')
+        logging.info(f'Loaded input data \n'
+                     f'Created output directories at {self.directory} \n')
 
         self.start = datetime.now()
 
@@ -103,11 +100,15 @@ class RbfSvmRandSearch():
         self.randomised_search()
         self.get_training_testing_prediction_stats()
         self.detailed_analysis()
-        
+
+###############################################################################
+#
+#  prepare input data
+#
+###############################################################################
+
     def prepare_data(self):
-        print('*' *80)
-        print('*    Preparing input data and split in train/test/calibration set')
-        print('*' *80)
+        print_to_consol('Preparing input data and split in train/test/calibration set')
 
         for name in self.data.columns:
             if 'success' in name:
@@ -143,18 +144,21 @@ class RbfSvmRandSearch():
                               columns=X_cal.columns)
 
         logging.info(f'Created test, train and validation set \n'
-                     f'Scaling the train set and applying to test set \n')
+                     f'Scaling the train set and applying to test set and calibration set \n' \n')
+
+###############################################################################
+#
+#  randomized search
+#
+###############################################################################
 
     def randomised_search(self):
-
-        print('*' *80)
-        print('*    Running randomized search to find best classifier')
-        print('*' *80)
+        print_to_consol('Running randomized search to find best classifier')
 
         #create the decision forest
         clf1 = SVC(kernel='rbf', probability=True, random_state=20, class_weight='balanced')
 
-        logging.info(f'Initialised SVM \n')
+        logging.info(f'Initialised classifier \n')
 
         #set up randomized search
         param_dict = {
@@ -174,9 +178,8 @@ class RbfSvmRandSearch():
                                              
 
         self.model = rand_search_fitted.best_estimator_
-        
+
         best_parameters = rand_search_fitted.best_params_
-        
         sv = self.model.support_vectors_
         intercept = self.model.intercept_
 
@@ -185,31 +188,32 @@ class RbfSvmRandSearch():
                      f'Best parameters found: {best_parameters} \n'
                      f'Best coefficient/score: {sv} \n'
                      f'Best intercept/score: {intercept} \n')
-                     
-        
 
         datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
         joblib.dump(self.model, os.path.join(self.directory,
                     'best_predictor_'+datestring+'.pkl'))
 
-        logging.info(f'Writing best classifier to disk in {self.directory} \n')
+        logging.info(f'Writing best classifier to disk in {self.directory} \n'
+                    f'No feature importances available for this type of predictor \n')
 
-        print('*' *80)
-        print('*    Getting 95%% confidence interval for best classifier')
-        print('*' *80)
+        print_to_consol('Getting 95% confidence interval for uncalibrated classifier')
 
         alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
                                                       self.X_test_scaled, self.y_test,
                                                       self.model, self.directory,
                                                       self.bootiter, 'uncalibrated')
 
-        logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n')
+        logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n'
+                     f'for uncalibrated classifier. \n')
 
+###############################################################################
+#
+#  get training and testing stats
+#
+###############################################################################
 
     def get_training_testing_prediction_stats(self):
-        print('*' *80)
-        print('*    Getting basic stats for training set and cross-validation')
-        print('*' *80)
+        print_to_consol('Getting basic stats for training set and cross-validation')
 
         training_stats, y_train_pred, y_train_pred_proba = training_cv_stats(
                                                 self.model, self.X_train_scaled,
@@ -225,9 +229,7 @@ class RbfSvmRandSearch():
             f'Storing cross-validated y_train classes in y_train_pred \n'
             f'Storing cross-validated y_train probabilities in y_train_pred_proba \n')
 
-        print('*' *80)
-        print('*    Getting class predictions and probabilities for test set')
-        print('*' *80)
+        print_to_consol('Getting class predictions and probabilities for test set')
 
         test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats(
                                                 self.model, self.X_test_scaled, self.y_test)
@@ -241,9 +243,8 @@ class RbfSvmRandSearch():
                      f'Prediction confidence for train set: {confidence_train} \n'
                      f'Prediction confidence for test set: {confidence_test} \n')
 
-        print('*' *80)
-        print('*    Calculate prediction stats for y_pred and y_pred_proba of test set')
-        print('*' *80)
+        print_to_consol(
+            'Calculate prediction stats for y_pred and y_pred_proba of test set')
 
         logging.info(f'Basic stats on the test set. \n'
                      f'Prediction accuracy on the test set: {test_stats["predict_acc"]} \n'
@@ -253,24 +254,25 @@ class RbfSvmRandSearch():
                      f'Average number of class 0 samples: {test_stats["class_zero"]} \n'
                      f'Null accuracy: {test_stats["null_acc"]} \n')
 
-        print('*' *80)
-        print('*    Plotting histogram for class 1 prediction probabilities for test set')
-        print('*' *80)
+        print_to_consol(
+            'Plotting histogram for class 1 prediction probabilities for test set')
 
         #store the predicted probabilities for class 1 of test set
         self.y_pred_proba_ones = self.y_pred_proba[:, 1]
-
 
         plot_hist_pred_proba(self.y_pred_proba_ones, self.directory)
 
         logging.info(
           f'Plotting prediction probabilities for class 1 in test set in histogram. \n')
 
-    def detailed_analysis(self):
-        print('*' *80)
-        print('*    Making a confusion matrix for test set classification outcomes')
-        print('*' *80)
+###############################################################################
+#
+#  get more detailed stats and plots
+#
+###############################################################################
 
+    def detailed_analysis(self):
+        print_to_consol('Making a confusion matrix for test set classification outcomes')
 
         matrix_stats = confusion_matrix_and_stats(self.y_test, self.y_pred,
                                                   self.directory)
@@ -289,9 +291,8 @@ class RbfSvmRandSearch():
                      f'Precision: {matrix_stats["precision"]} \n'
                      f'F1-score: {matrix_stats["F1-score"]} \n')
 
-        print('*' *80)
-        print('*    Plotting precision recall curve for test set class 1 probabilities')
-        print('*' *80)
+        print_to_consol(
+                    'Plotting precision recall curve for test set class 1 probabilities')
 
         logging.info(
           f'Plotting precision recall curve for class 1 in test set probabilities. \n')
@@ -299,9 +300,8 @@ class RbfSvmRandSearch():
         plot_precision_recall_vs_threshold(self.y_test, self.y_pred_proba_ones,
                                            self.directory)
 
-        print('*' *80)
-        print('*    Plotting ROC curve ad calculating AUC for test set class 1 probabilities')
-        print('*' *80)
+        print_to_consol(
+              'Plotting ROC curve ad calculating AUC for test set class 1 probabilities')
 
         logging.info(
           f'Plotting ROC curve for class 1 in test set probabilities. \n')
@@ -314,10 +314,8 @@ class RbfSvmRandSearch():
         logging.info(
           f'Calculating AUC for ROC curve for class 1 in test set probabilities: {AUC} \n')
 
-        print('*' *80)
-        print('*    Make a radar plot for performance metrics')
-        print('*' *80)
-        
+        print_to_consol('Make a radar plot for performance metrics')
+
         radar_dict = {'Classification accuracy' : matrix_stats["acc"],
                       'Classification error' : matrix_stats["err"],
                       'Sensitivity' : matrix_stats["sensitivity"],
@@ -330,9 +328,8 @@ class RbfSvmRandSearch():
 
         plot_radar_chart(radar_dict, self.directory)
 
-        print('*' *80)
-        print('*    Exploring probability thresholds, sensitivity, specificity for class 1 ')
-        print('*' *80)
+        print_to_consol(
+            'Exploring probability thresholds, sensitivity, specificity for class 1')
 
         threshold_dict = evaluate_threshold(self.tpr, self.fpr, self.thresholds)
 
@@ -347,13 +344,22 @@ class RbfSvmRandSearch():
           f'Threshold 0.8: {threshold_dict["0.8"]} \n'
           f'Threshold 0.9: {threshold_dict["0.9"]} \n')
 
-        print('*' *80)
-        print('*    Calibrating classifier and writing to disk; getting new accuracy')
-        print('*' *80)
+        print_to_consol(
+            'Calibrating classifier and writing to disk; getting new accuracy')
 
         self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal_scaled,
                                                             self.y_cal)
-        
+
+        print_to_consol('Getting 95% confidence interval for calibrated classifier')
+
+        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
+                                                      self.X_test_scaled, self.y_test,
+                                                      self.calibrated_clf, self.directory,
+                                                      self.bootiter, 'calibrated')
+
+        logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n'
+                     f'for calibrated classifier. \n')
+
         date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
         joblib.dump(self.calibrated_clf, os.path.join(self.directory,
                     'best_calibrated_predictor_'+date+'.pkl'))
@@ -361,7 +367,7 @@ class RbfSvmRandSearch():
         logging.info(
           f'Calibrated the best classifier with X_cal and y_cal and new accuracy {clf_acc}\n'
           f'Writing file to disk disk in {self.directory} \n')
-          
+
         end = datetime.now()
         duration = end - self.start
 
@@ -369,9 +375,7 @@ class RbfSvmRandSearch():
 
         logging.info(f'Training completed \n')
 
-        print('*' *80)
-        print('*    Training completed')
-        print('*' *80)
+        print_to_consol('Training completed')
 
 
 def run(input_csv, output_dir, features, cycles, boot_iter, cv):
@@ -404,14 +408,14 @@ def main():
         dest='num_features',
         default=10,
         help='Number of features to look for')
-      
+
     parser.add_argument(
         '--num_cycles',
         type=int,
         dest='num_cycles',
         default=500,
         help='Number of randomized search cycles')
-      
+
     parser.add_argument(
         '--cv',
         type=int,
@@ -427,11 +431,11 @@ def main():
         help='Number of bootstrap cycles')
 
     args = parser.parse_args()
-    
+
     if args.input == '':
         parser.print_help()
         exit(0)
-    
+
     run(args.input,
         args.outdir,
         args.num_features,
