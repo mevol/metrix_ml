@@ -45,7 +45,7 @@ class KneighborsRandSearch():
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
         * prepare the input data by splitting into a calibration (5%), testing (20%) and
-          training (80%) sets  and applying MinMaxScaling
+          training (80%) sets and applying MinMaxScaling
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
         * get 95% confidence interval for uncalibrated classifier
@@ -67,7 +67,8 @@ class KneighborsRandSearch():
            numf (int): maximum number of features to use in training; default = 10
            numc (int): number of search cycles for randomised search; default = 500
            cv (int): number of cross-validation cycles to use during training; default = 3
-           bootiter (int): number of bootstrap cylces to use for getting confidence intervals
+           bootiter (int): number of bootstrap cylces to use for getting confidence
+                           intervals; default = 1000
 
         Yields:
         trained predictor: "best_predictor_<date>.pkl"
@@ -145,7 +146,7 @@ class KneighborsRandSearch():
                               columns=X_cal.columns)
 
         logging.info(f'Created test, train and validation set \n'
-                     f'Scaling the train set and applying to test set and calibration set \n')
+                     f'Normalizing the train set and applying to test set and calibration set \n')
 
 ###############################################################################
 #
@@ -218,7 +219,7 @@ class KneighborsRandSearch():
 
         logging.info(f'Feature importances for best classifier {feature_importance} \n')
 
-        print_to_consol('Plotting feature importances')
+        print_to_consol('Plotting feature importances for best classifier')
 
         feature_importances_best_estimator(feature_importance, self.directory)
         logging.info(
@@ -309,7 +310,7 @@ class KneighborsRandSearch():
 
         logging.info(
             f'Plotting precision recall curve for class 1 in test set probabilities. \n')
-        
+
         plot_precision_recall_vs_threshold(self.y_test, self.y_pred_proba_ones,
                                            self.directory)
 

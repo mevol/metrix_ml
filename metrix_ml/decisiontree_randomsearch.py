@@ -22,7 +22,7 @@ from tbx import get_confidence_interval, feature_importances_best_estimator
 from tbx import feature_importances_error_bars, confusion_matrix_and_stats
 from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
 from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
-from tbx import calibrate_classifier, plot_radar_chart
+from tbx import calibrate_classifier, plot_radar_chart, print_to_consol
 
 def make_output_folder(outdir):
     '''A small function for making an output directory
@@ -44,10 +44,10 @@ class TreeRandSearch():
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
         * prepare the input data by splitting into a calibration (5%), testing (20%) and
-          training (80%) sets
+          training (80%) sets; no scaling --> data needs to be prepared accordingly
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
-        * get 95% confidence interval
+        * get 95% confidence interval for uncalibrated classifier
         * get feature importances
         * get statistics for training using 3-fold cross-validation and testing
         * get more detailed statistics and plots for prediction performances on the testing
@@ -56,6 +56,7 @@ class TreeRandSearch():
         * explore sensitivity/specificity trade-off when using different probability
           thresholds
         * calibrate the predictor and write the calibrated version to disk
+        * get 95% confidence interval for calibrated classifier
 
         Args:
 
@@ -65,7 +66,8 @@ class TreeRandSearch():
            numf (int): maximum number of features to use in training; default = 10
            numc (int): number of search cycles for randomised search; default = 500
            cv (int): number of cross-validation cycles to use during training; default = 3
-           bootiter (int): number of bootstrap cylces to use for getting confidence intervals
+           bootiter (int): number of bootstrap cylces to use for getting confidence
+                           intervals; default = 1000
 
         Yields:
         trained predictor: "best_predictor_<date>.pkl"
@@ -91,8 +93,8 @@ class TreeRandSearch():
 
         logging.basicConfig(level=logging.INFO, filename=os.path.join(self.directory,
                     'decisiontree_randomsearch.log'), filemode='w')
-        logging.info(f'Loaded input data')
-        logging.info(f'Created output directories at {self.directory}')
+        logging.info(f'Loaded input data \n'
+                     f'Created output directories at {self.directory} \n')
 
         self.start = datetime.now()
 
@@ -100,11 +102,15 @@ class TreeRandSearch():
         self.randomised_search()
         self.get_training_testing_prediction_stats()
         self.detailed_analysis()
-        
+
+###############################################################################
+#
+#  prepare input data
+#
+###############################################################################
+
     def prepare_data(self):
-        print('*' *80)
-        print('*    Preparing input data and split in train/test/calibration set')
-        print('*' *80)
+        print_to_consol('Preparing input data and split in train/test/calibration set')
 
         for name in self.data.columns:
             if 'success' in name:
@@ -122,20 +128,24 @@ class TreeRandSearch():
                                                                         test_size=0.2,
                                                                         random_state=100)
 
-        logging.info(f'Created test, train and validation set')
+        logging.info(f'Created test, train and validation set \n')
+
+###############################################################################
+#
+#  randomized search
+#
+###############################################################################
 
     def randomised_search(self):
 
-        print('*' *80)
-        print('*    Running randomized search to find best classifier')
-        print('*' *80)
+        print_to_consol('Running randomized search to find best classifier')
 
         #create the decision forest
         clf1 = DecisionTreeClassifier(random_state=20,
                                       class_weight='balanced',
                                       max_features = self.numf)
 
-        logging.info(f'Initialised decision tree using balanced class weights')
+        logging.info(f'Initialised classifier')
 
         #set up randomized search
         param_dict = {
@@ -146,7 +156,7 @@ class TreeRandSearch():
                    'max_leaf_nodes': randint(10, 20)}
 
         logging.info(f'Following parameters will be explored in randomized search \n'
-                     f'{param_dict}')
+                     f'{param_dict} \n')
 
         #building and running the randomized search
         rand_search = RandomizedSearchCV(clf1, param_dict, random_state=5,
@@ -159,8 +169,7 @@ class TreeRandSearch():
         best_parameters = rand_search_fitted.best_params_
         best_scores = rand_search_fitted.best_score_
 
-        logging.info(f'Running randomised search for best patameters of a decision tree \n'
-                     f'scoring is accuracy \n'
+        logging.info(f'Running randomised search for best patameters of classifier \n
                      f'Best parameters found: {best_parameters} \n'
                      f'Best accuracy scores found: {best_scores} \n')
                      
@@ -172,21 +181,17 @@ class TreeRandSearch():
 
         logging.info(f'Writing best classifier to disk in {self.directory} \n')
 
-        print('*' *80)
-        print('*    Getting 95%% confidence interval for best classifier')
-        print('*' *80)
+        print_to_consol('Getting 95% confidence interval for uncalibrated classifier')
 
         alpha, upper, lower = get_confidence_interval(self.X_train, self.y_train,
                                                       self.X_test, self.y_test,
                                                       self.model, self.directory,
                                                       self.bootiter, 'uncalibrated')
 
-        logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n')
-                                                      
-        print('*' *80)
-        print('*    Getting feature importances for best classifier')
-        print('*' *80)
+        logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n'
+                     f'for uncalibrated classifier. \n')
 
+        print_to_consol('Getting feature importances for best classifier')
 
         best_clf_feat_import = self.model.feature_importances_
         best_clf_feat_import_sorted = sorted(zip(best_clf_feat_import,
@@ -195,17 +200,19 @@ class TreeRandSearch():
 
         logging.info(f'Feature importances for best classifier {best_clf_feat_import_sorted} \n')
 
-        print('*' *80)
-        print('*    Plotting feature importances across all trees')
-        print('*' *80)
-        
+        print_to_consol('Plotting feature importances for best classifier')
+
         feature_importances_best_estimator(best_clf_feat_import_sorted, self.directory)
         logging.info(f'Plotting feature importances for best classifier in decreasing order \n')
 
+###############################################################################
+#
+#  get training and testing stats
+#
+###############################################################################
+
     def get_training_testing_prediction_stats(self):
-        print('*' *80)
-        print('*    Getting basic stats for training set and cross-validation')
-        print('*' *80)
+        print_to_consol('Getting basic stats for training set and cross-validation')
 
         training_stats, y_train_pred, y_train_pred_proba = training_cv_stats(
                                                 self.model, self.X_train,
@@ -221,9 +228,7 @@ class TreeRandSearch():
             f'Storing cross-validated y_train classes in y_train_pred \n'
             f'Storing cross-validated y_train probabilities in y_train_pred_proba \n')
 
-        print('*' *80)
-        print('*    Getting class predictions and probabilities for test set')
-        print('*' *80)
+        print_to_consol('Getting class predictions and probabilities for test set')
 
         test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats(
                                                 self.model, self.X_test, self.y_test)
@@ -231,9 +236,8 @@ class TreeRandSearch():
         logging.info(f'Predicting on the test set. \n'
                      f'Storing classes in y_pred and probabilities in y_pred_proba \n')
 
-        print('*' *80)
-        print('*    Calculate prediction stats for y_pred and y_pred_proba of test set')
-        print('*' *80)
+        print_to_consol(
+            'Calculate prediction stats for y_pred and y_pred_proba of test set')
 
         logging.info(f'Basic stats on the test set. \n'
                      f'Prediction accuracy on the test set: {test_stats["predict_acc"]} \n'
@@ -243,24 +247,25 @@ class TreeRandSearch():
                      f'Average number of class 0 samples: {test_stats["class_zero"]} \n'
                      f'Null accuracy: {test_stats["null_acc"]} \n')
 
-        print('*' *80)
-        print('*    Plotting histogram for class 1 prediction probabilities for test set')
-        print('*' *80)
+        print_to_consol(
+            'Plotting histogram for class 1 prediction probabilities for test set')
 
         #store the predicted probabilities for class 1 of test set
         self.y_pred_proba_ones = self.y_pred_proba[:, 1]
-
 
         plot_hist_pred_proba(self.y_pred_proba_ones, self.directory)
 
         logging.info(
           f'Plotting prediction probabilities for class 1 in test set in histogram. \n')
 
-    def detailed_analysis(self):
-        print('*' *80)
-        print('*    Making a confusion matrix for test set classification outcomes')
-        print('*' *80)
+###############################################################################
+#
+#  get more detailed stats and plots
+#
+###############################################################################
 
+    def detailed_analysis(self):
+        print_to_consol('Making a confusion matrix for test set classification outcomes')
 
         matrix_stats = confusion_matrix_and_stats(self.y_test, self.y_pred,
                                                   self.directory)
@@ -279,9 +284,8 @@ class TreeRandSearch():
                      f'Precision: {matrix_stats["precision"]} \n'
                      f'F1-score: {matrix_stats["F1-score"]} \n')
 
-        print('*' *80)
-        print('*    Plotting precision recall curve for test set class 1 probabilities')
-        print('*' *80)
+        print_to_consol(
+                    'Plotting precision recall curve for test set class 1 probabilities')
 
         logging.info(
           f'Plotting precision recall curve for class 1 in test set probabilities. \n')
@@ -289,9 +293,8 @@ class TreeRandSearch():
         plot_precision_recall_vs_threshold(self.y_test, self.y_pred_proba_ones,
                                            self.directory)
 
-        print('*' *80)
-        print('*    Plotting ROC curve ad calculating AUC for test set class 1 probabilities')
-        print('*' *80)
+        print_to_consol(
+              'Plotting ROC curve ad calculating AUC for test set class 1 probabilities')
 
         logging.info(
           f'Plotting ROC curve for class 1 in test set probabilities. \n')
@@ -304,10 +307,8 @@ class TreeRandSearch():
         logging.info(
           f'Calculating AUC for ROC curve for class 1 in test set probabilities: {AUC} \n')
 
-        print('*' *80)
-        print('*    Make a radar plot for performance metrics')
-        print('*' *80)
-        
+        print_to_consol('Make a radar plot for performance metrics')
+
         radar_dict = {'Classification accuracy' : matrix_stats["acc"],
                       'Classification error' : matrix_stats["err"],
                       'Sensitivity' : matrix_stats["sensitivity"],
@@ -320,9 +321,8 @@ class TreeRandSearch():
 
         plot_radar_chart(radar_dict, self.directory)
 
-        print('*' *80)
-        print('*    Exploring probability thresholds, sensitivity, specificity for class 1 ')
-        print('*' *80)
+        print_to_consol(
+            'Exploring probability thresholds, sensitivity, specificity for class 1')
 
         threshold_dict = evaluate_threshold(self.tpr, self.fpr, self.thresholds)
 
@@ -337,13 +337,22 @@ class TreeRandSearch():
           f'Threshold 0.8: {threshold_dict["0.8"]} \n'
           f'Threshold 0.9: {threshold_dict["0.9"]} \n')
 
-        print('*' *80)
-        print('*    Calibrating classifier and writing to disk; getting new accuracy')
-        print('*' *80)
+        print_to_consol(
+            'Calibrating classifier and writing to disk; getting new accuracy')
 
         self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal,
                                                             self.y_cal)
-        
+
+        print_to_consol('Getting 95% confidence interval for calibrated classifier')
+
+        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
+                                                      self.X_test_scaled, self.y_test,
+                                                      self.calibrated_clf, self.directory,
+                                                      self.bootiter, 'calibrated')
+
+        logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n'
+                     f'for calibrated classifier. \n')
+
         date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
         joblib.dump(self.calibrated_clf, os.path.join(self.directory,
                     'best_calibrated_predictor_'+date+'.pkl'))
@@ -351,7 +360,7 @@ class TreeRandSearch():
         logging.info(
           f'Calibrated the best classifier with X_cal and y_cal and new accuracy {clf_acc}\n'
           f'Writing file to disk disk in {self.directory} \n')
-          
+
         end = datetime.now()
         duration = end - self.start
 
@@ -359,9 +368,7 @@ class TreeRandSearch():
 
         logging.info(f'Training completed \n')
 
-        print('*' *80)
-        print('*    Training completed')
-        print('*' *80)
+        print_to_consol('Training completed')
 
 
 def run(input_csv, output_dir, features, cycles, boot_iter, cv):
@@ -387,21 +394,21 @@ def main():
         dest='outdir',
         default='',
         help='Specify output directory')
-      
+
     parser.add_argument(
         '--num_features',
         type=int,
         dest='num_features',
         default=10,
         help='Number of features to look for')
-      
+
     parser.add_argument(
         '--num_cycles',
         type=int,
         dest='num_cycles',
         default=500,
         help='Number of randomized search cycles')
-      
+
     parser.add_argument(
         '--cv',
         type=int,
@@ -417,11 +424,11 @@ def main():
         help='Number of bootstrap cycles')
 
     args = parser.parse_args()
-    
+
     if args.input == '':
         parser.print_help()
         exit(0)
-    
+
     run(args.input,
         args.outdir,
         args.num_features,

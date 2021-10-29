@@ -19,7 +19,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import RandomizedSearchCV
 from datetime import datetime
 from scipy.stats import expon
-from tbx import get_confidence_interval, confusion_matrix_and_stats
+from tbx import get_confidence_interval, confusion_matrix_and_stats, print_to_consol
 from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
 from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
 from tbx import calibrate_classifier, plot_radar_chart, plot_coefficients
@@ -47,7 +47,7 @@ class LinearSvmRandSearch():
           training (80%) sets and applying StandardScaler
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
-        * get 95% confidence interval
+        * get 95% confidence interval for uncalibrated classifier
         * get feature importances
         * get statistics for training using 3-fold cross-validation and testing
         * get more detailed statistics and plots for prediction performances on the testing
@@ -67,7 +67,8 @@ class LinearSvmRandSearch():
            numf (int): maximum number of features to use in training; default = 10
            numc (int): number of search cycles for randomised search; default = 500
            cv (int): number of cross-validation cycles to use during training; default = 3
-           bootiter (int): number of bootstrap cylces to use for getting confidence intervals
+           bootiter (int): number of bootstrap cylces to use for getting confidence
+                           intervals; default = 1000
 
         Yields:
         trained predictor: "best_predictor_<date>.pkl"
@@ -210,7 +211,12 @@ class LinearSvmRandSearch():
         cv.fit(self.X_train_scaled.columns)
         feature_names = cv.get_feature_names()
 
+        print_to_consol('Plotting feature importances for best classifier')
+
         plot_coefficients(coef_ravel, feature_names, self.directory)
+        logging.info(
+            f'Plotting feature importances for best classifier \n')
+
 
 ###############################################################################
 #

@@ -23,7 +23,7 @@ from tbx import get_confidence_interval, feature_importances_best_estimator
 from tbx import feature_importances_error_bars, confusion_matrix_and_stats
 from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
 from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
-from tbx import calibrate_classifier, plot_radar_chart
+from tbx import calibrate_classifier, plot_radar_chart, print_to_consol
 
 def make_output_folder(outdir):
     '''A small function for making an output directory
@@ -40,7 +40,7 @@ def make_output_folder(outdir):
 
 class TreeAdaBoostRandSearch():
     ''' A class to conduct a randomised search and training for best parameters for a
-        decision tree with AdaBoost; the following steps are executed:
+        decision tree classifier with AdaBoost; the following steps are executed:
         * loading input data in CSV format
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
@@ -48,7 +48,7 @@ class TreeAdaBoostRandSearch():
           training (80%) sets; no scaling --> data needs to be prepared accordingly
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
-        * get 95% confidence interval
+        * get 95% confidence interval for uncalibrated classifier
         * get feature importances
         * get statistics for training using 3-fold cross-validation and testing
         * get more detailed statistics and plots for prediction performances on the testing
@@ -67,7 +67,8 @@ class TreeAdaBoostRandSearch():
            numf (int): maximum number of features to use in training; default = 10
            numc (int): number of search cycles for randomised search; default = 500
            cv (int): number of cross-validation cycles to use during training; default = 3
-           bootiter (int): number of bootstrap cylces to use for getting confidence intervals
+           bootiter (int): number of bootstrap cylces to use for getting confidence
+                           intervals; default = 1000
 
         Yields:
         trained predictor: "best_predictor_<date>.pkl"
@@ -174,8 +175,7 @@ class TreeAdaBoostRandSearch():
         best_parameters = rand_search_fitted.best_params_
         best_scores = rand_search_fitted.best_score_
 
-        logging.info(f'Running randomised search for best patameters of a decision tree \n'
-                     f'with AdaBoost scoring is accuracy \n'
+        logging.info(f'Running randomised search for best patameters of classifier \n'
                      f'Best parameters found: {best_parameters} \n'
                      f'Best accuracy scores found: {best_scores} \n')
                      
@@ -212,7 +212,7 @@ class TreeAdaBoostRandSearch():
                                                 self.X_train.columns),
                                                 reverse=True)
 
-        print_to_consol('Plotting feature importances across all trees')
+        print_to_consol('Plotting feature importances for best classifier')
 
         feature_importances_best_estimator(best_clf_feat_import_sorted, self.directory)
         logging.info(f'Plotting feature importances for best classifier in decreasing order \n')

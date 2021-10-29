@@ -21,7 +21,7 @@ from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
 from scipy.stats import expon
-from tbx import get_confidence_interval, confusion_matrix_and_stats
+from tbx import get_confidence_interval, confusion_matrix_and_stats, print_to_consol
 from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
 from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
 from tbx import calibrate_classifier, plot_radar_chart, plot_coefficients
@@ -49,7 +49,8 @@ class RbfSvmRandSearch():
           training (80%) sets and applying StandardScaler
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
-        * get 95% confidence interval
+        * get 95% confidence interval for uncalibrated classifier
+        * NOTE: no feature importances available for this classifier
         * get statistics for training using 3-fold cross-validation and testing
         * get more detailed statistics and plots for prediction performances on the testing
           set; this includes a confusion matrix, histogram of prediction probabilities,
@@ -67,7 +68,8 @@ class RbfSvmRandSearch():
            numf (int): maximum number of features to use in training; default = 10
            numc (int): number of search cycles for randomised search; default = 500
            cv (int): number of cross-validation cycles to use during training; default = 3
-           bootiter (int): number of bootstrap cylces to use for getting confidence intervals
+           bootiter (int): number of bootstrap cylces to use for getting confidence
+                           intervals; default = 1000
 
         Yields:
         trained predictor: "best_predictor_<date>.pkl"

@@ -19,7 +19,7 @@ from sklearn.model_selection import RandomizedSearchCV, cross_val_score
 from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
-from tbx import get_confidence_interval, confusion_matrix_and_stats
+from tbx import get_confidence_interval, confusion_matrix_and_stats, print_to_consol
 from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
 from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
 from tbx import calibrate_classifier, plot_radar_chart, gnb_feature_importances
@@ -66,7 +66,8 @@ class NaiveBayesRandSearch():
            numf (int): maximum number of features to use in training; default = 10
            numc (int): number of search cycles for randomised search; default = 500
            cv (int): number of cross-validation cycles to use during training; default = 3
-           bootiter (int): number of bootstrap cylces to use for getting confidence intervals
+           bootiter (int): number of bootstrap cylces to use for getting confidence
+                           intervals; default = 1000
 
         Yields:
         trained predictor: "best_predictor_<date>.pkl"
@@ -219,7 +220,7 @@ class NaiveBayesRandSearch():
         f'Feature importances for class 0 for best classifier {feature_importance_class0} \n'
         f'Feature importances for class 1 for best classifier {feature_importance_class1} \n')
 
-        print_to_consol('Plotting feature importances')
+        print_to_consol('Plotting feature importances for best classifier')
 
         gnb_feature_importances(feature_importance_class0,
                                 'class_0', self.directory)
