@@ -25,6 +25,13 @@ from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
 from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
 from tbx import calibrate_classifier, plot_radar_chart, print_to_consol
 
+print("Pandas version: ", pd.__version__)
+print("Numpy version: ", np.__version__)
+print("Matplotlib.pyplot version: ", matplotlib.__version__)
+print("Seaborn version: ", sns.__version__)
+print("SciKitLearn version: ", sklearn.__version__)
+print("Python version: ", python.__version__)
+
 def make_output_folder(outdir):
     '''A small function for making an output directory
     Args:
