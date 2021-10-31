@@ -27,7 +27,6 @@ from tbx import calibrate_classifier, plot_radar_chart, print_to_consol
 
 print("Pandas version: ", pd.__version__)
 print("Numpy version: ", np.__version__)
-print("Matplotlib.pyplot version: ", matplotlib.__version__)
 print("Seaborn version: ", sns.__version__)
 print("SciKitLearn version: ", sklearn.__version__)
 print("Python version: ", python.__version__)
