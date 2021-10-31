@@ -31,11 +31,11 @@ def make_output_folder(outdir):
     Args:
         outdir (str): user provided directory where the output directory will be created
         output_dir (str): the newly created output directory named
-                         "decisiontree_ada_randomsearch"
+                         "decisiontree_ada_randomsearch_scaled"
     Yields:
         directory
     '''
-    output_dir = os.path.join(outdir, 'decisiontree_ada_randomsearch')
+    output_dir = os.path.join(outdir, 'decisiontree_ada_randomsearch_scaled')
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 

@@ -30,11 +30,11 @@ def make_output_folder(outdir):
     Args:
         outdir (str): user provided directory where the output directory will be created
         output_dir (str): the newly created output directory named
-                         "extreme_randomforest_randomsearch"
+                         "extreme_randomforest_randomsearch_normed"
     Yields:
         directory
     '''
-    output_dir = os.path.join(outdir, 'extreme_randomforest_randomsearch')
+    output_dir = os.path.join(outdir, 'extreme_randomforest_randomsearch_normed')
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
