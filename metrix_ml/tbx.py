@@ -8,7 +8,6 @@ import pandas as pd
 import seaborn as sns
 
 print("Seaborn version: ", sns.__version__)
-print("Matplotlib.pyplot version: ", plt.__version__)
 
 from sklearn.utils import resample
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, matthews_corrcoef
