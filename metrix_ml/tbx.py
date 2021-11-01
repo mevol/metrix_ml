@@ -275,13 +275,10 @@ def evaluate_threshold(tpr, fpr, thresholds):
 
 
 # calibrate classifier
-def calibrate_classifier(clf, X_cal, y_cal, directory):
+def calibrate_classifier(clf, X_cal, y_cal):
     clf_cccv = CalibratedClassifierCV(clf, cv='prefit')
     calibrated_clf = clf_cccv.fit(X_cal, y_cal)
     clf_acc = clf_cccv.score(X_cal, y_cal)
-    date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-    joblib.dump(calibrated_clf, os.path.join(directory,
-                    'best_predictor_calibrated_'+date+'.pkl'))
     return calibrated_clf, clf_acc
 
 

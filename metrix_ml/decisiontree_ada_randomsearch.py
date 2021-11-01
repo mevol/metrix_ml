@@ -360,14 +360,12 @@ class TreeAdaBoostRandSearch():
             'Calibrating classifier and writing to disk; getting new accuracy')
 
         self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal,
-                                                            self.y_cal, self.directory)
-
-        logging.info(f'Accuracy for calibrated classifier: {clf_acc} \n')
+                                                            self.y_cal)
 
         print_to_consol('Getting 95% confidence interval for calibrated classifier')
 
-        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
-                                                      self.X_test_scaled, self.y_test,
+        alpha, upper, lower = get_confidence_interval(self.X_train, self.y_train,
+                                                      self.X_test, self.y_test,
                                                       self.calibrated_clf, self.directory,
                                                       self.bootiter, 'calibrated')
 
@@ -381,7 +379,7 @@ class TreeAdaBoostRandSearch():
         logging.info(
           f'Calibrated the best classifier with X_cal and y_cal and new accuracy {clf_acc}\n'
           f'Writing file to disk disk in {self.directory} \n')
-          
+
         end = datetime.now()
         duration = end - self.start
 
