@@ -169,7 +169,7 @@ class TreeRandSearch():
         best_parameters = rand_search_fitted.best_params_
         best_scores = rand_search_fitted.best_score_
 
-        logging.info(f'Running randomised search for best patameters of classifier \n
+        logging.info(f'Running randomised search for best patameters of classifier \n'
                      f'Best parameters found: {best_parameters} \n'
                      f'Best accuracy scores found: {best_scores} \n')
                      
