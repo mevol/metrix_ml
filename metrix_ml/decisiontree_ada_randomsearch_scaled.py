@@ -188,7 +188,7 @@ class TreeAdaBoostRandSearch():
                                          cv=self.cv, n_iter=self.numc,
                                          scoring='accuracy', n_jobs=-1)
 
-        rand_search_fitted = rand_search.fit(self.X_train,
+        rand_search_fitted = rand_search.fit(self.X_train_scaled,
                                              self.y_train)
                                              
         best_parameters = rand_search_fitted.best_params_
@@ -208,8 +208,8 @@ class TreeAdaBoostRandSearch():
 
         print_to_consol('Getting 95% confidence interval for uncalibrated classifier')
 
-        alpha, upper, lower = get_confidence_interval(self.X_train, self.y_train,
-                                                      self.X_test, self.y_test,
+        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
+                                                      self.X_test_scaled, self.y_test,
                                                       self.model, self.directory,
                                                       self.bootiter, 'uncalibrated')
 
@@ -220,7 +220,7 @@ class TreeAdaBoostRandSearch():
 
         best_clf_feat_import = self.model.feature_importances_
         best_clf_feat_import_sorted = sorted(zip(best_clf_feat_import,
-                                                self.X_train.columns),
+                                                self.X_train_scaled.columns),
                                                 reverse=True)
 
         logging.info(f'Feature importances for best classifier {best_clf_feat_import_sorted} \n')
@@ -228,14 +228,14 @@ class TreeAdaBoostRandSearch():
         all_clf_feat_import_mean = np.mean(
                  [tree.feature_importances_ for tree in self.model.estimators_], axis=0)
         all_clf_feat_import_mean_sorted = sorted(zip(all_clf_feat_import_mean,
-                                                self.X_train.columns),
+                                                self.X_train_scaled.columns),
                                                 reverse=True)
 
         print_to_consol('Plotting feature importances for best classifier')
 
         feature_importances_best_estimator(best_clf_feat_import_sorted, self.directory)
         logging.info(f'Plotting feature importances for best classifier in decreasing order \n')
-        feature_importances_error_bars(self.model, self.X_train.columns, self.directory)
+        feature_importances_error_bars(self.model, self.X_train_scaled.columns, self.directory)
         logging.info(f'Plotting feature importances for best classifier with errorbars \n')
 
 ###############################################################################
@@ -248,7 +248,7 @@ class TreeAdaBoostRandSearch():
         print_to_consol('Getting basic stats for training set and cross-validation')
 
         training_stats, y_train_pred, y_train_pred_proba = training_cv_stats(
-                                                self.model, self.X_train,
+                                                self.model, self.X_train_scaled,
                                                 self.y_train, self.cv)
 
         logging.info(f'Basic stats achieved for training set and 3-fold CV \n'
@@ -264,7 +264,7 @@ class TreeAdaBoostRandSearch():
         print_to_consol('Getting class predictions and probabilities for test set')
 
         test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats(
-                                                self.model, self.X_test, self.y_test)
+                                                self.model, self.X_test_scaled, self.y_test)
 
         logging.info(f'Predicting on the test set. \n'
                      f'Storing classes in y_pred and probabilities in y_pred_proba \n')

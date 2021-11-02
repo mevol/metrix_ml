@@ -356,8 +356,8 @@ class ExtremeRandomForestRandSearch():
                                                             self.y_cal)
         print_to_consol('Getting 95% confidence interval for calibrated classifier')
 
-        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
-                                                      self.X_test_scaled, self.y_test,
+        alpha, upper, lower = get_confidence_interval(self.X_train, self.y_train,
+                                                      self.X_test, self.y_test,
                                                       self.calibrated_clf, self.directory,
                                                       self.bootiter, 'calibrated')
 

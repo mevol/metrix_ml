@@ -378,6 +378,16 @@ class LinearSvmRandSearch():
           f'Calibrated the best classifier with X_cal and y_cal and new accuracy {clf_acc}\n'
           f'Writing file to disk in {self.directory} \n')
 
+        print_to_consol('Getting 95% confidence interval for calibrated classifier')
+
+        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
+                                                      self.X_test_scaled, self.y_test,
+                                                      self.calibrated_clf, self.directory,
+                                                      self.bootiter, 'calibrated')
+
+        logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n'
+                     f'for calibrated classifier. \n')
+
         end = datetime.now()
         duration = end - self.start
 
