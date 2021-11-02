@@ -156,7 +156,6 @@ class RandomForestRandSearch():
 ###############################################################################
 
     def randomised_search(self):
-    def randomised_search(self):
         print_to_consol('Running randomized search to find best classifier')
 
         #create the decision forest
