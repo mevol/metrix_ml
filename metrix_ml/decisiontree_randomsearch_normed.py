@@ -120,7 +120,7 @@ class TreeRandSearch():
                                                  exclude=['object'])
 
         # create a 5% calibration set if needed
-        X_temp, X_cal, y_temp, self.y_cal = train_test_split(X, y, test_size=0.05,
+        X_temp, self.X_cal, y_temp, self.y_cal = train_test_split(X, y, test_size=0.05,
                                                         random_state=42)
 
         # use the remaining data for 80/20 train-test split
