@@ -146,7 +146,7 @@ class RbfSvmRandSearch():
                               columns=X_cal.columns)
 
         logging.info(f'Created test, train and validation set \n'
-                     f'Scaling the train set and applying to test set and calibration set \n' \n')
+                     f'Scaling the train set and applying to test set and calibration set \n')
 
 ###############################################################################
 #
