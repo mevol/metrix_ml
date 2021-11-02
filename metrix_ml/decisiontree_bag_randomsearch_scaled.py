@@ -367,7 +367,7 @@ class TreeBagBoostRandSearch():
         print_to_consol(
             'Calibrating classifier and writing to disk; getting new accuracy')
 
-        self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal,
+        self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal_scaled,
                                                             self.y_cal)
 
         print_to_consol('Getting 95% confidence interval for calibrated classifier')

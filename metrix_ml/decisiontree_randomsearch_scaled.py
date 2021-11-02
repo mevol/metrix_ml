@@ -120,7 +120,7 @@ class TreeRandSearch():
                                                  exclude=['object'])
 
         # create a 5% calibration set if needed
-        X_temp, self.X_cal, y_temp, self.y_cal = train_test_split(X, y, test_size=0.05,
+        X_temp, X_cal, y_temp, self.y_cal = train_test_split(X, y, test_size=0.05,
                                                         random_state=42)
 
         # use the remaining data for 80/20 train-test split
@@ -359,7 +359,7 @@ class TreeRandSearch():
         print_to_consol(
             'Calibrating classifier and writing to disk; getting new accuracy')
 
-        self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal,
+        self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal_scaled,
                                                             self.y_cal)
 
         print_to_consol('Getting 95% confidence interval for calibrated classifier')
