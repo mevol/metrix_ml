@@ -113,7 +113,7 @@ class TreeRandSearch():
         print_to_consol('Preparing input data and split in train/test/calibration set')
 
         for name in self.data.columns:
-            if 'success' in name:
+            if 'success' in name or "ground_truth" in name:
                 y = self.data[name]
                 X = self.data.drop([name, 'Unnamed: 0'], axis=1).select_dtypes(
                                                  exclude=['object'])
