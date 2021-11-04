@@ -12,6 +12,7 @@ import joblib
 import logging
 
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
 from datetime import datetime
 from tbx import  confusion_matrix_and_stats, plot_radar_chart
 from tbx import testing_predict_stats, plot_hist_pred_proba, print_to_consol
