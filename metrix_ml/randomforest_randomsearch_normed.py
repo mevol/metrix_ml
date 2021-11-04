@@ -203,7 +203,7 @@ class RandomForestRandSearch():
         print_to_consol('Getting 95% confidence interval for uncalibrated classifier')
 
         alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
-                                                      self.X_test_scaled, self_scaled.y_test,
+                                                      self.X_test_scaled, self.y_test,
                                                       self.model, self.directory,
                                                       self.bootiter, 'uncalibrated')
 
