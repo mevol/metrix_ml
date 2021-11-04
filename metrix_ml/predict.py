@@ -234,7 +234,7 @@ class PredictWithSplit():
 
 def run(input_csv, output_dir, model):
 
-    Predict(input_csv, output_dir, model)
+    PredictWithSplit(input_csv, output_dir, model)
 
 
 
