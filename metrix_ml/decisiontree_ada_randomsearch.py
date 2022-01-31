@@ -387,7 +387,7 @@ class TreeAdaBoostRandSearch():
 
         test_stats_cal, self.y_pred_cal, self.y_pred_proba_cal = testing_predict_stats(
                                                 self.calibrated_clf,
-                                                self.X_test_scaled, self.y_test)
+                                                self.X_test, self.y_test)
 
         logging.info(
         f'Predicting on the test set with calibrated classifier. \n'
