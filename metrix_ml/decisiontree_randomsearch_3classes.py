@@ -298,7 +298,7 @@ class TreeRandSearch():
         except:
             logging.info(f'No false positives found. \n')
             print('No false positives found.')
-        continue
+            continue
 
         FN_out = os.path.join(self.directory, "false_negatives_before_calibration.csv")
         np.savetxt(FN_out, FN, delimiter=",")
