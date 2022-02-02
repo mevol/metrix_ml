@@ -308,14 +308,14 @@ class TreeRandSearch():
             logging.info(f'No false negatives found. \n')
             print('No false negatives found.')
 
-        print_to_consol(
-                    'Plotting precision recall curve for test set class 1 probabilities')
-
-        logging.info(
-          f'Plotting precision recall curve for class 1 in test set probabilities. \n')
-        
-        plot_precision_recall_vs_threshold(self.y_test, self.y_pred_proba_ones,
-                                           self.directory)
+#        print_to_consol(
+#                    'Plotting precision recall curve for test set class 1 probabilities')
+#
+#        logging.info(
+#          f'Plotting precision recall curve for class 1 in test set probabilities. \n')
+#        
+#        plot_precision_recall_vs_threshold(self.y_test, self.y_pred_proba_ones,
+#                                           self.directory)
 
         print_to_consol(
               'Plotting ROC curve ad calculating AUC for test set class 1 probabilities')
