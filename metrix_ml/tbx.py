@@ -130,7 +130,7 @@ def training_cv_stats(clf, X_train, y_train, cv):
     train_precision = round((cross_val_score(clf, X_train, y_train,
                                              cv=cv, scoring='precision').mean()) * 100, 2)
     train_f1 = round((cross_val_score(clf, X_train, y_train,
-                                      cv=cv, scoring='f1').mean()) * 100, 2)
+                                      cv=cv, scoring='f1_macro').mean()) * 100, 2)
     # predict class and probabilities on training data with cross-validation
     y_train_CV_pred = cross_val_predict(clf, X_train, y_train, cv=cv)
     y_train_CV_pred_proba = cross_val_predict(clf, X_train, y_train,
