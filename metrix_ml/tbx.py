@@ -264,7 +264,7 @@ def confusion_matrix_and_stats_3classes(y_test, y_pred, directory):
                      'FN-rate' : false_negative_rate,
                      'precision' : precision,
                      'F1-score' : f1}
-    return conf_mat_dict, report
+    return conf_mat_dict, report, FP, FN
     
 
 def plot_hist_pred_proba(y_pred_proba, directory):
