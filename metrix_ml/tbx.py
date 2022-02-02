@@ -267,7 +267,7 @@ def confusion_matrix_and_stats_3classes(y_test, y_pred, directory):
     false_positive_rate = round((FP / (TN + FP)) * 100, 2)
     false_negative_rate = round((FN / (TP + FN)) * 100, 2)
     precision = round((TP / (TP + FP)) * 100, 2)
-    f1 = round(f1_score(y_test, y_pred) * 100, 2)
+    f1 = round(f1_score(y_test, y_pred, average = 'macro') * 100, 2)
 
     target_names = ['class 0', 'class 1', 'class 2']
     report = classification_report(y_true, y_pred, labels = [0, 1, 2],
