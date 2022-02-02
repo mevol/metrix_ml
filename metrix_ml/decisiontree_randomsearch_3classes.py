@@ -291,10 +291,10 @@ class TreeRandSearch():
         logging.info(f'Writing false positives and false positives to disk. \n')
 
         FP_out = os.path.join(self.directory, "false_positives_before_calibration.csv")
-        np.savetxt(FP_out, a, delimiter=",")
+        np.savetxt(FP_out, FP, delimiter=",")
 
         FN_out = os.path.join(self.directory, "false_negatives_before_calibration.csv")
-        np.savetxt(FN_out, a, delimiter=",")
+        np.savetxt(FN_out, FN, delimiter=",")
 
         print_to_consol(
                     'Plotting precision recall curve for test set class 1 probabilities')
