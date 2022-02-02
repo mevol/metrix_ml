@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import joblib
+import itertools
 
 print("Seaborn version: ", sns.__version__)
 
