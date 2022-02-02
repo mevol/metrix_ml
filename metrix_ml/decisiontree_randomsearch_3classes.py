@@ -327,7 +327,7 @@ class TreeRandSearch():
 #                                                   self.y_pred_proba_ones, self.directory)
 #
         AUC = round(roc_auc_score(self.y_test, self.y_pred_proba_ones,
-                                  average='micro', multi_class = 'ovr') * 100, 2)
+                                  average='macro', multi_class = 'ovr') * 100, 2)
 
         logging.info(
           f'Calculating AUC for ROC curve for class 1 in test set probabilities: {AUC} \n')
