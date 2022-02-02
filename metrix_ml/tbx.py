@@ -12,7 +12,7 @@ import itertools
 print("Seaborn version: ", sns.__version__)
 
 from sklearn.utils import resample
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, matthews_corrcoef
+from sklearn.metrics import balanced_accuracy_score, f1_score, confusion_matrix, matthews_corrcoef
 from sklearn.metrics import precision_recall_curve, roc_curve, classification_report
 from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.calibration import CalibratedClassifierCV
@@ -153,7 +153,7 @@ def testing_predict_stats(clf, X_test, y_test):
 
 
     # calculate accuracy
-    y_accuracy = round((accuracy_score(y_test, y_pred)) * 100, 2)
+    y_accuracy = round((balanced_accuracy_score(y_test, y_pred)) * 100, 2)
     # examine the class distribution of the testing set (using a Pandas Series method)
     class_dist = y_test.value_counts()
     # calculate the percentage of ones
