@@ -223,7 +223,7 @@ def confusion_matrix_and_stats(y_test, y_pred, directory):
 
 def confusion_matrix_and_stats_3classes(y_test, y_pred, directory):
     # Plot predictions in confusion matrix
-    TN, FP, FN, TP = confusion_matrix(y_test, y_pred)
+    TN, FP, FN, TP = confusion_matrix(y_test, y_pred).ravel()
 
     # draw confusion matrix
     date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
