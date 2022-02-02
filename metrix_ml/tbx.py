@@ -13,7 +13,7 @@ print("Seaborn version: ", sns.__version__)
 
 from sklearn.utils import resample
 from sklearn.metrics import balanced_accuracy_score, f1_score, confusion_matrix, matthews_corrcoef
-from sklearn.metrics import precision_recall_curve, roc_curve, classification_report
+from sklearn.metrics import precision_recall_curve, roc_curve, classification_report, accuracy_score
 from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.calibration import CalibratedClassifierCV
 from datetime import datetime
