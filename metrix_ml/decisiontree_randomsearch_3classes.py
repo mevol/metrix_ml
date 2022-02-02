@@ -299,10 +299,14 @@ class TreeRandSearch():
             logging.info(f'No false positives found. \n')
             print('No false positives found.')
 
-          
+        print(FN)
 
-        FN_out = os.path.join(self.directory, "false_negatives_before_calibration.csv")
-        np.savetxt(FN_out, FN, delimiter=",")
+        try:
+            FN_out = os.path.join(self.directory, "false_negatives_before_calibration.csv")
+            np.savetxt(FN_out, FN, delimiter=",")
+        except:
+            logging.info(f'No false negatives found. \n')
+            print('No false negatives found.')
 
         print_to_consol(
                     'Plotting precision recall curve for test set class 1 probabilities')
