@@ -296,8 +296,8 @@ class TreeRandSearch():
             FP_out = os.path.join(self.directory, "false_positives_before_calibration.csv")
             np.savetxt(FP_out, FP, delimiter=",")
         except:
-            logging.info(f'No false positives found. \n')
-            print('No false positives found.')
+            logging.info(f'No false positives found before calibration. \n')
+            print('No false positives found before calibration.')
 
         print(FN)
 
@@ -305,8 +305,8 @@ class TreeRandSearch():
             FN_out = os.path.join(self.directory, "false_negatives_before_calibration.csv")
             np.savetxt(FN_out, FN, delimiter=",")
         except:
-            logging.info(f'No false negatives found. \n')
-            print('No false negatives found.')
+            logging.info(f'No false negatives found before calibration. \n')
+            print('No false negatives found before calibration.')
 
 #        print_to_consol(
 #                    'Plotting precision recall curve for test set class 1 probabilities')
@@ -326,11 +326,11 @@ class TreeRandSearch():
 #        self.fpr, self.tpr, self.thresholds = plot_roc_curve(self.y_test,
 #                                                   self.y_pred_proba_ones, self.directory)
 #
-        AUC = round(roc_auc_score(self.y_test, self.y_pred_proba_ones,
-                                  average='macro', multi_class = 'ovr') * 100, 2)
-
-        logging.info(
-          f'Calculating AUC for ROC curve for class 1 in test set probabilities: {AUC} \n')
+#        AUC = round(roc_auc_score(self.y_test, self.y_pred_proba_ones,
+#                                  average='macro', multi_class = 'ovr') * 100, 2)
+#
+#        logging.info(
+#          f'Calculating AUC for ROC curve for class 1 in test set probabilities: {AUC} \n')
 
         print_to_consol('Make a radar plot for performance metrics')
 
@@ -341,27 +341,27 @@ class TreeRandSearch():
                       'False positive rate' : matrix_stats["FP-rate"],
                       'False negative rate' : matrix_stats["FN-rate"],
                       'Precision' : matrix_stats["precision"],
-                      'F1-score' : matrix_stats["F1-score"],
-                      'ROC_AUC' : AUC}
+                      'F1-score' : matrix_stats["F1-score"]}
+#                      'ROC_AUC' : AUC}
 
         plot_radar_chart(radar_dict, self.directory)
 
-        print_to_consol(
-            'Exploring probability thresholds, sensitivity, specificity for class 1')
-
-        threshold_dict = evaluate_threshold(self.tpr, self.fpr, self.thresholds)
-
-        logging.info(
-          f'Exploring different probability thresholds and sensitivity-specificity trade-offs. \n'
-          f'Threshold 0.2: {threshold_dict["0.2"]} \n'
-          f'Threshold 0.3: {threshold_dict["0.3"]} \n'
-          f'Threshold 0.4: {threshold_dict["0.4"]} \n'
-          f'Threshold 0.5: {threshold_dict["0.5"]} \n'
-          f'Threshold 0.6: {threshold_dict["0.6"]} \n'
-          f'Threshold 0.7: {threshold_dict["0.7"]} \n'
-          f'Threshold 0.8: {threshold_dict["0.8"]} \n'
-          f'Threshold 0.9: {threshold_dict["0.9"]} \n')
-
+#        print_to_consol(
+#            'Exploring probability thresholds, sensitivity, specificity for class 1')
+#
+#        threshold_dict = evaluate_threshold(self.tpr, self.fpr, self.thresholds)
+#
+#        logging.info(
+#          f'Exploring different probability thresholds and sensitivity-specificity trade-offs. \n'
+#          f'Threshold 0.2: {threshold_dict["0.2"]} \n'
+#          f'Threshold 0.3: {threshold_dict["0.3"]} \n'
+#          f'Threshold 0.4: {threshold_dict["0.4"]} \n'
+#          f'Threshold 0.5: {threshold_dict["0.5"]} \n'
+#          f'Threshold 0.6: {threshold_dict["0.6"]} \n'
+#          f'Threshold 0.7: {threshold_dict["0.7"]} \n'
+#          f'Threshold 0.8: {threshold_dict["0.8"]} \n'
+#          f'Threshold 0.9: {threshold_dict["0.9"]} \n')
+#
         print_to_consol(
             'Calibrating classifier and writing to disk; getting new accuracy')
 
@@ -424,7 +424,7 @@ class TreeRandSearch():
         print_to_consol(
         'Making a confusion matrix for test set classification outcomes with calibrated classifier')
 
-        matrix_stats_cal = confusion_matrix_and_stats(self.y_test, self.y_pred_cal,
+        matrix_stats_cal, report_cal, FP_cal, FN_cal = confusion_matrix_and_stats(self.y_test, self.y_pred_cal,
                                                   self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set with calibrated classifier. \n'
@@ -441,28 +441,46 @@ class TreeRandSearch():
                      f'Precision: {matrix_stats_cal["precision"]} \n'
                      f'F1-score: {matrix_stats_cal["F1-score"]} \n')
 
-        print_to_consol(
-        'Plotting precision recall curve for test set class 1 probabilities with calibrated classifier')
+        print(FP_cal)
 
-        logging.info(
-          f'Plotting precision recall curve for class 1 in test set probabilities with calibrated classifier. \n')
-        
-        plot_precision_recall_vs_threshold(self.y_test, self.y_pred_proba_cal_ones,
-                                           self.directory)
+        try:
+            FP_cal_out = os.path.join(self.directory, "false_positives_after_calibration.csv")
+            np.savetxt(FP_cal_out, FP_cal, delimiter=",")
+        except:
+            logging.info(f'No false positives found after callibration. \n')
+            print('No false positives found after callibration.')
 
-        print_to_consol(
-              'Plotting ROC curve ad calculating AUC for test set class 1 probabilities with calibrated classifier')
+        print(FN_cal)
 
-        logging.info(
-          f'Plotting ROC curve for class 1 in test set probabilities with calibrated classifier. \n')
+        try:
+            FN_cal_out = os.path.join(self.directory, "false_negatives_after_calibration.csv")
+            np.savetxt(FN_cal_out, FN_cal, delimiter=",")
+        except:
+            logging.info(f'No false negatives found after callibration. \n')
+            print('No false negatives found after callibration.')
 
-        self.fpr_cal, self.tpr_cal, self.thresholds_cal = plot_roc_curve(self.y_test,
-                                                   self.y_pred_proba_cal_ones, self.directory)
-
-        AUC_cal = round(roc_auc_score(self.y_test, self.y_pred_proba_cal_ones) * 100, 2)
-
-        logging.info(
-          f'Calculating AUC for ROC curve for class 1 in test set probabilities with calibrated classifier: {AUC_cal} \n')
+#        print_to_consol(
+#        'Plotting precision recall curve for test set class 1 probabilities with calibrated classifier')
+#
+#        logging.info(
+#          f'Plotting precision recall curve for class 1 in test set probabilities with calibrated classifier. \n')
+#        
+#        plot_precision_recall_vs_threshold(self.y_test, self.y_pred_proba_cal_ones,
+#                                           self.directory)
+#
+#        print_to_consol(
+#              'Plotting ROC curve ad calculating AUC for test set class 1 probabilities with calibrated classifier')
+#
+#        logging.info(
+#          f'Plotting ROC curve for class 1 in test set probabilities with calibrated classifier. \n')
+#
+#        self.fpr_cal, self.tpr_cal, self.thresholds_cal = plot_roc_curve(self.y_test,
+#                                                   self.y_pred_proba_cal_ones, self.directory)
+#
+#        AUC_cal = round(roc_auc_score(self.y_test, self.y_pred_proba_cal_ones) * 100, 2)
+#
+#        logging.info(
+#          f'Calculating AUC for ROC curve for class 1 in test set probabilities with calibrated classifier: {AUC_cal} \n')
 
         print_to_consol('Make a radar plot for performance metrics with calibrated classifier')
 
@@ -473,27 +491,27 @@ class TreeRandSearch():
                       'False positive rate' : matrix_stats_cal["FP-rate"],
                       'False negative rate' : matrix_stats_cal["FN-rate"],
                       'Precision' : matrix_stats_cal["precision"],
-                      'F1-score' : matrix_stats_cal["F1-score"],
-                      'ROC AUC' : AUC_cal}
+                      'F1-score' : matrix_stats_cal["F1-score"]}
+#                      'ROC AUC' : AUC_cal}
 
         plot_radar_chart(radar_dict_cal, self.directory)
 
-        print_to_consol(
-            'Exploring probability thresholds, sensitivity, specificity for class 1 with calibrated classifier')
-
-        threshold_dict_cal = evaluate_threshold(self.tpr_cal, self.fpr_cal, self.thresholds_cal)
-
-        logging.info(
-          f'Exploring different probability thresholds and sensitivity-specificity trade-offs \n'
-          f'for calibrated classifier. \n'
-          f'Threshold 0.2: {threshold_dict_cal["0.2"]} \n'
-          f'Threshold 0.3: {threshold_dict_cal["0.3"]} \n'
-          f'Threshold 0.4: {threshold_dict_cal["0.4"]} \n'
-          f'Threshold 0.5: {threshold_dict_cal["0.5"]} \n'
-          f'Threshold 0.6: {threshold_dict_cal["0.6"]} \n'
-          f'Threshold 0.7: {threshold_dict_cal["0.7"]} \n'
-          f'Threshold 0.8: {threshold_dict_cal["0.8"]} \n'
-          f'Threshold 0.9: {threshold_dict_cal["0.9"]} \n')
+#        print_to_consol(
+#            'Exploring probability thresholds, sensitivity, specificity for class 1 with calibrated classifier')
+#
+#        threshold_dict_cal = evaluate_threshold(self.tpr_cal, self.fpr_cal, self.thresholds_cal)
+#
+#        logging.info(
+#          f'Exploring different probability thresholds and sensitivity-specificity trade-offs \n'
+#          f'for calibrated classifier. \n'
+#          f'Threshold 0.2: {threshold_dict_cal["0.2"]} \n'
+#          f'Threshold 0.3: {threshold_dict_cal["0.3"]} \n'
+#          f'Threshold 0.4: {threshold_dict_cal["0.4"]} \n'
+#          f'Threshold 0.5: {threshold_dict_cal["0.5"]} \n'
+#          f'Threshold 0.6: {threshold_dict_cal["0.6"]} \n'
+#          f'Threshold 0.7: {threshold_dict_cal["0.7"]} \n'
+#          f'Threshold 0.8: {threshold_dict_cal["0.8"]} \n'
+#          f'Threshold 0.9: {threshold_dict_cal["0.9"]} \n')
 
         end = datetime.now()
         duration = end - self.start
