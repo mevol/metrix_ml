@@ -119,13 +119,13 @@ def training_cv_stats(clf, X_train, y_train, cv):
     # accuracy for the training set
     # for each CV fold
     accuracy_each_cv = cross_val_score(clf,X_train, y_train,
-                                       cv=cv, scoring='accuracy')
+                                       cv=cv, scoring='balanced_accuracy')
     # mean across all CV folds
     accuracy_mean_cv = round((cross_val_score(clf, X_train, y_train,
-                                              cv=cv, scoring='accuracy').mean()) * 100 , 2)
+                                              cv=cv, scoring='balanced_accuracy').mean()) * 100 , 2)
     # calculate cross_val_scoring with different scoring functions for CV train set
     train_roc_auc = round((cross_val_score(clf, X_train, y_train,
-                                           cv=cv, scoring='roc_auc_micro').mean()) * 100, 2)
+                                           cv=cv, scoring='roc_auc').mean()) * 100, 2)
     train_recall = round((cross_val_score(clf, X_train, y_train,
                                           cv=cv, scoring='recall_micro').mean()) * 100, 2)
     train_precision = round((cross_val_score(clf, X_train, y_train,
