@@ -270,7 +270,7 @@ def confusion_matrix_and_stats_3classes(y_test, y_pred, directory):
     f1 = round(f1_score(y_test, y_pred, average = 'macro') * 100, 2)
 
     target_names = ['class 0', 'class 1', 'class 2']
-    report = classification_report(y_true, y_pred, labels = [0, 1, 2],
+    report = classification_report(y_test, y_pred, labels = [0, 1, 2],
                                    target_names=target_names)
 
     conf_mat_dict = {'TP' : TP,
