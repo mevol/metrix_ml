@@ -223,22 +223,42 @@ def confusion_matrix_and_stats(y_test, y_pred, directory):
 
 def confusion_matrix_and_stats_3classes(y_test, y_pred, directory):
     # Plot predictions in confusion matrix
-    TN, FP, FN, TP = confusion_matrix(y_test, y_pred).ravel()
+    conf_mat = confusion_matrix(y_test, y_pred)
+    cmap=plt.conf_mat.Blues
 
     # draw confusion matrix
     date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-    labels = ['2', '1', '0']      
-    ax = plt.subplot()
-    sns.heatmap(conf_mat, annot=True, ax=ax)
-    plt.title('Confusion matrix of the classifier')
-    ax.set_xticklabels(labels)
-    ax.set_yticklabels(labels)
-    plt.xlabel('Predicted')
-    plt.ylabel('True')
+    classes = ['2', '1', '0']      
+    plt.imshow(conf_mat, interpolation='nearest', cmap=cmap)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+#    if normalize:
+#        conf_mat = conf_mat.astype('float') / conf_mat.sum(axis=1)[:, np.newaxis]
+#        print("Normalized confusion matrix")
+#    else:
+#        print('Confusion matrix, without normalization')
+
+    thresh = conf_mat.max() / 2.
+    for i, j in itertools.product(range(conf_mat.shape[0]), range(conf_mat.shape[1])):
+        plt.text(j, i, conf_mat[i, j],
+                 horizontalalignment="center",
+                 color="white" if conf_mat[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
     plt.savefig(os.path.join(directory, 'confusion_matrix_for_test_set_'+date+'.png'), dpi=600)
     plt.close()
 
     # separating prediction outcomes in TP, TN, FP, FN
+    TP = conf_mat[1, 1]
+    TN = conf_mat[0, 0]
+    FP = conf_mat[0, 1]
+    FN = conf_mat[1, 0]
+    
     acc_score = round(((TP + TN) / (TP + TN + FP + FN)) * 100, 2)
     class_err = round(((FP + FN) / (TP + TN + FP + FN)) * 100, 2)
     sensitivity = round((TP / (FN + TP)) * 100, 2)
