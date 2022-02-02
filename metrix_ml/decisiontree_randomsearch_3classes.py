@@ -316,20 +316,20 @@ class TreeRandSearch():
 #        
 #        plot_precision_recall_vs_threshold(self.y_test, self.y_pred_proba_ones,
 #                                           self.directory)
-
-        print_to_consol(
-              'Plotting ROC curve ad calculating AUC for test set class 1 probabilities')
-
-        logging.info(
-          f'Plotting ROC curve for class 1 in test set probabilities. \n')
-
-        self.fpr, self.tpr, self.thresholds = plot_roc_curve(self.y_test,
-                                                   self.y_pred_proba_ones, self.directory)
-
-        AUC = round(roc_auc_score(self.y_test, self.y_pred_proba_ones) * 100, 2)
-
-        logging.info(
-          f'Calculating AUC for ROC curve for class 1 in test set probabilities: {AUC} \n')
+#
+#        print_to_consol(
+#              'Plotting ROC curve ad calculating AUC for test set class 1 probabilities')
+#
+#        logging.info(
+#          f'Plotting ROC curve for class 1 in test set probabilities. \n')
+#
+#        self.fpr, self.tpr, self.thresholds = plot_roc_curve(self.y_test,
+#                                                   self.y_pred_proba_ones, self.directory)
+#
+#        AUC = round(roc_auc_score(self.y_test, self.y_pred_proba_ones) * 100, 2)
+#
+#        logging.info(
+#          f'Calculating AUC for ROC curve for class 1 in test set probabilities: {AUC} \n')
 
         print_to_consol('Make a radar plot for performance metrics')
 
@@ -340,8 +340,7 @@ class TreeRandSearch():
                       'False positive rate' : matrix_stats["FP-rate"],
                       'False negative rate' : matrix_stats["FN-rate"],
                       'Precision' : matrix_stats["precision"],
-                      'F1-score' : matrix_stats["F1-score"],
-                      'ROC AUC' : AUC}
+                      'F1-score' : matrix_stats["F1-score"]}
 
         plot_radar_chart(radar_dict, self.directory)
 
