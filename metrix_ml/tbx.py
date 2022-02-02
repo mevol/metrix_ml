@@ -127,11 +127,11 @@ def training_cv_stats(clf, X_train, y_train, cv):
     train_roc_auc = round((cross_val_score(clf, X_train, y_train,
                                            cv=cv, scoring='roc_auc').mean()) * 100, 2)
     train_recall = round((cross_val_score(clf, X_train, y_train,
-                                          cv=cv, scoring='recall').mean()) * 100, 2)
+                                          cv=cv, scoring='recall_micro').mean()) * 100, 2)
     train_precision = round((cross_val_score(clf, X_train, y_train,
-                                             cv=cv, scoring='precision').mean()) * 100, 2)
+                                             cv=cv, scoring='precision_micro').mean()) * 100, 2)
     train_f1 = round((cross_val_score(clf, X_train, y_train,
-                                      cv=cv, scoring='f1_macro').mean()) * 100, 2)
+                                      cv=cv, scoring='f1_micro').mean()) * 100, 2)
     # predict class and probabilities on training data with cross-validation
     y_train_CV_pred = cross_val_predict(clf, X_train, y_train, cv=cv)
     y_train_CV_pred_proba = cross_val_predict(clf, X_train, y_train,
@@ -267,7 +267,7 @@ def confusion_matrix_and_stats_3classes(y_test, y_pred, directory):
     false_positive_rate = round((FP / (TN + FP)) * 100, 2)
     false_negative_rate = round((FN / (TP + FN)) * 100, 2)
     precision = round((TP / (TP + FP)) * 100, 2)
-    f1 = round(f1_score(y_test, y_pred, average = 'macro') * 100, 2)
+    f1 = round(f1_score(y_test, y_pred, average = 'micro') * 100, 2)
 
     target_names = ['class 0', 'class 1', 'class 2']
     report = classification_report(y_test, y_pred, labels = [0, 1, 2],
