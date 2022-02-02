@@ -12,7 +12,7 @@ print("Seaborn version: ", sns.__version__)
 
 from sklearn.utils import resample
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, matthews_corrcoef
-from sklearn.metrics import precision_recall_curve, roc_curve
+from sklearn.metrics import precision_recall_curve, roc_curve, classification_report
 from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.calibration import CalibratedClassifierCV
 from datetime import datetime
@@ -220,6 +220,52 @@ def confusion_matrix_and_stats(y_test, y_pred, directory):
                      'F1-score' : f1}
     return conf_mat_dict
 
+
+def confusion_matrix_and_stats_3classes(y_test, y_pred, directory):
+    # Plot predictions in confusion matrix
+    TN, FP, FN, TP = confusion_matrix(y_test, y_pred)
+
+    # draw confusion matrix
+    date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
+    labels = ['2', '1', '0']      
+    ax = plt.subplot()
+    sns.heatmap(conf_mat, annot=True, ax=ax)
+    plt.title('Confusion matrix of the classifier')
+    ax.set_xticklabels(labels)
+    ax.set_yticklabels(labels)
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.savefig(os.path.join(directory, 'confusion_matrix_for_test_set_'+date+'.png'), dpi=600)
+    plt.close()
+
+    # separating prediction outcomes in TP, TN, FP, FN
+    acc_score = round(((TP + TN) / (TP + TN + FP + FN)) * 100, 2)
+    class_err = round(((FP + FN) / (TP + TN + FP + FN)) * 100, 2)
+    sensitivity = round((TP / (FN + TP)) * 100, 2)
+    specificity = round((TN / (TN + FP)) * 100, 2)
+    false_positive_rate = round((FP / (TN + FP)) * 100, 2)
+    false_negative_rate = round((FN / (TP + FN)) * 100, 2)
+    precision = round((TP / (TP + FP)) * 100, 2)
+    f1 = round(f1_score(y_test, y_pred) * 100, 2)
+
+    target_names = ['class 0', 'class 1', 'class 2']
+    report = classification_report(y_true, y_pred, labels = [0, 1, 2],
+                                   target_names=target_names)
+
+    conf_mat_dict = {'TP' : TP,
+                     'TN' : TN,
+                     'FP' : FP,
+                     'FN' : FN,
+                     'acc' : acc_score,
+                     'err' : class_err,
+                     'sensitivity' : sensitivity,
+                     'specificity' : specificity,
+                     'FP-rate' : false_positive_rate,
+                     'FN-rate' : false_negative_rate,
+                     'precision' : precision,
+                     'F1-score' : f1}
+    return conf_mat_dict, report
+    
 
 def plot_hist_pred_proba(y_pred_proba, directory):
     date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
