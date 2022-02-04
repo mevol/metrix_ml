@@ -145,12 +145,38 @@ def training_cv_stats(clf, X_train, y_train, cv):
                   'f1-score' : train_f1}
     return stats_dict, y_train_CV_pred, y_train_CV_pred_proba
 
-def testing_predict_stats(clf, X_test, y_test):
+def training_cv_stats_multiclass(clf, X_train, y_train, cv):
+    # accuracy for the training set
+    # for each CV fold
+    accuracy_each_cv = cross_val_score(clf,X_train, y_train,
+                                       cv=cv, scoring='balanced_accuracy')
+    # mean across all CV folds
+    accuracy_mean_cv = round((cross_val_score(clf, X_train, y_train,
+                                              cv=cv, scoring='balanced_accuracy').mean()) * 100 , 2)
+    # calculate cross_val_scoring with different scoring functions for CV train set
+    train_recall = round((cross_val_score(clf, X_train, y_train,
+                                          cv=cv, scoring='recall_micro').mean()) * 100, 2)
+    train_precision = round((cross_val_score(clf, X_train, y_train,
+                                             cv=cv, scoring='precision_micro').mean()) * 100, 2)
+    train_f1 = round((cross_val_score(clf, X_train, y_train,
+                                      cv=cv, scoring='f1_micro').mean()) * 100, 2)
+    # predict class and probabilities on training data with cross-validation
+    y_train_CV_pred = cross_val_predict(clf, X_train, y_train, cv=cv)
+    y_train_CV_pred_proba = cross_val_predict(clf, X_train, y_train,
+                                              cv=cv, method='predict_proba')
 
+    stats_dict = {'acc_cv' : accuracy_each_cv,
+                  'acc' : accuracy_mean_cv,
+                  'recall' : train_recall,
+                  'precision' : train_precision,
+                  'f1-score' : train_f1}
+    return stats_dict, y_train_CV_pred, y_train_CV_pred_proba
+
+
+def testing_predict_stats(clf, X_test, y_test):
     #getting class predictions and probabilities on the test set for best classifiers
     y_pred = clf.predict(X_test)
     y_pred_proba = clf.predict_proba(X_test)
-
 
     # calculate accuracy
     y_accuracy = round((balanced_accuracy_score(y_test, y_pred)) * 100, 2)
@@ -172,6 +198,22 @@ def testing_predict_stats(clf, X_test, y_test):
                   'class_one' : ones,
                   'class_zero' : zeros,
                   'null_acc' : null_acc,
+                  'mcc' : mcc}
+    return stats_dict, y_pred, y_pred_proba
+
+def testing_predict_stats_multiclass(clf, X_test, y_test):
+    #getting class predictions and probabilities on the test set for best classifiers
+    y_pred = clf.predict(X_test)
+    y_pred_proba = clf.predict_proba(X_test)
+
+    # calculate accuracy
+    y_accuracy = round((balanced_accuracy_score(y_test, y_pred)) * 100, 2)
+    # examine the class distribution of the testing set (using a Pandas Series method)
+    class_dist = y_test.value_counts()
+    # Matthews correlation coefficient
+    mcc = round(matthews_corrcoef(y_test, y_pred), 4)
+    stats_dict = {'predict_acc' : y_accuracy,
+                  'class_distribution' : class_dist,
                   'mcc' : mcc}
     return stats_dict, y_pred, y_pred_proba
 
@@ -222,14 +264,15 @@ def confusion_matrix_and_stats(y_test, y_pred, directory):
     return conf_mat_dict
 
 
-def confusion_matrix_and_stats_3classes(y_test, y_pred, directory):
+def confusion_matrix_and_stats_multiclass(y_test, y_pred, directory):
     # Plot predictions in confusion matrix
     conf_mat = confusion_matrix(y_test, y_pred)
     cmap=plt.cm.Blues
 
     # draw confusion matrix
     date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
-    classes = ['2', '1', '0']      
+    classes = list(y_test.unique())
+    print(classes)
     plt.imshow(conf_mat, interpolation='nearest', cmap=cmap)
     plt.colorbar()
     tick_marks = np.arange(len(classes))

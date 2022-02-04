@@ -19,8 +19,8 @@ from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
 from tbx import get_confidence_interval, feature_importances_best_estimator
-from tbx import feature_importances_error_bars, confusion_matrix_and_stats_3classes
-from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
+from tbx import feature_importances_error_bars, confusion_matrix_and_stats_multiclass
+from tbx import training_cv_stats_multiclass, testing_predict_stats_multiclass, plot_hist_pred_proba
 from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
 from tbx import calibrate_classifier, plot_radar_chart, print_to_consol
 
@@ -222,7 +222,7 @@ class TreeRandSearch():
     def get_training_testing_prediction_stats(self):
         print_to_consol('Getting basic stats for training set and cross-validation')
 
-        training_stats, y_train_pred, y_train_pred_proba = training_cv_stats(
+        training_stats, y_train_pred, y_train_pred_proba = training_cv_stats_multiclass(
                                                 self.model, self.X_train,
                                                 self.y_train, self.cv)
 
@@ -238,7 +238,7 @@ class TreeRandSearch():
 
         print_to_consol('Getting class predictions and probabilities for test set')
 
-        test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats(
+        test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats_multiclass(
                                                 self.model, self.X_test, self.y_test)
 
         y_pred_out = os.path.join(self.directory, "y_pred_before_calibration.csv")
@@ -282,7 +282,7 @@ class TreeRandSearch():
     def detailed_analysis(self):
         print_to_consol('Making a confusion matrix for test set classification outcomes')
 
-        matrix_stats, report, FP, FN = confusion_matrix_and_stats_3classes(self.y_test,
+        matrix_stats, report, FP, FN = confusion_matrix_and_stats_multiclass(self.y_test,
                                                                            self.y_pred,
                                                                            self.directory)
 
