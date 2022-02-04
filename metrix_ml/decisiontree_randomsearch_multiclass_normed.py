@@ -15,6 +15,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
@@ -28,11 +29,11 @@ def make_output_folder(outdir):
     Args:
         outdir (str): user provided directory where the output directory will be created
         output_dir (str): the newly created output directory named
-                         "decisiontree_randomsearch"
+                         "decisiontree_randomsearch_normed"
     Yields:
         directory
     '''
-    output_dir = os.path.join(outdir, 'decisiontree_randomsearch')
+    output_dir = os.path.join(outdir, 'decisiontree_randomsearch_normed')
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
@@ -43,7 +44,7 @@ class TreeRandSearch():
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
         * prepare the input data by splitting into a calibration (5%), testing (20%) and
-          training (80%) sets; no scaling --> data needs to be prepared accordingly
+          training (80%) sets and applying MinMaxScaling
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
         * get 95% confidence interval for uncalibrated classifier
@@ -118,24 +119,40 @@ class TreeRandSearch():
                                                  exclude=['object'])
 
         # create a 5% calibration set if needed
-        X_temp, self.X_cal, y_temp, self.y_cal = train_test_split(X, y, test_size=0.05,
+        X_temp, X_cal, y_temp, self.y_cal = train_test_split(X, y, test_size=0.05,
                                                         random_state=42)
 
         # use the remaining data for 80/20 train-test split
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X_temp,
+        X_train, X_test, self.y_train, self.y_test = train_test_split(X_temp,
                                                                         y_temp,
                                                                         test_size=0.2,
                                                                         random_state=100)
 
+        scaler = MinMaxScaler()
+        scaler.fit(X_train)
+        X_train_scaled = scaler.transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+        X_cal_scaled = scaler.transform(X_cal)
+        
+        self.X_train_scaled = pd.DataFrame(data=X_train_scaled,
+                              index=X_train.index,
+                              columns=X_train.columns)
+        self.X_test_scaled = pd.DataFrame(data=X_test_scaled,
+                              index=X_test.index,
+                              columns=X_test.columns)
+                              
+        self.X_cal_scaled = pd.DataFrame(data=X_cal_scaled,
+                              index=X_cal.index,
+                              columns=X_cal.columns)
+
         X_test_out = os.path.join(self.directory, "X_test.csv")
-        np.savetxt(X_test_out, self.X_test, delimiter=",")
+        np.savetxt(X_test_out, self.X_test_scaled, delimiter=",")
 
         y_test_out = os.path.join(self.directory, "y_test.csv")
         np.savetxt(y_test_out, self.y_test, delimiter=",")
 
         logging.info(f'Writing X_test and y_test to disk \n')
         logging.info(f'Created test, train and validation set \n')
-
 
 ###############################################################################
 #
@@ -170,7 +187,7 @@ class TreeRandSearch():
                                          cv=self.cv, n_iter=self.numc,
                                          scoring='accuracy', n_jobs=-1)
 
-        rand_search_fitted = rand_search.fit(self.X_train,
+        rand_search_fitted = rand_search.fit(self.X_train_scaled,
                                              self.y_train)
                                              
         best_parameters = rand_search_fitted.best_params_
@@ -190,8 +207,8 @@ class TreeRandSearch():
 
         print_to_consol('Getting 95% confidence interval for uncalibrated classifier')
 
-        alpha, upper, lower = get_confidence_interval(self.X_train, self.y_train,
-                                                      self.X_test, self.y_test,
+        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
+                                                      self.X_test_scaled, self.y_test,
                                                       self.model, self.directory,
                                                       self.bootiter, 'uncalibrated')
 
@@ -202,7 +219,7 @@ class TreeRandSearch():
 
         best_clf_feat_import = self.model.feature_importances_
         best_clf_feat_import_sorted = sorted(zip(best_clf_feat_import,
-                                                self.X_train.columns),
+                                                self.X_train_scaled.columns),
                                                 reverse=True)
 
         logging.info(f'Feature importances for best classifier {best_clf_feat_import_sorted} \n')
@@ -222,7 +239,7 @@ class TreeRandSearch():
         print_to_consol('Getting basic stats for training set and cross-validation')
 
         training_stats, y_train_pred, y_train_pred_proba = training_cv_stats_multiclass(
-                                                self.model, self.X_train,
+                                                self.model, self.X_train_scaled,
                                                 self.y_train, self.cv)
 
         logging.info(f'Basic stats achieved for training set and 3-fold CV \n'
@@ -237,7 +254,7 @@ class TreeRandSearch():
         print_to_consol('Getting class predictions and probabilities for test set')
 
         test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats_multiclass(
-                                                self.model, self.X_test, self.y_test)
+                                                self.model, self.X_test_scaled, self.y_test)
 
         y_pred_out = os.path.join(self.directory, "y_pred_before_calibration.csv")
         np.savetxt(y_pred_out, self.y_pred, delimiter=",")
@@ -278,8 +295,8 @@ class TreeRandSearch():
         print_to_consol('Making a confusion matrix for test set classification outcomes')
 
         matrix_stats, report, FP, FN = confusion_matrix_and_stats_multiclass(self.y_test,
-                                                                           self.y_pred,
-                                                                           self.directory)
+                                                  self.y_pred,
+                                                  self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set. \n'
                      f'True positives: {matrix_stats["TP"]} \n'
@@ -298,8 +315,6 @@ class TreeRandSearch():
         logging.info(f'Classification report on test set. \n'
                       '{report} \n')
 
-        logging.info(f'Writing false positives and false positives to disk. \n')
-
         print_to_consol('Make a radar plot for performance metrics')
 
         radar_dict = {'Classification accuracy' : matrix_stats["acc"],
@@ -310,14 +325,14 @@ class TreeRandSearch():
                       'False negative rate' : matrix_stats["FN-rate"],
                       'Precision' : matrix_stats["precision"],
                       'F1-score' : matrix_stats["F1-score"],
-                      'ROC_AUC' : None}
+                      'ROC AUC' : None}
 
         plot_radar_chart(radar_dict, self.directory)
 
         print_to_consol(
             'Calibrating classifier and writing to disk; getting new accuracy')
 
-        self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal,
+        self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal_scaled,
                                                             self.y_cal)
 
         date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
@@ -330,8 +345,8 @@ class TreeRandSearch():
 
         print_to_consol('Getting 95% confidence interval for calibrated classifier')
 
-        alpha, upper, lower = get_confidence_interval(self.X_train, self.y_train,
-                                                      self.X_test, self.y_test,
+        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
+                                                      self.X_test_scaled, self.y_test,
                                                       self.calibrated_clf, self.directory,
                                                       self.bootiter, 'calibrated')
 
@@ -345,7 +360,7 @@ class TreeRandSearch():
 
         test_stats_cal, self.y_pred_cal, self.y_pred_proba_cal = testing_predict_stats_multiclass(
                                                 self.calibrated_clf,
-                                                self.X_test, self.y_test)
+                                                self.X_test_scaled, self.y_test)
 
         y_pred_cal_out = os.path.join(self.directory, "y_pred_after_calibration.csv")
         np.savetxt(y_pred_cal_out, self.y_pred_cal, delimiter=",")
@@ -364,17 +379,6 @@ class TreeRandSearch():
                      f'Prediction accuracy on the test set: {test_stats_cal["predict_acc"]} \n'
                      f'Class distributio in the test set: {test_stats_cal["class_distribution"]} \n'
                      f'Matthews Correlation Coefficient: {test_stats_cal["mcc"]} \n')
-
-        print_to_consol(
-            'Plotting histogram for class 1 prediction probabilities for test set')
-
-        #store the predicted probabilities for class 1 of test set
-        self.y_pred_proba_cal_ones = self.y_pred_proba_cal[:, 1]
-
-        plot_hist_pred_proba(self.y_pred_proba_cal_ones, self.directory)
-
-        logging.info(
-        f'Plotting prediction probabilities for class 1 in test set in histogram for calibrated classifier. \n')
 
         print_to_consol(
         'Making a confusion matrix for test set classification outcomes with calibrated classifier')
@@ -406,7 +410,7 @@ class TreeRandSearch():
                       'False negative rate' : matrix_stats_cal["FN-rate"],
                       'Precision' : matrix_stats_cal["precision"],
                       'F1-score' : matrix_stats_cal["F1-score"],
-                      'ROC AUC' : None}
+                      'ROC AUC' : AUC_cal}
 
         plot_radar_chart(radar_dict_cal, self.directory)
 
