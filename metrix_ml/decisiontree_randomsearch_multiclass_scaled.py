@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
@@ -29,11 +29,11 @@ def make_output_folder(outdir):
     Args:
         outdir (str): user provided directory where the output directory will be created
         output_dir (str): the newly created output directory named
-                         "decisiontree_randomsearch_normed"
+                         "decisiontree_randomsearch_scaled"
     Yields:
         directory
     '''
-    output_dir = os.path.join(outdir, 'decisiontree_randomsearch_normed')
+    output_dir = os.path.join(outdir, 'decisiontree_randomsearch_scaled')
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
@@ -44,7 +44,7 @@ class TreeRandSearch():
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
         * prepare the input data by splitting into a calibration (5%), testing (20%) and
-          training (80%) sets and applying MinMaxScaling
+          training (80%) sets and applying StandardScaler
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
         * get 95% confidence interval for uncalibrated classifier
@@ -128,7 +128,7 @@ class TreeRandSearch():
                                                                         test_size=0.2,
                                                                         random_state=100)
 
-        scaler = MinMaxScaler()
+        scaler = StandardScaler()
         scaler.fit(X_train)
         X_train_scaled = scaler.transform(X_train)
         X_test_scaled = scaler.transform(X_test)
@@ -245,6 +245,7 @@ class TreeRandSearch():
         logging.info(f'Basic stats achieved for training set and 3-fold CV \n'
             f'Accuracy for each individual fold of 3 CV folds: {training_stats["acc_cv"]} \n'
             f'Accuracy across all 3 CV-folds: {training_stats["acc"]} \n'
+            f'ROC_AUC across all 3 CV-folds: {training_stats["roc_auc"]} \n'
             f'Recall across all 3 CV-folds: {training_stats["recall"]} \n'
             f'Precision across all 3 CV-folds: {training_stats["precision"]} \n'
             f'F1 score across all 3 CV-folds: {training_stats["f1-score"]} \n'
@@ -283,8 +284,7 @@ class TreeRandSearch():
     def detailed_analysis(self):
         print_to_consol('Making a confusion matrix for test set classification outcomes')
 
-        matrix_stats, report, FP, FN = confusion_matrix_and_stats_multiclass(self.y_test,
-                                                  self.y_pred,
+        matrix_stats, report, FP, FN = confusion_matrix_and_stats_multiclass(self.y_test, self.y_pred,
                                                   self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set. \n'
@@ -370,6 +370,9 @@ class TreeRandSearch():
                      f'Matthews Correlation Coefficient: {test_stats_cal["mcc"]} \n')
 
         print_to_consol(
+            'Plotting histogram for class 1 prediction probabilities for test set')
+
+        print_to_consol(
         'Making a confusion matrix for test set classification outcomes with calibrated classifier')
 
         matrix_stats_cal, report_cal, FP_cal, FN_cal = confusion_matrix_and_stats_multiclass(self.y_test, self.y_pred_cal,
@@ -389,7 +392,7 @@ class TreeRandSearch():
                      f'Precision: {matrix_stats_cal["precision"]} \n'
                      f'F1-score: {matrix_stats_cal["F1-score"]} \n')
 
-        logging.info(f'Classification report on test set after calibration. \n'
+        logging.info(f'Classification report on test set afetr callibration. \n'
                       '{report_cal} \n')
 
         print_to_consol('Make a radar plot for performance metrics with calibrated classifier')

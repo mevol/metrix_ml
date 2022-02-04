@@ -257,17 +257,6 @@ class TreeRandSearch():
                      f'Class distributio in the test set: {test_stats["class_distribution"]} \n'
                      f'Matthews Correlation Coefficient: {test_stats["mcc"]} \n')
 
-        print_to_consol(
-            'Plotting histogram for class 1 prediction probabilities for test set')
-
-        #store the predicted probabilities for class 1 of test set
-        self.y_pred_proba_ones = self.y_pred_proba[:, 1]
-
-        plot_hist_pred_proba(self.y_pred_proba_ones, self.directory)
-
-        logging.info(
-          f'Plotting prediction probabilities for class 1 in test set in histogram. \n')
-
 ###############################################################################
 #
 #  get more detailed stats and plots
@@ -295,10 +284,8 @@ class TreeRandSearch():
                      f'Precision: {matrix_stats["precision"]} \n'
                      f'F1-score: {matrix_stats["F1-score"]} \n')
 
-        logging.info(f'Classification report on test set. \n'
+        logging.info(f'Classification report on test set before calibration. \n'
                       '{report} \n')
-
-        logging.info(f'Writing false positives and false positives to disk. \n')
 
         print_to_consol('Make a radar plot for performance metrics')
 
@@ -366,17 +353,6 @@ class TreeRandSearch():
                      f'Matthews Correlation Coefficient: {test_stats_cal["mcc"]} \n')
 
         print_to_consol(
-            'Plotting histogram for class 1 prediction probabilities for test set')
-
-        #store the predicted probabilities for class 1 of test set
-        self.y_pred_proba_cal_ones = self.y_pred_proba_cal[:, 1]
-
-        plot_hist_pred_proba(self.y_pred_proba_cal_ones, self.directory)
-
-        logging.info(
-        f'Plotting prediction probabilities for class 1 in test set in histogram for calibrated classifier. \n')
-
-        print_to_consol(
         'Making a confusion matrix for test set classification outcomes with calibrated classifier')
 
         matrix_stats_cal, report_cal, FP_cal, FN_cal = confusion_matrix_and_stats_multiclass(self.y_test, self.y_pred_cal,
@@ -395,6 +371,9 @@ class TreeRandSearch():
                      f'False negative rate: {matrix_stats_cal["FN-rate"]} \n'
                      f'Precision: {matrix_stats_cal["precision"]} \n'
                      f'F1-score: {matrix_stats_cal["F1-score"]} \n')
+
+        logging.info(f'Classification report on test set afetr callibration. \n'
+                      '{report_cal} \n')
 
         print_to_consol('Make a radar plot for performance metrics with calibrated classifier')
 
