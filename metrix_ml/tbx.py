@@ -10,6 +10,9 @@ import joblib
 import itertools
 
 print("Seaborn version: ", sns.__version__)
+print("Pandas version: ", pd.__version__)
+print("Numpy version: ", np.__version__)
+print("SciKitLearn version: ", sklearn.__version__)
 
 from sklearn.utils import resample
 from sklearn.metrics import balanced_accuracy_score, f1_score, confusion_matrix, matthews_corrcoef

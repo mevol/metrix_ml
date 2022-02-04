@@ -25,10 +25,6 @@ from tbx import feature_importances_error_bars, confusion_matrix_and_stats_multi
 from tbx import training_cv_stats_multiclass, testing_predict_stats_multiclass
 from tbx import calibrate_classifier, plot_radar_chart, print_to_consol
 
-print("Pandas version: ", pd.__version__)
-print("Numpy version: ", np.__version__)
-print("SciKitLearn version: ", sklearn.__version__)
-
 def make_output_folder(outdir):
     '''A small function for making an output directory
     Args:

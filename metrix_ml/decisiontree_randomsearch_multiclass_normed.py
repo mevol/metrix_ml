@@ -153,6 +153,7 @@ class TreeRandSearch():
 
         logging.info(f'Writing X_test and y_test to disk \n')
         logging.info(f'Created test, train and validation set \n')
+                     f'Normalizing the train set and applying to test set and calibration set \n')
 
 ###############################################################################
 #
