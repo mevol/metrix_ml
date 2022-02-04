@@ -39,7 +39,7 @@ def make_output_folder(outdir):
 
 class TreeRandSearch():
     ''' A class to conduct a randomised search and training for best parameters for a
-        decision tree; the following steps are executed:
+        decision tree for multiple classes; the following steps are executed:
         * loading input data in CSV format
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
