@@ -229,7 +229,6 @@ class TreeRandSearch():
         logging.info(f'Basic stats achieved for training set and 3-fold CV \n'
             f'Accuracy for each individual fold of 3 CV folds: {training_stats["acc_cv"]} \n'
             f'Accuracy across all 3 CV-folds: {training_stats["acc"]} \n'
-            f'ROC_AUC across all 3 CV-folds: {training_stats["roc_auc"]} \n'
             f'Recall across all 3 CV-folds: {training_stats["recall"]} \n'
             f'Precision across all 3 CV-folds: {training_stats["precision"]} \n'
             f'F1 score across all 3 CV-folds: {training_stats["f1-score"]} \n'
@@ -257,10 +256,7 @@ class TreeRandSearch():
         logging.info(f'Basic stats on the test set. \n'
                      f'Prediction accuracy on the test set: {test_stats["predict_acc"]} \n'
                      f'Class distributio in the test set: {test_stats["class_distribution"]} \n'
-                     f'Matthews Correlation Coefficient: {test_stats["mcc"]} \n'
-                     f'Average number of class 1 samples: {test_stats["class_one"]} \n'
-                     f'Average number of class 0 samples: {test_stats["class_zero"]} \n'
-                     f'Null accuracy: {test_stats["null_acc"]} \n')
+                     f'Matthews Correlation Coefficient: {test_stats["mcc"]} \n')
 
         print_to_consol(
             'Plotting histogram for class 1 prediction probabilities for test set')
