@@ -272,18 +272,11 @@ def confusion_matrix_and_stats_multiclass(y_test, y_pred, directory):
     # draw confusion matrix
     date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
     classes = list(y_test.unique())
-    print(classes)
     plt.imshow(conf_mat, interpolation='nearest', cmap=cmap)
     plt.colorbar()
     tick_marks = np.arange(len(classes))
     plt.xticks(tick_marks, classes, rotation=45)
     plt.yticks(tick_marks, classes)
-
-#    if normalize:
-#        conf_mat = conf_mat.astype('float') / conf_mat.sum(axis=1)[:, np.newaxis]
-#        print("Normalized confusion matrix")
-#    else:
-#        print('Confusion matrix, without normalization')
 
     thresh = conf_mat.max() / 2.
     for i, j in itertools.product(range(conf_mat.shape[0]), range(conf_mat.shape[1])):
@@ -328,7 +321,7 @@ def confusion_matrix_and_stats_multiclass(y_test, y_pred, directory):
                      'FN-rate' : false_negative_rate,
                      'precision' : precision,
                      'F1-score' : f1}
-    return conf_mat_dict, report, FP, FN
+    return conf_mat_dict, report
     
 
 def plot_hist_pred_proba(y_pred_proba, directory):
