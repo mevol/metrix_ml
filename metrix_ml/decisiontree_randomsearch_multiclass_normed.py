@@ -410,7 +410,7 @@ class TreeRandSearch():
                       'False negative rate' : matrix_stats_cal["FN-rate"],
                       'Precision' : matrix_stats_cal["precision"],
                       'F1-score' : matrix_stats_cal["F1-score"],
-                      'ROC AUC' : AUC_cal}
+                      'ROC AUC' : None}
 
         plot_radar_chart(radar_dict_cal, self.directory)
 
