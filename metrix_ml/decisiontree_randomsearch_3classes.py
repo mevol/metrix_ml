@@ -344,7 +344,7 @@ class TreeRandSearch():
         print_to_consol(
         'Getting class predictions and probabilities for test set with calibrated classifier')
 
-        test_stats_cal, self.y_pred_cal, self.y_pred_proba_cal = testing_predict_stats(
+        test_stats_cal, self.y_pred_cal, self.y_pred_proba_cal = testing_predict_stats_multiclass(
                                                 self.calibrated_clf,
                                                 self.X_test, self.y_test)
 
@@ -364,10 +364,7 @@ class TreeRandSearch():
         logging.info(f'Basic stats on the test set woth calibrated classifier. \n'
                      f'Prediction accuracy on the test set: {test_stats_cal["predict_acc"]} \n'
                      f'Class distributio in the test set: {test_stats_cal["class_distribution"]} \n'
-                     f'Matthews Correlation Coefficient: {test_stats_cal["mcc"]} \n'
-                     f'Average number of class 1 samples: {test_stats_cal["class_one"]} \n'
-                     f'Average number of class 0 samples: {test_stats_cal["class_zero"]} \n'
-                     f'Null accuracy: {test_stats_cal["null_acc"]} \n')
+                     f'Matthews Correlation Coefficient: {test_stats_cal["mcc"]} \n')
 
         print_to_consol(
             'Plotting histogram for class 1 prediction probabilities for test set')
@@ -383,7 +380,7 @@ class TreeRandSearch():
         print_to_consol(
         'Making a confusion matrix for test set classification outcomes with calibrated classifier')
 
-        matrix_stats_cal, report_cal, FP_cal, FN_cal = confusion_matrix_and_stats_3classes(self.y_test, self.y_pred_cal,
+        matrix_stats_cal, report_cal, FP_cal, FN_cal = confusion_matrix_and_stats_multiclass(self.y_test, self.y_pred_cal,
                                                   self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set with calibrated classifier. \n'
