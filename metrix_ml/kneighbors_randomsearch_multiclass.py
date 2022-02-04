@@ -12,35 +12,34 @@ import joblib
 import logging
 
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import RandomizedSearchCV, cross_val_score
 from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
-from sklearn.ensemble import BaggingClassifier
-from tbx import feature_importances_error_bars, confusion_matrix_and_stats_multiclass, print_to_consol
+from tbx import get_confidence_interval, feature_importances_best_estimator
+from tbx import confusion_matrix_and_stats
 from tbx import training_cv_stats_multiclass, testing_predict_stats_multiclass
-from tbx import calibrate_classifier, plot_radar_chart, get_confidence_interval
+from tbx import calibrate_classifier, plot_radar_chart, print_to_consol
 
 def make_output_folder(outdir):
     '''A small function for making an output directory
     Args:
         outdir (str): user provided directory where the output directory will be created
         output_dir (str): the newly created output directory named
-                         "decisiontree_bag_randomsearch_normed"
+                         "kneighbors_randomsearch"
     Yields:
         directory
     '''
-    output_dir = os.path.join(outdir, 'decisiontree_bag_randomsearch_normed')
+    output_dir = os.path.join(outdir, 'kneighbors_randomsearch')
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
-class TreeBagBoostRandSearch():
+class KneighborsRandSearch():
     ''' A class to conduct a randomised search and training for best parameters for a
-        decision tree classifier with Bagging for multiple classes;
-        the following steps are executed:
+        Kneighbors classifier for multiple classes; the following steps are executed:
         * loading input data in CSV format
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
@@ -50,10 +49,10 @@ class TreeBagBoostRandSearch():
         * save model to disk
         * get 95% confidence interval for uncalibrated classifier
         * get feature importances
-        * get statistics for training using 3-fold cross-validation and testing
+        * get statistics for training using k-fold cross-validation and testing
         * get more detailed statistics and plots for prediction performances on the testing
           set; this includes a confusion matrix, histogram of prediction probabilities,
-          precision-recall curve and ROC curve
+          precision-recall curve, ROC curve and radar plot
         * explore sensitivity/specificity trade-off when using different probability
           thresholds
         * calibrate the predictor and write the calibrated version to disk
@@ -73,15 +72,14 @@ class TreeBagBoostRandSearch():
         Yields:
         trained predictor: "best_predictor_<date>.pkl"
         trained and calibrated predictor: "best_predictor_calibrated_<date>.pkl"
-        logfile: "decisiontree_bag_randomsearch.log"
+        logfile: "kneighbors_randomsearch.log"
         plots: "bootstrap_hist_uncalibrated_<date>.png"
-               "feature_importances_all_error_bars_<date>.png"
+               "feature_importances_best_bar_plot_<date>.png"
                "confusion_matrix_for_test_set_<date>.png"
                "hist_pred_proba_<date>.png"
                "Precision_Recall_<date>.png"
                "ROC_curve_<date>.png"
                "bootstrap_hist_calibrated_<date>.png"
-               "radar_plot_prediction_metrics<date>.png"
                "radar_plot_prediction_metrics<date>.png"
     '''
     def __init__(self, data, directory, numf, numc, cv, bootiter):
@@ -93,7 +91,7 @@ class TreeBagBoostRandSearch():
         self.directory = make_output_folder(directory)
 
         logging.basicConfig(level=logging.INFO, filename=os.path.join(self.directory,
-                    'decisiontree_bag_randomsearch.log'), filemode='w')
+                    'kneighbors_randomsearch.log'), filemode='w')
         logging.info(f'Loaded input data \n'
                      f'Created output directories at {self.directory} \n')
 
@@ -166,31 +164,21 @@ class TreeBagBoostRandSearch():
         print_to_consol('Running randomized search to find best classifier')
 
         #create the decision forest
-        clf1 = DecisionTreeClassifier(random_state=20,
-                                      class_weight='balanced',
-                                      max_features = self.numf)
-
-        bag = BaggingClassifier(base_estimator=clf1,
-                                          n_jobs=-1,
-                                          bootstrap=True,
-                                          random_state=55)
+        clf1 = KNeighborsClassifier()
 
         logging.info(f'Initialised classifier \n')
 
         #set up randomized search
-        param_dict = {
-                   'base_estimator__criterion': ['gini', 'entropy'],
-                   'n_estimators': randint(100, 10000),#number of base estimators to use
-                   'base_estimator__min_samples_split': randint(2, 20),
-                   'base_estimator__max_depth': randint(1, 10),
-                   'base_estimator__min_samples_leaf': randint(1, 20),
-                   'base_estimator__max_leaf_nodes': randint(10, 20)}
+        param_dict = {'n_neighbors': randint(2, 10),
+                      'weights': ['uniform', 'distance'],
+                      'algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
+                      'leaf_size': randint(2, 50)}
 
         logging.info(f'Following parameters will be explored in randomized search \n'
                      f'{param_dict} \n')
 
         #building and running the randomized search
-        rand_search = RandomizedSearchCV(bag, param_dict, random_state=5,
+        rand_search = RandomizedSearchCV(clf1, param_dict, random_state=5,
                                          cv=self.cv, n_iter=self.numc,
                                          scoring='accuracy', n_jobs=-1)
 
@@ -203,7 +191,7 @@ class TreeBagBoostRandSearch():
         logging.info(f'Running randomised search for best patameters of classifier \n'
                      f'Best parameters found: {best_parameters} \n'
                      f'Best accuracy scores found: {best_scores} \n')
-                     
+
         self.model = rand_search_fitted.best_estimator_
 
         datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
@@ -224,19 +212,24 @@ class TreeBagBoostRandSearch():
 
         print_to_consol('Getting feature importances for best classifier')
 
-        all_clf_feat_import_mean = np.mean(
-                 [tree.feature_importances_ for tree in self.model.estimators_], axis=0)
-        all_clf_feat_import_mean_sorted = sorted(zip(all_clf_feat_import_mean,
-                                                self.X_train_scaled.columns),
-                                                reverse=True)
+        feature_list = []
 
-        logging.info(
-          f'Feature importances across all trees {all_clf_feat_import_mean_sorted} \n')
+        for i in range(len(self.X_train_scaled.columns)):
+            X = self.X_train_scaled.iloc[:, i].values.reshape(-1, 1)
+            scores = cross_val_score(self.model, self.X_train_scaled,
+                                     self.y_train, cv=self.cv)
+            feature_list.append(scores.mean())
+    
+        feature_importance = sorted(zip(self.X_train_scaled.columns,
+                                    feature_list), reverse=True)
+
+        logging.info(f'Feature importances for best classifier {feature_importance} \n')
 
         print_to_consol('Plotting feature importances for best classifier')
 
-        feature_importances_error_bars(self.model, self.X_train_scaled.columns, self.directory)
-        logging.info(f'Plotting feature importances for best classifier with errorbars \n')
+        feature_importances_best_estimator(feature_importance, self.directory)
+        logging.info(
+            f'Plotting feature importances for best classifier in decreasing order \n')
 
 ###############################################################################
 #
@@ -262,7 +255,7 @@ class TreeBagBoostRandSearch():
 
         print_to_consol('Getting class predictions and probabilities for test set')
 
-        test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats(
+        test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats_multiclass(
                                                 self.model, self.X_test_scaled, self.y_test)
 
         y_pred_out = os.path.join(self.directory, "y_pred_before_calibration.csv")
@@ -278,10 +271,11 @@ class TreeBagBoostRandSearch():
         print_to_consol(
             'Calculate prediction stats for y_pred and y_pred_proba of test set')
 
-        logging.info(f'Basic stats on the test set. \n'
-                     f'Prediction accuracy on the test set: {test_stats["predict_acc"]} \n'
-                     f'Class distributio in the test set: {test_stats["class_distribution"]} \n'
-                     f'Matthews Correlation Coefficient: {test_stats["mcc"]} \n')
+        logging.info(
+            f'Basic stats on the test set. \n'
+            f'Prediction accuracy on the test set: {test_stats["predict_acc"]} \n'
+            f'Class distributio in the test set: {test_stats["class_distribution"]} \n'
+            f'Matthews Correlation Coefficient: {test_stats["mcc"]} \n')
 
 ###############################################################################
 #
@@ -338,7 +332,7 @@ class TreeBagBoostRandSearch():
 
         logging.info(
           f'Calibrated the best classifier with X_cal and y_cal and new accuracy {clf_acc}\n'
-          f'Writing file to disk disk in {self.directory} \n')
+          f'Writing file to disk in {self.directory} \n')
 
         print_to_consol('Getting 95% confidence interval for calibrated classifier')
 
@@ -426,13 +420,13 @@ class TreeBagBoostRandSearch():
 
 def run(input_csv, output_dir, features, cycles, boot_iter, cv):
 
-    TreeBagBoostRandSearch(input_csv, output_dir, features, cycles, boot_iter, cv)
+    KneighborsRandSearch(input_csv, output_dir, features, cycles, boot_iter, cv)
 
 
 
 def main():
     '''defining the command line input to make it runable'''
-    parser = argparse.ArgumentParser(description='Bagging and DecisionTree randomized search')
+    parser = argparse.ArgumentParser(description='Kneighbors randomized search')
 
     parser.add_argument(
         '--input', 
@@ -477,7 +471,7 @@ def main():
         help='Number of bootstrap cycles')
 
     args = parser.parse_args()
-    
+
     if args.input == '':
         parser.print_help()
         exit(0)

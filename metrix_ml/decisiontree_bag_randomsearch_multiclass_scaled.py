@@ -15,37 +15,36 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
 from sklearn.ensemble import BaggingClassifier
 from tbx import feature_importances_error_bars, confusion_matrix_and_stats_multiclass, print_to_consol
 from tbx import training_cv_stats_multiclass, testing_predict_stats_multiclass
-from tbx import calibrate_classifier, plot_radar_chart, get_confidence_interval
+from tbx import calibrate_classifier, plot_radar_chart,  get_confidence_interval
 
 def make_output_folder(outdir):
     '''A small function for making an output directory
     Args:
         outdir (str): user provided directory where the output directory will be created
         output_dir (str): the newly created output directory named
-                         "decisiontree_bag_randomsearch_normed"
+                         "decisiontree_bag_randomsearch_scaled"
     Yields:
         directory
     '''
-    output_dir = os.path.join(outdir, 'decisiontree_bag_randomsearch_normed')
+    output_dir = os.path.join(outdir, 'decisiontree_bag_randomsearch_scaled')
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
 class TreeBagBoostRandSearch():
     ''' A class to conduct a randomised search and training for best parameters for a
-        decision tree classifier with Bagging for multiple classes;
-        the following steps are executed:
+        decision tree classifier with Bagging for multiple classes; the following steps are executed:
         * loading input data in CSV format
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
         * prepare the input data by splitting into a calibration (5%), testing (20%) and
-          training (80%) sets and applying MinMaxScaling
+          training (80%) sets and applying StandardScaler
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
         * get 95% confidence interval for uncalibrated classifier
@@ -129,7 +128,7 @@ class TreeBagBoostRandSearch():
                                                                         test_size=0.2,
                                                                         random_state=100)
 
-        scaler = MinMaxScaler()
+        scaler = StandardScaler()
         scaler.fit(X_train)
         X_train_scaled = scaler.transform(X_train)
         X_test_scaled = scaler.transform(X_test)
@@ -147,14 +146,14 @@ class TreeBagBoostRandSearch():
                               columns=X_cal.columns)
 
         X_test_out = os.path.join(self.directory, "X_test.csv")
-        np.savetxt(X_test_out, self.X_test_scaled, delimiter=",")
+        np.savetxt(X_test_out, self.X_test, delimiter=",")
 
         y_test_out = os.path.join(self.directory, "y_test.csv")
         np.savetxt(y_test_out, self.y_test, delimiter=",")
 
         logging.info(f'Writing X_test and y_test to disk \n')
-        logging.info(f'Created test, train and validation set \n')
-                     f'Normalizing the train set and applying to test set and calibration set \n')
+        logging.info(f'Created test, train and validation set \n'
+                     f'Scaling the train set and applying to test set and calibration set \n')
 
 ###############################################################################
 #

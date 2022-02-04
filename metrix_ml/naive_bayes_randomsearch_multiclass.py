@@ -12,45 +12,43 @@ import joblib
 import logging
 
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import RandomizedSearchCV, cross_val_score
 from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
-from sklearn.ensemble import BaggingClassifier
-from tbx import feature_importances_error_bars, confusion_matrix_and_stats_multiclass, print_to_consol
+from tbx import get_confidence_interval, confusion_matrix_and_stats_multiclass, print_to_consol
 from tbx import training_cv_stats_multiclass, testing_predict_stats_multiclass
-from tbx import calibrate_classifier, plot_radar_chart, get_confidence_interval
+from tbx import calibrate_classifier, plot_radar_chart, gnb_feature_importances
 
 def make_output_folder(outdir):
     '''A small function for making an output directory
     Args:
         outdir (str): user provided directory where the output directory will be created
         output_dir (str): the newly created output directory named
-                         "decisiontree_bag_randomsearch_normed"
+                         "naive_bayes_randomsearch"
     Yields:
         directory
     '''
-    output_dir = os.path.join(outdir, 'decisiontree_bag_randomsearch_normed')
+    output_dir = os.path.join(outdir, 'naive_bayes_randomsearch')
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
-class TreeBagBoostRandSearch():
+class NaiveBayesRandSearch():
     ''' A class to conduct a randomised search and training for best parameters for a
-        decision tree classifier with Bagging for multiple classes;
-        the following steps are executed:
+        Naive Bayes classifier for multiple classes; the following steps are executed:
         * loading input data in CSV format
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
         * prepare the input data by splitting into a calibration (5%), testing (20%) and
-          training (80%) sets and applying MinMaxScaling
+          training (80%) sets and applying StandardScaler
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
         * get 95% confidence interval for uncalibrated classifier
         * get feature importances
-        * get statistics for training using 3-fold cross-validation and testing
+        * get statistics for training using k-fold cross-validation and testing
         * get more detailed statistics and plots for prediction performances on the testing
           set; this includes a confusion matrix, histogram of prediction probabilities,
           precision-recall curve and ROC curve
@@ -73,15 +71,14 @@ class TreeBagBoostRandSearch():
         Yields:
         trained predictor: "best_predictor_<date>.pkl"
         trained and calibrated predictor: "best_predictor_calibrated_<date>.pkl"
-        logfile: "decisiontree_bag_randomsearch.log"
+        logfile: "naive_bayes_randomsearch.log"
         plots: "bootstrap_hist_uncalibrated_<date>.png"
-               "feature_importances_all_error_bars_<date>.png"
+               "feature_importances_overall_bar_plot_<class>_<date>.png"
                "confusion_matrix_for_test_set_<date>.png"
                "hist_pred_proba_<date>.png"
                "Precision_Recall_<date>.png"
                "ROC_curve_<date>.png"
                "bootstrap_hist_calibrated_<date>.png"
-               "radar_plot_prediction_metrics<date>.png"
                "radar_plot_prediction_metrics<date>.png"
     '''
     def __init__(self, data, directory, numf, numc, cv, bootiter):
@@ -93,7 +90,7 @@ class TreeBagBoostRandSearch():
         self.directory = make_output_folder(directory)
 
         logging.basicConfig(level=logging.INFO, filename=os.path.join(self.directory,
-                    'decisiontree_bag_randomsearch.log'), filemode='w')
+                    'naive_bayes_randomsearch.log'), filemode='w')
         logging.info(f'Loaded input data \n'
                      f'Created output directories at {self.directory} \n')
 
@@ -129,7 +126,7 @@ class TreeBagBoostRandSearch():
                                                                         test_size=0.2,
                                                                         random_state=100)
 
-        scaler = MinMaxScaler()
+        scaler = StandardScaler()
         scaler.fit(X_train)
         X_train_scaled = scaler.transform(X_train)
         X_test_scaled = scaler.transform(X_test)
@@ -153,8 +150,8 @@ class TreeBagBoostRandSearch():
         np.savetxt(y_test_out, self.y_test, delimiter=",")
 
         logging.info(f'Writing X_test and y_test to disk \n')
-        logging.info(f'Created test, train and validation set \n')
-                     f'Normalizing the train set and applying to test set and calibration set \n')
+        logging.info(f'Created test, train and validation set \n'
+                     f'Scaling the train set and applying to test set and calibration set \n')
 
 ###############################################################################
 #
@@ -163,34 +160,22 @@ class TreeBagBoostRandSearch():
 ###############################################################################
 
     def randomised_search(self):
+
         print_to_consol('Running randomized search to find best classifier')
 
         #create the decision forest
-        clf1 = DecisionTreeClassifier(random_state=20,
-                                      class_weight='balanced',
-                                      max_features = self.numf)
-
-        bag = BaggingClassifier(base_estimator=clf1,
-                                          n_jobs=-1,
-                                          bootstrap=True,
-                                          random_state=55)
+        clf1 = GaussianNB(priors=None)
 
         logging.info(f'Initialised classifier \n')
 
         #set up randomized search
-        param_dict = {
-                   'base_estimator__criterion': ['gini', 'entropy'],
-                   'n_estimators': randint(100, 10000),#number of base estimators to use
-                   'base_estimator__min_samples_split': randint(2, 20),
-                   'base_estimator__max_depth': randint(1, 10),
-                   'base_estimator__min_samples_leaf': randint(1, 20),
-                   'base_estimator__max_leaf_nodes': randint(10, 20)}
+        param_dict = {'var_smoothing': uniform(0.000000000001, 10.0)}
 
         logging.info(f'Following parameters will be explored in randomized search \n'
                      f'{param_dict} \n')
 
         #building and running the randomized search
-        rand_search = RandomizedSearchCV(bag, param_dict, random_state=5,
+        rand_search = RandomizedSearchCV(clf1, param_dict, random_state=5,
                                          cv=self.cv, n_iter=self.numc,
                                          scoring='accuracy', n_jobs=-1)
 
@@ -200,11 +185,14 @@ class TreeBagBoostRandSearch():
         best_parameters = rand_search_fitted.best_params_
         best_scores = rand_search_fitted.best_score_
 
+        self.model = rand_search_fitted.best_estimator_
+
         logging.info(f'Running randomised search for best patameters of classifier \n'
                      f'Best parameters found: {best_parameters} \n'
-                     f'Best accuracy scores found: {best_scores} \n')
-                     
-        self.model = rand_search_fitted.best_estimator_
+                     f'Best accuracy scores found: {best_scores} \n'
+                     f'Probability for each class 0: {self.model.class_prior_} \n'
+                     f'Mean for each feature for class 0: {self.model.theta_[0]} \n'
+                     f'Mean for each feature for class 1: {self.model.theta_[1]} \n')
 
         datestring = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
         joblib.dump(self.model, os.path.join(self.directory,
@@ -221,22 +209,31 @@ class TreeBagBoostRandSearch():
 
         logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n'
                      f'for uncalibrated classifier. \n')
-
+                                                      
         print_to_consol('Getting feature importances for best classifier')
 
-        all_clf_feat_import_mean = np.mean(
-                 [tree.feature_importances_ for tree in self.model.estimators_], axis=0)
-        all_clf_feat_import_mean_sorted = sorted(zip(all_clf_feat_import_mean,
-                                                self.X_train_scaled.columns),
-                                                reverse=True)
+        class0_feature_ls = self.model.theta_[0]
+        class1_feature_ls = self.model.theta_[1]
+        df_0 = pd.DataFrame(class0_feature_ls.reshape(-1, len(class0_feature_ls)),
+                            columns=self.X_train_scaled.columns)
+        df_1 = pd.DataFrame(class1_feature_ls.reshape(-1, len(class1_feature_ls)),
+                            columns=self.X_train_scaled.columns)
+
+        feature_importance_class0 = df_0.to_dict(orient='records')
+        feature_importance_class1 = df_1.to_dict(orient='records')
 
         logging.info(
-          f'Feature importances across all trees {all_clf_feat_import_mean_sorted} \n')
+        f'Feature importances for class 0 for best classifier {feature_importance_class0} \n'
+        f'Feature importances for class 1 for best classifier {feature_importance_class1} \n')
 
         print_to_consol('Plotting feature importances for best classifier')
 
-        feature_importances_error_bars(self.model, self.X_train_scaled.columns, self.directory)
-        logging.info(f'Plotting feature importances for best classifier with errorbars \n')
+        gnb_feature_importances(feature_importance_class0,
+                                'class_0', self.directory)
+        gnb_feature_importances(feature_importance_class1,
+                                'class_1', self.directory)
+        logging.info(
+        f'Plotting feature importances for each class for best classifier in decreasing order \n')
 
 ###############################################################################
 #
@@ -253,7 +250,7 @@ class TreeBagBoostRandSearch():
 
         logging.info(f'Basic stats achieved for training set and 3-fold CV \n'
             f'Accuracy for each individual fold of 3 CV folds: {training_stats["acc_cv"]} \n'
-            f'Accuracy across all 3 CV-folds: {training_stats["acc"]} \n'
+            f'ROC_AUC across all 3 CV-folds: {training_stats["roc_auc"]} \n'
             f'Recall across all 3 CV-folds: {training_stats["recall"]} \n'
             f'Precision across all 3 CV-folds: {training_stats["precision"]} \n'
             f'F1 score across all 3 CV-folds: {training_stats["f1-score"]} \n'
@@ -262,7 +259,7 @@ class TreeBagBoostRandSearch():
 
         print_to_consol('Getting class predictions and probabilities for test set')
 
-        test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats(
+        test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats_multiclass(
                                                 self.model, self.X_test_scaled, self.y_test)
 
         y_pred_out = os.path.join(self.directory, "y_pred_before_calibration.csv")
@@ -355,7 +352,7 @@ class TreeBagBoostRandSearch():
         print_to_consol(
         'Getting class predictions and probabilities for test set with calibrated classifier')
 
-        test_stats_cal, self.y_pred_cal, self.y_pred_proba_cal = testing_predict_stats_multiclass(
+        test_stats_cal, self.y_pred_cal, self.y_pred_proba_cal = testing_predict_stats(
                                                 self.calibrated_clf,
                                                 self.X_test_scaled, self.y_test)
 
@@ -426,13 +423,13 @@ class TreeBagBoostRandSearch():
 
 def run(input_csv, output_dir, features, cycles, boot_iter, cv):
 
-    TreeBagBoostRandSearch(input_csv, output_dir, features, cycles, boot_iter, cv)
+    NaiveBayesRandSearch(input_csv, output_dir, features, cycles, boot_iter, cv)
 
 
 
 def main():
     '''defining the command line input to make it runable'''
-    parser = argparse.ArgumentParser(description='Bagging and DecisionTree randomized search')
+    parser = argparse.ArgumentParser(description='Naive Bayes randomized search')
 
     parser.add_argument(
         '--input', 
@@ -477,7 +474,7 @@ def main():
         help='Number of bootstrap cycles')
 
     args = parser.parse_args()
-    
+
     if args.input == '':
         parser.print_help()
         exit(0)
