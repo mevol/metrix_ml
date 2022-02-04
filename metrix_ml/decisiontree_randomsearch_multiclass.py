@@ -266,7 +266,7 @@ class TreeRandSearch():
     def detailed_analysis(self):
         print_to_consol('Making a confusion matrix for test set classification outcomes')
 
-        matrix_stats, report, FP, FN = confusion_matrix_and_stats_multiclass(self.y_test,
+        matrix_stats, report = confusion_matrix_and_stats_multiclass(self.y_test,
                                                                            self.y_pred,
                                                                            self.directory)
 

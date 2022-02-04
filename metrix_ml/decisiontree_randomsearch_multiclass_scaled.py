@@ -245,7 +245,6 @@ class TreeRandSearch():
         logging.info(f'Basic stats achieved for training set and 3-fold CV \n'
             f'Accuracy for each individual fold of 3 CV folds: {training_stats["acc_cv"]} \n'
             f'Accuracy across all 3 CV-folds: {training_stats["acc"]} \n'
-            f'ROC_AUC across all 3 CV-folds: {training_stats["roc_auc"]} \n'
             f'Recall across all 3 CV-folds: {training_stats["recall"]} \n'
             f'Precision across all 3 CV-folds: {training_stats["precision"]} \n'
             f'F1 score across all 3 CV-folds: {training_stats["f1-score"]} \n'
@@ -284,7 +283,7 @@ class TreeRandSearch():
     def detailed_analysis(self):
         print_to_consol('Making a confusion matrix for test set classification outcomes')
 
-        matrix_stats, report, FP, FN = confusion_matrix_and_stats_multiclass(self.y_test, self.y_pred,
+        matrix_stats, report = confusion_matrix_and_stats_multiclass(self.y_test, self.y_pred,
                                                   self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set. \n'
@@ -375,7 +374,7 @@ class TreeRandSearch():
         print_to_consol(
         'Making a confusion matrix for test set classification outcomes with calibrated classifier')
 
-        matrix_stats_cal, report_cal, FP_cal, FN_cal = confusion_matrix_and_stats_multiclass(self.y_test, self.y_pred_cal,
+        matrix_stats_cal, report_cal = confusion_matrix_and_stats_multiclass(self.y_test, self.y_pred_cal,
                                                   self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set with calibrated classifier. \n'
