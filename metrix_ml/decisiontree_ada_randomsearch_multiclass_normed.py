@@ -254,7 +254,7 @@ class TreeAdaBoostRandSearch():
     def get_training_testing_prediction_stats(self):
         print_to_consol('Getting basic stats for training set and cross-validation')
 
-        training_stats, y_train_pred, y_train_pred_proba = training_cv_stats(
+        training_stats, y_train_pred, y_train_pred_proba = training_cv_stats_multiclass(
                                                 self.model, self.X_train_scaled,
                                                 self.y_train, self.cv)
 

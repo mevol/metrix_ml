@@ -375,7 +375,7 @@ class TreeRandSearch():
                      f'F1-score: {matrix_stats_cal["F1-score"]} \n')
 
         logging.info(f'Classification report on test set afetr callibration. \n'
-                      '{report_cal} \n')
+                     f'{report_cal} \n')
 
         print_to_consol('Make a radar plot for performance metrics with calibrated classifier')
 
