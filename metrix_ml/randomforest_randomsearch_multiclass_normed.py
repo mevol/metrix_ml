@@ -10,16 +10,15 @@ import os
 import numpy as np
 import joblib
 import logging
-import sklearn
 
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
-from sklearn.ensemble import AdaBoostClassifier
 from tbx import get_confidence_interval, feature_importances_best_estimator
 from tbx import feature_importances_error_bars, confusion_matrix_and_stats_multiclass
 from tbx import training_cv_stats_multiclass, testing_predict_stats_multiclass
@@ -30,26 +29,25 @@ def make_output_folder(outdir):
     Args:
         outdir (str): user provided directory where the output directory will be created
         output_dir (str): the newly created output directory named
-                         "decisiontree_ada_randomsearch"
+                         "randomforest_randomsearch_normed"
     Yields:
         directory
     '''
-    output_dir = os.path.join(outdir, 'decisiontree_ada_randomsearch')
+    output_dir = os.path.join(outdir, 'randomforest_randomsearch_normed')
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
-class TreeAdaBoostRandSearch():
+class RandomForestRandSearch():
     ''' A class to conduct a randomised search and training for best parameters for a
-        decision tree classifier with AdaBoost for multiple classes;
-        the following steps are executed:
+        Random Forest for multiple classes; the following steps are executed:
         * loading input data in CSV format
         * creating output directory to write results files to
         * set up a log file to keep note of stats and processes
         * prepare the input data by splitting into a calibration (5%), testing (20%) and
-          training (80%) sets; no scaling --> data needs to be prepared accordingly
+          training (80%) sets and applying MinMaxScaling
         * conduct randomised search to find best parameters for the best predictor
         * save model to disk
-        * get 95% confidence interval for uncalibrated classifier
+        * get 95% confidence interval
         * get feature importances
         * get statistics for training using 3-fold cross-validation and testing
         * get more detailed statistics and plots for prediction performances on the testing
@@ -74,7 +72,7 @@ class TreeAdaBoostRandSearch():
         Yields:
         trained predictor: "best_predictor_<date>.pkl"
         trained and calibrated predictor: "best_predictor_calibrated_<date>.pkl"
-        logfile: "decisiontree_ada_randomsearch.log"
+        logfile: "randomforest_randomsearch.log"
         plots: "bootstrap_hist_uncalibrated_<date>.png"
                "feature_importances_best_bar_plot_<date>.png"
                "feature_importances_all_error_bars_<date>.png"
@@ -94,7 +92,7 @@ class TreeAdaBoostRandSearch():
         self.directory = make_output_folder(directory)
 
         logging.basicConfig(level=logging.INFO, filename=os.path.join(self.directory,
-                    'decisiontree_ada_randomsearch.log'), filemode='w')
+                    'randomforest_randomsearch.log'), filemode='w')
         logging.info(f'Loaded input data \n'
                      f'Created output directories at {self.directory} \n')
 
@@ -121,23 +119,41 @@ class TreeAdaBoostRandSearch():
                                                  exclude=['object'])
 
         # create a 5% calibration set if needed
-        X_temp, self.X_cal, y_temp, self.y_cal = train_test_split(X, y, test_size=0.05,
+        X_temp, X_cal, y_temp, self.y_cal = train_test_split(X, y, test_size=0.05,
                                                         random_state=42)
 
         # use the remaining data for 80/20 train-test split
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X_temp,
+        X_train, X_test, self.y_train, self.y_test = train_test_split(X_temp,
                                                                         y_temp,
                                                                         test_size=0.2,
                                                                         random_state=100)
 
+        scaler = MinMaxScaler()
+        scaler.fit(X_train)
+        X_train_scaled = scaler.transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+        X_cal_scaled = scaler.transform(X_cal)
+        
+        self.X_train_scaled = pd.DataFrame(data=X_train_scaled,
+                              index=X_train.index,
+                              columns=X_train.columns)
+        self.X_test_scaled = pd.DataFrame(data=X_test_scaled,
+                              index=X_test.index,
+                              columns=X_test.columns)
+                              
+        self.X_cal_scaled = pd.DataFrame(data=X_cal_scaled,
+                              index=X_cal.index,
+                              columns=X_cal.columns)
+
         X_test_out = os.path.join(self.directory, "X_test.csv")
-        np.savetxt(X_test_out, self.X_test, delimiter=",")
+        np.savetxt(X_test_out, self.X_test_scaled, delimiter=",")
 
         y_test_out = os.path.join(self.directory, "y_test.csv")
         np.savetxt(y_test_out, self.y_test, delimiter=",")
 
         logging.info(f'Writing X_test and y_test to disk \n')
-        logging.info(f'Created test, train and validation set \n')
+        logging.info(f'Created test, train and validation set \n'
+                     f'Normalizing the train set and applying to test set and calibration set \n')
 
 ###############################################################################
 #
@@ -149,35 +165,30 @@ class TreeAdaBoostRandSearch():
         print_to_consol('Running randomized search to find best classifier')
 
         #create the decision forest
-        clf1 = DecisionTreeClassifier(random_state=20,
+        clf1 = RandomForestClassifier(random_state=20,
                                       class_weight='balanced',
                                       max_features = self.numf)
 
-        ada = AdaBoostClassifier(base_estimator=clf1,
-                                 algorithm ="SAMME.R",
-                                 random_state=55)
-
-        logging.info(f'Initialised classifier using balanced class weights \n')
+        logging.info(f'Initialised classifier \n')
 
         #set up randomized search
         param_dict = {
-                   'base_estimator__criterion': ['gini', 'entropy'],
+                   'criterion': ['gini', 'entropy'],
                    'n_estimators': randint(100, 10000),#number of base estimators to use
-                   'learning_rate': uniform(0.0001, 1.0),
-                   'base_estimator__min_samples_split': randint(2, 20),
-                   'base_estimator__max_depth': randint(1, 10),
-                   'base_estimator__min_samples_leaf': randint(1, 20),
-                   'base_estimator__max_leaf_nodes': randint(10, 20)}
+                   'min_samples_split': randint(2, 20),
+                   'max_depth': randint(1, 10),
+                   'min_samples_leaf': randint(1, 20),
+                   'max_leaf_nodes': randint(10, 20)}
 
         logging.info(f'Following parameters will be explored in randomized search \n'
                      f'{param_dict} \n')
 
         #building and running the randomized search
-        rand_search = RandomizedSearchCV(ada, param_dict, random_state=5,
+        rand_search = RandomizedSearchCV(clf1, param_dict, random_state=5,
                                          cv=self.cv, n_iter=self.numc,
                                          scoring='accuracy', n_jobs=-1)
 
-        rand_search_fitted = rand_search.fit(self.X_train,
+        rand_search_fitted = rand_search.fit(self.X_train_scaled,
                                              self.y_train)
                                              
         best_parameters = rand_search_fitted.best_params_
@@ -197,8 +208,8 @@ class TreeAdaBoostRandSearch():
 
         print_to_consol('Getting 95% confidence interval for uncalibrated classifier')
 
-        alpha, upper, lower = get_confidence_interval(self.X_train, self.y_train,
-                                                      self.X_test, self.y_test,
+        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
+                                                      self.X_test_scaled, self.y_test,
                                                       self.model, self.directory,
                                                       self.bootiter, 'uncalibrated')
 
@@ -209,7 +220,7 @@ class TreeAdaBoostRandSearch():
 
         best_clf_feat_import = self.model.feature_importances_
         best_clf_feat_import_sorted = sorted(zip(best_clf_feat_import,
-                                                self.X_train.columns),
+                                                self.X_train_scaled.columns),
                                                 reverse=True)
 
         logging.info(f'Feature importances for best classifier {best_clf_feat_import_sorted} \n')
@@ -217,14 +228,14 @@ class TreeAdaBoostRandSearch():
         all_clf_feat_import_mean = np.mean(
                  [tree.feature_importances_ for tree in self.model.estimators_], axis=0)
         all_clf_feat_import_mean_sorted = sorted(zip(all_clf_feat_import_mean,
-                                                self.X_train.columns),
+                                                self.X_train_scaled.columns),
                                                 reverse=True)
 
         print_to_consol('Plotting feature importances for best classifier')
 
         feature_importances_best_estimator(best_clf_feat_import_sorted, self.directory)
         logging.info(f'Plotting feature importances for best classifier in decreasing order \n')
-        feature_importances_error_bars(self.model, self.X_train.columns, self.directory)
+        feature_importances_error_bars(self.model, self.X_train_scaled.columns, self.directory)
         logging.info(f'Plotting feature importances for best classifier with errorbars \n')
 
 ###############################################################################
@@ -237,7 +248,7 @@ class TreeAdaBoostRandSearch():
         print_to_consol('Getting basic stats for training set and cross-validation')
 
         training_stats, y_train_pred, y_train_pred_proba = training_cv_stats_multiclass(
-                                                self.model, self.X_train,
+                                                self.model, self.X_train_scaled,
                                                 self.y_train, self.cv)
 
         logging.info(f'Basic stats achieved for training set and 3-fold CV \n'
@@ -252,16 +263,9 @@ class TreeAdaBoostRandSearch():
         print_to_consol('Getting class predictions and probabilities for test set')
 
         test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats_multiclass(
-                                                self.model, self.X_test, self.y_test)
+                                                self.model, self.X_test_scaled, self.y_test)
 
-        y_pred_out = os.path.join(self.directory, "y_pred_before_calibration.csv")
-        np.savetxt(y_pred_out, self.y_pred, delimiter=",")
-
-        y_pred_proba_out = os.path.join(self.directory, "y_pred_proba_before_calibration.csv")
-        np.savetxt(y_pred_proba_out, self.y_pred_proba, delimiter=",")
-
-        logging.info(f'Writing y_pred and y_pred_proba before calibration to disk. \n'
-                     f'Predicting on the test set. \n'
+        logging.info(f'Predicting on the test set. \n'
                      f'Storing classes in y_pred and probabilities in y_pred_proba \n')
 
         print_to_consol(
@@ -318,7 +322,7 @@ class TreeAdaBoostRandSearch():
         print_to_consol(
             'Calibrating classifier and writing to disk; getting new accuracy')
 
-        self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal,
+        self.calibrated_clf, clf_acc = calibrate_classifier(self.model, self.X_cal_scaled,
                                                             self.y_cal)
 
         date = datetime.strftime(datetime.now(), '%Y%m%d_%H%M')
@@ -331,8 +335,8 @@ class TreeAdaBoostRandSearch():
 
         print_to_consol('Getting 95% confidence interval for calibrated classifier')
 
-        alpha, upper, lower = get_confidence_interval(self.X_train, self.y_train,
-                                                      self.X_test, self.y_test,
+        alpha, upper, lower = get_confidence_interval(self.X_train_scaled, self.y_train,
+                                                      self.X_test_scaled, self.y_test,
                                                       self.calibrated_clf, self.directory,
                                                       self.bootiter, 'calibrated')
 
@@ -346,15 +350,9 @@ class TreeAdaBoostRandSearch():
 
         test_stats_cal, self.y_pred_cal, self.y_pred_proba_cal = testing_predict_stats_multiclass(
                                                 self.calibrated_clf,
-                                                self.X_test, self.y_test)
+                                                self.X_test_scaled, self.y_test)
 
-        y_pred_cal_out = os.path.join(self.directory, "y_pred_after_calibration.csv")
-        np.savetxt(y_pred_cal_out, self.y_pred_cal, delimiter=",")
-
-        y_pred_proba_cal_out = os.path.join(self.directory, "y_pred_proba_after_calibration.csv")
-        np.savetxt(y_pred_proba_cal_out, self.y_pred_proba_cal, delimiter=",")
-
-        logging.info(f'Writing y_pred and y_pred_proba after calibration to disk. \n'
+        logging.info(
         f'Predicting on the test set with calibrated classifier. \n'
         f'Storing classes for calibrated classifier in y_pred and probabilities in y_pred_proba. \n')
 
@@ -415,13 +413,13 @@ class TreeAdaBoostRandSearch():
 
 def run(input_csv, output_dir, features, cycles, boot_iter, cv):
 
-    TreeAdaBoostRandSearch(input_csv, output_dir, features, cycles, boot_iter, cv)
+    RandomForestRandSearch(input_csv, output_dir, features, cycles, boot_iter, cv)
 
 
 
 def main():
     '''defining the command line input to make it runable'''
-    parser = argparse.ArgumentParser(description='AdaBoost and DecisionTree randomized search')
+    parser = argparse.ArgumentParser(description='Random Forest randomized search')
 
     parser.add_argument(
         '--input', 
