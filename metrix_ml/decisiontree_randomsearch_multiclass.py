@@ -284,7 +284,7 @@ class TreeRandSearch():
                      f'F1-score: {matrix_stats["F1-score"]} \n')
 
         logging.info(f'Classification report on test set before calibration. \n'
-                      '{report} \n')
+                     f'{report} \n')
                       
         print("Classification reprort: ", report)
 
