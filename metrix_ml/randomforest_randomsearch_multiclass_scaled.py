@@ -285,7 +285,7 @@ class RandomForestRandSearch():
     def detailed_analysis(self):
         print_to_consol('Making a confusion matrix for test set classification outcomes')
 
-        matrix_stats, report = confusion_matrix_and_stats_muticlass(self.y_test, self.y_pred,
+        matrix_stats, report = confusion_matrix_and_stats_multiclass(self.y_test, self.y_pred,
                                                   'before_cal', self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set. \n'

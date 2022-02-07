@@ -20,7 +20,7 @@ from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
 from tbx import get_confidence_interval, feature_importances_best_estimator
-from tbx import confusion_matrix_and_stats
+from tbx import confusion_matrix_and_stats_multiclass
 from tbx import training_cv_stats_multiclass, testing_predict_stats_multiclass
 from tbx import calibrate_classifier, plot_radar_chart, print_to_consol
 

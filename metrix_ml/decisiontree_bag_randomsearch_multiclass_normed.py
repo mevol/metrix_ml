@@ -262,7 +262,7 @@ class TreeBagBoostRandSearch():
 
         print_to_consol('Getting class predictions and probabilities for test set')
 
-        test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats(
+        test_stats, self.y_pred, self.y_pred_proba = testing_predict_stats_multiclass(
                                                 self.model, self.X_test_scaled, self.y_test)
 
         y_pred_out = os.path.join(self.directory, "y_pred_before_calibration.csv")

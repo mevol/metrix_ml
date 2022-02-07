@@ -235,7 +235,6 @@ class ExtremeRandomForestRandSearch():
 
         logging.info(f'Basic stats achieved for training set and 3-fold CV \n'
             f'Accuracy for each individual fold of 3 CV folds: {training_stats["acc_cv"]} \n'
-            f'ROC_AUC across all 3 CV-folds: {training_stats["roc_auc"]} \n'
             f'Recall across all 3 CV-folds: {training_stats["recall"]} \n'
             f'Precision across all 3 CV-folds: {training_stats["precision"]} \n'
             f'F1 score across all 3 CV-folds: {training_stats["f1-score"]} \n'
