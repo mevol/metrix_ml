@@ -146,7 +146,7 @@ class ExtremeRandomForestRandSearch():
                               columns=X_cal.columns)
 
         X_test_out = os.path.join(self.directory, "X_test.csv")
-        np.savetxt(X_test_out, self.X_test, delimiter=",")
+        np.savetxt(X_test_out, self.X_test_scaled, delimiter=",")
 
         y_test_out = os.path.join(self.directory, "y_test.csv")
         np.savetxt(y_test_out, self.y_test, delimiter=",")

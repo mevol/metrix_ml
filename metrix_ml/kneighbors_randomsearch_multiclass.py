@@ -151,7 +151,7 @@ class KneighborsRandSearch():
         np.savetxt(y_test_out, self.y_test, delimiter=",")
 
         logging.info(f'Writing X_test and y_test to disk \n')
-        logging.info(f'Created test, train and validation set \n')
+        logging.info(f'Created test, train and validation set \n'
                      f'Normalizing the train set and applying to test set and calibration set \n')
 
 ###############################################################################
