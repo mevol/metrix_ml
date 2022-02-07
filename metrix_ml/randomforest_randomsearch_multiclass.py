@@ -283,8 +283,6 @@ class RandomForestRandSearch():
                      f'Precision: {matrix_stats["precision"]} \n'
                      f'F1-score: {matrix_stats["F1-score"]} \n')
 
-        print("Classification report before calibration: ," report)
-
         logging.info(f'Classification report on test set before calibration. \n'
                      f'{report} \n')
 
