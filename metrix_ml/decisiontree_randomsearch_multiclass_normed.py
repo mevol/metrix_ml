@@ -286,6 +286,7 @@ class TreeRandSearch():
 
         matrix_stats, report = confusion_matrix_and_stats_multiclass(self.y_test,
                                                   self.y_pred,
+                                                  'before_cal',
                                                   self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set. \n'
@@ -303,7 +304,7 @@ class TreeRandSearch():
                      f'F1-score: {matrix_stats["F1-score"]} \n')
 
         logging.info(f'Classification report on test set before calibration. \n'
-                      '{report} \n')
+                     f'{report} \n')
 
         print_to_consol('Make a radar plot for performance metrics')
 
@@ -374,7 +375,7 @@ class TreeRandSearch():
         'Making a confusion matrix for test set classification outcomes with calibrated classifier')
 
         matrix_stats_cal, report_cal = confusion_matrix_and_stats_multiclass(self.y_test, self.y_pred_cal,
-                                                  self.directory)
+                                                  'after_cal', self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set with calibrated classifier. \n'
                      f'True positives: {matrix_stats_cal["TP"]} \n'
@@ -391,7 +392,7 @@ class TreeRandSearch():
                      f'F1-score: {matrix_stats_cal["F1-score"]} \n')
 
         logging.info(f'Classification report on test set after calibration. \n'
-                      '{report_cal} \n')
+                     f'{report_cal} \n')
 
         print_to_consol('Make a radar plot for performance metrics with calibrated classifier')
 

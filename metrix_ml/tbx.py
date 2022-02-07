@@ -219,7 +219,7 @@ def testing_predict_stats_multiclass(clf, X_test, y_test):
                   'mcc' : mcc}
     return stats_dict, y_pred, y_pred_proba
 
-def confusion_matrix_and_stats(y_test, y_pred, directory):
+def confusion_matrix_and_stats(y_test, y_pred, kind, directory):
     # Plot predictions in confusion matrix
     conf_mat = confusion_matrix(y_test, y_pred)
 
@@ -233,7 +233,7 @@ def confusion_matrix_and_stats(y_test, y_pred, directory):
     ax.set_yticklabels(labels)
     plt.xlabel('Predicted')
     plt.ylabel('True')
-    plt.savefig(os.path.join(directory, 'confusion_matrix_for_test_set_'+date+'.png'), dpi=600)
+    plt.savefig(os.path.join(directory, 'confusion_matrix_for_test_set_'+kind+'_'+date+'.png'), dpi=600)
     plt.close()
 
     # separating prediction outcomes in TP, TN, FP, FN
@@ -266,7 +266,7 @@ def confusion_matrix_and_stats(y_test, y_pred, directory):
     return conf_mat_dict
 
 
-def confusion_matrix_and_stats_multiclass(y_test, y_pred, directory):
+def confusion_matrix_and_stats_multiclass(y_test, y_pred, kind, directory):
     # Plot predictions in confusion matrix
     conf_mat = confusion_matrix(y_test, y_pred)
     cmap=plt.cm.Blues
@@ -289,7 +289,7 @@ def confusion_matrix_and_stats_multiclass(y_test, y_pred, directory):
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.savefig(os.path.join(directory, 'confusion_matrix_for_test_set_'+date+'.png'), dpi=600)
+    plt.savefig(os.path.join(directory, 'confusion_matrix_for_test_set_'+kind+'_'+date+'.png'), dpi=600)
     plt.close()
 
     # separating prediction outcomes in TP, TN, FP, FN
