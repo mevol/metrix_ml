@@ -285,6 +285,8 @@ class TreeRandSearch():
 
         logging.info(f'Classification report on test set before calibration. \n'
                       '{report} \n')
+                      
+        print("Classification reprort: ", report)
 
         print_to_consol('Make a radar plot for performance metrics')
 
