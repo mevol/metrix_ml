@@ -362,7 +362,7 @@ class TreeAdaBoostRandSearch():
         print_to_consol(
         'Getting class predictions and probabilities for test set with calibrated classifier')
 
-        test_stats_cal, self.y_pred_cal, self.y_pred_proba_cal = testing_predict_stats(
+        test_stats_cal, self.y_pred_cal, self.y_pred_proba_cal = testing_predict_stats_multiclass(
                                                 self.calibrated_clf,
                                                 self.X_test_scaled, self.y_test)
 
