@@ -35,7 +35,7 @@ def make_output_folder(outdir):
     Yields:
         directory
     '''
-    output_dir = os.path.join(outdir, 'decisiontree_randomsearch')
+    output_dir = os.path.join(outdir, 'logistic_regression')
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
@@ -94,7 +94,7 @@ class TreeRandSearch():
         self.directory = make_output_folder(directory)
 
         logging.basicConfig(level=logging.INFO, filename=os.path.join(self.directory,
-                    'decisiontree_randomsearch.log'), filemode='w')
+                    'logistic_regression.log'), filemode='w')
         logging.info(f'Loaded input data \n'
                      f'Created output directories at {self.directory} \n')
 
