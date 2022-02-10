@@ -175,6 +175,7 @@ class TreeRandSearch():
 
         #set up randomized search
         param_dict = {
+                   'max_iter' : randint(100, 10000),
                    'C': expon(scale=100)}
 
         logging.info(f'Following parameters will be explored in randomized search \n'
