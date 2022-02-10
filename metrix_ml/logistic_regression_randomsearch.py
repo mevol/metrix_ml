@@ -125,7 +125,7 @@ class TreeRandSearch():
                                                         random_state=42)
 
         # use the remaining data for 80/20 train-test split
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X_temp,
+        X_train, X_test, self.y_train, self.y_test = train_test_split(X_temp,
                                                                         y_temp,
                                                                         test_size=0.2,
                                                                         random_state=100)
