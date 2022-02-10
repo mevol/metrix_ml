@@ -277,7 +277,7 @@ class RbfSvmRandSearch():
         print_to_consol('Making a confusion matrix for test set classification outcomes')
 
         matrix_stats = confusion_matrix_and_stats(self.y_test, self.y_pred,
-                                                  self.directory)
+                                                  'before_cal', self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set. \n'
                      f'True positives: {matrix_stats["TP"]} \n'
@@ -409,7 +409,7 @@ class RbfSvmRandSearch():
         'Making a confusion matrix for test set classification outcomes with calibrated classifier')
 
         matrix_stats_cal = confusion_matrix_and_stats(self.y_test, self.y_pred_cal,
-                                                  self.directory)
+                                                  'after_cal', self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set with calibrated classifier. \n'
                      f'True positives: {matrix_stats_cal["TP"]} \n'
