@@ -169,8 +169,7 @@ class TreeRandSearch():
 
         #create the decision forest
         clf1 = LogisticRegression(penalty = 'l2', random_state=20,
-                                      class_weight='balanced',
-                                      l1_ratio = 0.5)
+                                      class_weight='balanced')
 
         logging.info(f'Initialised classifier')
 
@@ -284,7 +283,7 @@ class TreeRandSearch():
         print_to_consol('Making a confusion matrix for test set classification outcomes')
 
         matrix_stats = confusion_matrix_and_stats(self.y_test, self.y_pred,
-                                                  self.directory)
+                                                  'before_cal', self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set. \n'
                      f'True positives: {matrix_stats["TP"]} \n'
@@ -416,7 +415,7 @@ class TreeRandSearch():
         'Making a confusion matrix for test set classification outcomes with calibrated classifier')
 
         matrix_stats_cal = confusion_matrix_and_stats(self.y_test, self.y_pred_cal,
-                                                  self.directory)
+                                                  'after_cal', self.directory)
 
         logging.info(f'Detailed analysis of confusion matrix for test set with calibrated classifier. \n'
                      f'True positives: {matrix_stats_cal["TP"]} \n'
