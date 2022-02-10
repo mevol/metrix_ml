@@ -20,8 +20,8 @@ from datetime import datetime
 from scipy.stats import randint
 from scipy.stats import uniform
 from scipy.stats import expon
-from tbx import get_confidence_interval, feature_importances_best_estimator
-from tbx import feature_importances_error_bars, confusion_matrix_and_stats
+from tbx import get_confidence_interval
+from tbx import confusion_matrix_and_stats
 from tbx import training_cv_stats, testing_predict_stats, plot_hist_pred_proba
 from tbx import plot_precision_recall_vs_threshold, plot_roc_curve, evaluate_threshold
 from tbx import calibrate_classifier, plot_radar_chart, print_to_consol
@@ -168,7 +168,7 @@ class TreeRandSearch():
         print_to_consol('Running randomized search to find best classifier')
 
         #create the decision forest
-        clf1 = LogisticRegression(random_state=20,
+        clf1 = LogisticRegression(penalty = 'l2', random_state=20,
                                       class_weight='balanced',
                                       l1_ratio = 0.5)
 
@@ -176,7 +176,6 @@ class TreeRandSearch():
 
         #set up randomized search
         param_dict = {
-                   'penalty': ['l2', 'elasticnet'],
                    'C': expon(scale=100)}
 
         logging.info(f'Following parameters will be explored in randomized search \n'
@@ -221,20 +220,6 @@ class TreeRandSearch():
 
         logging.info(f'{alpha}% confidence interval {upper}% and {lower}% \n'
                      f'for uncalibrated classifier. \n')
-
-        print_to_consol('Getting feature importances for best classifier')
-
-        best_clf_feat_import = self.model.feature_importances_
-        best_clf_feat_import_sorted = sorted(zip(best_clf_feat_import,
-                                                self.X_train_scaled.columns),
-                                                reverse=True)
-
-        logging.info(f'Feature importances for best classifier {best_clf_feat_import_sorted} \n')
-
-        print_to_consol('Plotting feature importances for best classifier')
-
-        feature_importances_best_estimator(best_clf_feat_import_sorted, self.directory)
-        logging.info(f'Plotting feature importances for best classifier in decreasing order \n')
 
 ###############################################################################
 #
